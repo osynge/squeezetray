@@ -317,10 +317,11 @@ class Example(wx.Frame):
         self.BtnCancel = wx.Button(self,-1, "Cancel")
         self.BtnSave = wx.Button(self,-1, "Save")
         
-        self.Bind(wx.EVT_BUTTON, self.OnSave,id=self.BtnSave.GetId())
+
         self.Bind(wx.EVT_BUTTON, self.OnCancel, id=self.BtnCancel.GetId())
         self.Bind(wx.EVT_BUTTON, self.OnSave,id=self.BtnSave.GetId())
-        
+        self.Bind(wx.EVT_BUTTON, self.OnApply,id=self.BtnApply.GetId())
+
         
         
         
