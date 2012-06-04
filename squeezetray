@@ -134,11 +134,15 @@ class squeezecmd:
         if response.status != 200:
             print response.status, response.reason
         return response.read()
-    def squeezecmd_play(self):
+    def squeezecmd_play(self,player):
+        if not self.hasPlayer(player):
+            return None
+        playerIndex = self.players[player]["index"]
+        playerId =self.players[player]["id"]
         reponce = self.sendmsg({ 
-            "id":self.player,
+            "id" : playerIndex,
             "method":"slim.request",
-            "params":[ self.playerid, 
+            "params":[ playerId, 
                     ["play"]
                 ]
         })
@@ -160,9 +164,9 @@ class squeezecmd:
         playerIndex = self.players[player]["index"]
         playerId =self.players[player]["id"]
         reponce = self.sendmsg({ 
-            "id":self.player,
+            "id":playerIndex,
             "method":"slim.request",
-            "params":[ self.playerid, 
+            "params":[ playerId, 
                     ["randomplay",'tracks']
                 ]
             })
@@ -171,10 +175,12 @@ class squeezecmd:
         prefix = ""
         if Count > 0:
             prefix = "+"
+        playerIndex = self.players[player]["index"]
+        playerId =self.players[player]["id"]
         reponce = self.sendmsg({ 
-            "id":self.player,
+            "id":playerIndex,
             "method":"slim.request",
-            "params":[ self.playerid, 
+            "params":[ playerId, 
                     ["playlist","index",prefix + str(Count)]
                 ]
         })
@@ -209,6 +215,7 @@ class TaskBarIcon(wx.TaskBarIcon):
     
     def CreatePopupMenu(self):
         toolsMENU = wx.Menu()
+        create_menu_item(toolsMENU, 'Play', self.onScPlay)
         create_menu_item(toolsMENU, 'Pause', self.onScPause)
         create_menu_item(toolsMENU, 'Next', self.onScNext)
         create_menu_item(toolsMENU, 'Previous', self.onScPrevious)
@@ -265,6 +272,13 @@ class TaskBarIcon(wx.TaskBarIcon):
     def on_exit(self, event):
         self.on_settings_close(event)
         wx.CallAfter(self.Destroy)
+    def onScPlay(self, event):
+        player = self.GetSqueezeServerPlayer()
+        if player != None:
+            self.squeezecmd.squeezecmd_play(player)
+        else:
+            self.on_settings(event)
+    
     def onScPause(self, event):
         player = self.GetSqueezeServerPlayer()
         if player != None:
