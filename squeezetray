@@ -27,9 +27,6 @@ def create_menu_item(menu, label, func):
 
 class squeezecmd:
     def __init__(self):
-        self.conn = httplib.HTTPConnection("mini.yokel.org:9000")
-        self.player = 1
-        self.playerid = "00:04:20:23:52:7c"
         self.connected = False
     def SetSqueezeServerHost(self, Host):
         changed = False
@@ -121,6 +118,8 @@ class squeezecmd:
         return self.connected
     
     def sendmsg(self,msg):
+        if not hasattr(self,'conn'):
+            return
         params = json.dumps(msg, sort_keys=True, indent=4)
         try:
             self.conn.request("POST", "/jsonrpc.js", params)
