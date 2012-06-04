@@ -117,6 +117,8 @@ class squeezecmd:
         if not player in self.GetSqueezeServerPlayers():
             return False
         return True
+    def GetSqueezeServerConnected(self):
+        return self.connected
     
     def sendmsg(self,msg):
         params = json.dumps(msg, sort_keys=True, indent=4)
@@ -310,6 +312,9 @@ class Example(wx.Frame):
         self.title = title
         w, h = (250, 250)
         wx.Frame.__init__(self, self.parent, -1, self.title, wx.DefaultPosition, wx.Size(w, h))
+        self.CreateStatusBar()
+        
+        self.SetStatusText("Demonstration of wxPython")
         self.sizer = wx.GridBagSizer(8, 3)
         
         
@@ -374,6 +379,11 @@ class Example(wx.Frame):
         self.cbPlayer.Clear()
         
         availablePlayers = self.app.ConMan.GetSqueezeServerPlayers()
+        
+        if True == self.app.ConMan.GetSqueezeServerConnected():
+            self.SetStatusText("Server Connected.")
+        else:
+            self.SetStatusText("Server not connected.")
         
         for player in availablePlayers:
             self.cbPlayer.Append(player)
