@@ -706,31 +706,6 @@ class Example(wx.Frame):
         self.app.tb.on_settings_close(event)
         
 
-def runner(context):
-    """Run Worker Thread."""
-    # This is the code executing in the new thread. Simulation of
-    # a long process (well, 10s here) as a simple loop - you will
-    # need to structure your processing so that you periodically
-    # peek at the abort variable
-    for i in range(10):
-        time.sleep(1)
-        if context._want_abort:
-            # Use a result of None to acknowledge the abort (of
-            # course you can use whatever you'd like or even
-            # a separate event type)
-            wx.PostEvent(context, ResultEvent(None))
-            return
-    # Here's where the result would be returned (this is an
-    # example fixed result of the number 10, but it could be
-    # any Python object)
-    wx.PostEvent(context, ResultEvent(10))
-
-def runner2(context,naughtyApp):
-    model = naughtyApp.model
-    connection = context
-
-
-
 
 class myapp(wx.App):
     def __init__(self):
