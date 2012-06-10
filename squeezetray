@@ -145,7 +145,7 @@ class SqueezeConnectionWorker(Thread):
         self.tasks = tasks
         self.daemon = True
         self.start()
-    
+        self.connectionString = None
     def run(self):
         while True:
             func,params = self.tasks.get()
@@ -174,6 +174,8 @@ class SqueezeConnectionWorker(Thread):
             
             
     def ConnectionSet(self,connectionStr):
+        if self.connectionString == connectionStr:
+            return
         self.conn = httplib.HTTPConnection(connectionStr)
 class SqueezeConnectionThreadPool:
     """Pool of threads consuming tasks from a queue"""
@@ -210,12 +212,12 @@ class SqueezeConnectionThreadPool:
         
         noPlayers = int(responce["result"]["_count"])
         self.noPlayers = noPlayers
-        print "self.noPlayers=%s" % ( noPlayers )
+        #print "self.noPlayers=%s" % ( noPlayers )
         self.squeezeConMdle.connected.set(True)
         self.squeezeConMdle.playersCount.set(noPlayers)
-        self.players = []
+        
         for index in range(self.noPlayers):
-            self.players.append({'index' : index})
+            
             msg = { 
                 "method":"slim.request",
                 "params": [ '-', [ 'player', 'id', index ,"?"] ]
@@ -232,15 +234,15 @@ class SqueezeConnectionThreadPool:
         playerId = responce["result"]["_id"]
         playerIndex = int(responce['params'][1][2])
         #print type(playerIndex)
-        self.players[playerIndex].update({'id' : playerId})
+        #self.players[playerIndex].update({'id' : playerId})
         #self.squeezeConMdle.playerIndex(playerIndex,playerId)
-        print "self.players=%s" % (self.players)
+        #print "self.players=%s" % (self.players)
         self.squeezeConMdle.playerList[playerIndex].identifier.set(playerId)
     def OnPlayerName(self,responce):
         playerName = responce["result"]["_name"] 
         playerIndex = int(responce['params'][1][2])
-        self.players[playerIndex].update({'name' : playerName})
-        print "self.players=%s" % (self.players)
+        #self.players[playerIndex].update({'name' : playerName})
+        #print "self.players=%s" % (self.players)
         self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
        
 class squeezeConCtrl:
@@ -269,11 +271,12 @@ class squeezeConCtrl:
     def _OnPlayersNameChange(self,value):
         playersCount = self.model.playersCount.get()
         for index in range(playersCount):
-            print self.model.playerList[index].name.get()
-            self.mapping[value] = index
+            if self.model.playerList[index].name.get() == value:
+                self.mapping[value] = index
+                return
             
     def PlayersList(self):
-        return lest(self.mapping.keys())
+        return list(self.mapping.keys())
         
             
             
@@ -505,7 +508,7 @@ class squeezecmd:
         })
 
 class TaskBarIcon(wx.TaskBarIcon):
-    def __init__(self,sc):
+    def __init__(self):
         super(TaskBarIcon, self).__init__()
         self.set_icon(TRAY_ICON)
         
@@ -517,7 +520,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, self.on_left_dclick)
         self.Bind(wx.EVT_TASKBAR_RIGHT_DCLICK, self.on_right_dclick)
         #self.Bind(wx.EVT_TASKBAR_CLICK, self.on_click )
-        self.squeezecmd = sc
+        #self.squeezecmd = sc
         self.Example = None
         self.Connect(-1, -1, EVT_RESULT_ID, self.OnResult)
     def GetSqueezeServerPlayer(self):
@@ -727,7 +730,8 @@ class Example(wx.Frame):
         
         self.cbPlayer.Clear()
         
-        availablePlayers = self.app.ConMan.GetSqueezeServerPlayers()
+        #availablePlayers = self.app.ConMan.GetSqueezeServerPlayers()
+        availablePlayers = self.app.squeezeConCtrl.PlayersList()
         
         if True == self.app.ConMan.GetSqueezeServerConnected():
             self.SetStatusText("Server Connected.")
@@ -795,12 +799,12 @@ class myapp(wx.App):
                                     style=wx.CONFIG_USE_LOCAL_FILE)
         self.squeezeConCtrl = squeezeConCtrl()
         self.configRead()
-        self.ConMan = squeezecmd()
-        self.ConMan.SetSqueezeServerHost(self.GetSqueezeServerHost())
-        self.ConMan.SetSqueezeServerPort(self.GetSqueezeServerPort())
+        #self.ConMan = squeezecmd()
+        #self.ConMan.SetSqueezeServerHost(self.GetSqueezeServerHost())
+        #self.ConMan.SetSqueezeServerPort(self.GetSqueezeServerPort())
         
         
-        self.tb = TaskBarIcon(self.ConMan)
+        self.tb = TaskBarIcon()
         self.tb.app = self
          
         
