@@ -740,12 +740,13 @@ class myapp(wx.App):
                 squeezeServerPortTmp = int(self.cfg.ReadInt('squeezeServerPort'))
             except ValueError:
                 squeezeServerPort = 9000
-        self.SetSqueezeServerPort(9000)
+        self.SetSqueezeServerPort(squeezeServerPort)
+        self.squeezeConCtrl.ConectionStringSet("%s:%s" % (self.GetSqueezeServerHost(),self.GetSqueezeServerPort()))
+        
         SqueezeServerPlayer = None
         if self.cfg.Exists('SqueezeServerPlayer'):
             SqueezeServerPlayer = self.cfg.Read('SqueezeServerPlayer')
         self.SetSqueezeServerPlayer(SqueezeServerPlayer)
-        self.squeezeConCtrl.ConectionStringSet("%s:%s" % (self.GetSqueezeServerHost(),self.GetSqueezeServerPort()))
         self.squeezeConCtrl.RecConnectionOnline()
     def configSave(self):
         self.cfg.Write("squeezeServerHost", self.GetSqueezeServerHost())
