@@ -39,6 +39,7 @@ def create_menu_item(menu, label, func):
 
 # Define notification event for thread completion
 EVT_RESULT_ID = wx.NewId()
+EVT_RESULT_CONNECTED_ID = wx.NewId()
 
 class ResultEvent(wx.PyEvent):
     """Simple event to carry arbitrary result data."""
@@ -46,6 +47,14 @@ class ResultEvent(wx.PyEvent):
         """Init Result Event."""
         wx.PyEvent.__init__(self)
         self.SetEventType(EVT_RESULT_ID)
+        self.data = data
+
+class ResultEvent2(wx.PyEvent):
+    """Simple event to carry arbitrary result data."""
+    def __init__(self, wxTypeId, data):
+        """Init Result Event."""
+        wx.PyEvent.__init__(self)
+        self.SetEventType(wxTypeId)
         self.data = data
 
 
@@ -102,19 +111,25 @@ class squeezeConMdle:
         self.connected = Observable(False)
         self.playersCount = Observable(0)
         self.playerList = []
-        self.host.addCallback(self.OnConnectionStrChange)
-        self.port.addCallback(self.OnConnectionStrChange)
         self.connected.addCallback(self.OnConnectedChange)
         self.playersCount.addCallback(self.OnPlayersCountChange)
         self.CbPlayersAvailable= []
+        self.connectionStr.addCallback(self.OnConnectedChange)
         
     def OnConnectionStrChange(self,value):
+        """ Note ignores parmewters"""
+        print "OnConnectionStrChange='%s'" % value
         NewConstr = "%s:%s" % (self.host.get(),self.port.get())
         OldConstr = self.connectionStr.get()
         if NewConstr != OldConstr:
-            self.connectionStr.set(NewConstr)
+            print "OnConnectionStrChange checnged=%s" % (NewConstr)
+            #self.connectionStr.set(NewConstr)
+            #self.ConectionStringSet(NewConstr)
+            self.playersCount.set(0)
+            
     def OnConnectedChange(self,value):
-        if not self.connected:
+        #print "value=%s" % value
+        if not self.connected.get():
             self.playersCount.set(0)
     def OnPlayersCountChange(self,value):
         self.playerList = []
@@ -123,7 +138,7 @@ class squeezeConMdle:
             self.playerList[index].discovered.addCallback(self.OnPlayersAvailableChange)
     
     def OnPlayersAvailableChange(self,value):
-        print 'dsdsd',value
+        #print 'dsdsd',value
         availablePlayewrs = []
         for index in range(len(self.playerList)):
             #print index
@@ -134,8 +149,10 @@ class squeezeConMdle:
 
     def CbPlayersAvailableAdd(self,func, *args, **kargs):
         self.CbPlayersAvailable.append((func, args, kargs))
-
     
+    def playerListClear(self):
+        self.playerList = []
+        self.playersCount.set(0)
     
     
         
@@ -149,16 +166,23 @@ class SqueezeConnectionWorker(Thread):
         self.connectionString = None
     def run(self):
         while True:
-            func,params = self.tasks.get()
-            #print "fsdfsdFSDF= %s" % (params)
+            func,params, args, kargs = self.tasks.get()
+            
+            if self.connectionString == None:
+                print "self.connectionString == None"
+                print func,params, args, kargs 
+                self.tasks.task_done()
+                return
+            
             try:
                 self.conn.request("POST", "/jsonrpc.js", params)
             except socket.error:
+                self.tasks.task_done()
                 return
             try:
                 response = self.conn.getresponse()
             except httplib.BadStatusLine:
-                self.conn = httplib.HTTPConnection("mini.yokel.org:9000")
+                self.conn = httplib.HTTPConnection(self.connectionStr)
                 self.conn.request("POST", "/jsonrpc.js", params)
                 response = self.conn.getresponse()
 
@@ -167,7 +191,7 @@ class SqueezeConnectionWorker(Thread):
             #return response.read()
             rep = json.loads(response.read())
             if func != None:
-                func(rep)
+                func(rep,*args, **kargs)
                 #try: func(rep)
                 #except Exception, e: 
                 #    print e
@@ -176,9 +200,16 @@ class SqueezeConnectionWorker(Thread):
             
             
     def ConnectionSet(self,connectionStr):
-        if self.connectionString == connectionStr:
-            return
-        self.conn = httplib.HTTPConnection(connectionStr)
+        Changed =  False
+        if self.connectionString != connectionStr:
+            Changed =  True
+            self.connectionString = connectionStr
+        if not hasattr(self,'conn'):
+            Changed =  True
+        if Changed:
+            self.conn = httplib.HTTPConnection(connectionStr)
+            
+        
 class SqueezeConnectionThreadPool:
     """Pool of threads consuming tasks from a queue"""
     def __init__(self, squeezeConMdle,num_threads = 10):
@@ -194,20 +225,29 @@ class SqueezeConnectionThreadPool:
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
         self.tasks.join()
-    def seldMessage(self,func,message):
+    def seldMessage(self,func,message, *args, **kargs):
         params = json.dumps(message, sort_keys=True, indent=4)
-        self.tasks.put((func,params))
+        self.tasks.put((func,params, args, kargs))
         
+    def RecConnectionOnline(self):
         
-    def OnConnectionStrChange(self,value):
-        for player in range(len(self.arrayOfSqueezeConnectionWorker)):
-            self.arrayOfSqueezeConnectionWorker[player].ConnectionSet(value)
-        self.squeezeConMdle.connected.set(False)
         self.seldMessage(self.OnPlayerCount,{ 
             "method":"slim.request",
             "params": [ '-', [ 'player', 'count', '?' ] ]
         })
-        self.players = {}
+        
+    def OnConnectionStrChange(self,value):
+        oldvalue = self.squeezeConMdle.connectionStr.get()
+        if value == None:
+            pass
+        print "oldvalue     vvvvvvvv=%s" % (value)
+        print "OnConnectionStrChange     vvvvvvvv=%s" % (value)
+        for player in range(len(self.arrayOfSqueezeConnectionWorker)):
+            self.arrayOfSqueezeConnectionWorker[player].ConnectionSet(value)
+        oldValue = self.squeezeConMdle.connected.get()
+        self.squeezeConMdle.connected.set(False)
+        
+        
     def OnPlayerCount(self,responce):
         
         noPlayers = int(responce["result"]["_count"])
@@ -215,6 +255,12 @@ class SqueezeConnectionThreadPool:
         #print "self.noPlayers=%s" % ( noPlayers )
         self.squeezeConMdle.connected.set(True)
         self.squeezeConMdle.playersCount.set(noPlayers)
+        
+        oldValue = self.squeezeConMdle.connected.get()
+        if oldValue != True:
+            self.squeezeConMdle.connected.set(True)
+        
+        
         
         for index in range(self.noPlayers):
             
@@ -249,43 +295,52 @@ class squeezeConCtrl:
     def __init__(self):  
         self.model = squeezeConMdle()
         self.view1 = SqueezeConnectionThreadPool(self.model)
+        
         self.model.connectionStr.addCallback(self.view1.OnConnectionStrChange)
-       
+        
         self.model.CbPlayersAvailableAdd(self._OnPlayersNameChange)
         
         self.model.connected.addCallback(self.OnConnection)
         self.mapping = {}
         self.CbConnection = []
         self.CbPlayersList = []
+    def  RecConnectionOnline(self):
+        self.view1.RecConnectionOnline()
     def ConectionStringSet(self,Conecxtionstring):
         oldConecxtionstring = self.model.connectionStr.get()
         if oldConecxtionstring != Conecxtionstring:
             self.model.connectionStr.set(Conecxtionstring)
+            self.view1.RecConnectionOnline()
+            print 'sadasda'
     def ServerHostSet(self,hostname):
         oldHost = self.model.port.get()
         if oldHost != hostname:
             self.model.host.set(hostname)
+            self.view1.RecConnectionOnline()
     def ServerPortSet(self,port):
         oldPort = self.model.port.get()
         if oldPort != port:
             self.model.port.set(port)
+            self.view1.RecConnectionOnline()
     def _OnPlayersNameChange(self,value,dfd):
-        print (self,value,dfd)
+        #print (self,value,dfd)
         
         playersCount = self.model.playersCount.get()
         for index in range(playersCount):
-            print index
-            if self.model.playerList[index].name.get() == value:
-                self.mapping[value] = index
-        print self.PlayersList()    
+            #print index
+            name = self.model.playerList[index].name.get()
+            if None != name:
+                self.mapping[ name] =index 
     def PlayersList(self):
+        
+        self.mapping = {}
         playerList = []
         playersCount = self.model.playersCount.get()
         for index in range(playersCount):
             player = self.model.playerList[index].name.get()
             if player != None:
                 playerList.append(player)
-        #return list(self.mapping.keys())
+                self.mapping[player] = index
         return playerList
         
     def CbPlayersListAdd(self, func, *args, **kargs):
@@ -305,9 +360,10 @@ class squeezeConCtrl:
         self.mapping = {}
         for func, args, kargs in self.CbConnection:
             func(value,*args, **kargs)
+        
+            
     def OnPlayersList(self,value):
         #print "OnConnection(value)=%s" % value
-        self.mapping = {}
         for func, args, kargs in self.CbConnection:
             func(value,*args, **kargs)
     
@@ -315,6 +371,7 @@ class squeezeConCtrl:
         return self.model.connected.get()
             
     def Pause(self,player):
+        #print self.mapping,player
         if not self.model.connected.get():
             return None
         if not player in self.mapping:
@@ -398,6 +455,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         #self.squeezecmd = sc
         self.Example = None
         self.Connect(-1, -1, EVT_RESULT_ID, self.OnResult)
+        self.Connect(-1, -1, EVT_RESULT_CONNECTED_ID, self.OnConnected)
     def GetSqueezeServerPlayer(self):
         if not hasattr(self,'app'):
             return None
@@ -522,8 +580,17 @@ class TaskBarIcon(wx.TaskBarIcon):
     def OnResult(self, event):
         if (self.Example == None):
             return
+            
         
         self.Example.OnConnected(event)
+        return
+    def OnConnected(self, event):
+        print "OnConnected(=%s)" % (Event)
+        if (self.Example == None):
+            return
+            
+        
+            self.Example.OnConnected(event)
         return
         
 
@@ -611,7 +678,7 @@ class Example(wx.Frame):
         
         #availablePlayers = self.app.ConMan.GetSqueezeServerPlayers()
         availablePlayers = self.app.squeezeConCtrl.PlayersList()
-        print "availablePlayers=%s" % (availablePlayers)
+        #print "availablePlayers=%s" % (availablePlayers)
         
         
         for player in availablePlayers:
@@ -704,7 +771,7 @@ class myapp(wx.App):
             SqueezeServerPlayer = self.cfg.Read('SqueezeServerPlayer')
         self.SetSqueezeServerPlayer(SqueezeServerPlayer)
         self.squeezeConCtrl.ConectionStringSet("%s:%s" % (self.GetSqueezeServerHost(),self.GetSqueezeServerPort()))
-        
+        self.squeezeConCtrl.RecConnectionOnline()
     def configSave(self):
         self.cfg.Write("squeezeServerHost", self.GetSqueezeServerHost())
         self.cfg.WriteInt("squeezeServerPort", self.GetSqueezeServerPort())
@@ -712,22 +779,25 @@ class myapp(wx.App):
         self.cfg.Flush()
         
     def handleConnectionChange(self,value,window):
-        print "value=%s" % value
+        #self.squeezeConCtrl.RecConnectionOnline()
+        #print "value=%s" % value
         #print self.GetSqueezeServerHost()
         #print dir(self)
         if not hasattr(self,'tb'):
             print "no tb"
             return
-        wx.PostEvent(self.tb, ResultEvent(value))
+        
+        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
+        
     
     def handlePlayersChange(self,value,window,asda,asdfg):
-        print "value=%s,%s,%s,%s" % (value,window,asda,asdfg)
+        #print "value=%s,%s,%s,%s" % (value,window,asda,asdfg)
         #print self.GetSqueezeServerHost()
         #print dir(self)
         if not hasattr(self,'tb'):
             print "no tb"
             return
-        wx.PostEvent(self.tb, ResultEvent(value))
+        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
         
 
     def SetSqueezeServerHost(self,host):
@@ -735,17 +805,19 @@ class myapp(wx.App):
         if not hasattr(self,'SqueezeServerHost'):
             Changed = True
             self.SqueezeServerHost = 'localhost'
+        
         if self.SqueezeServerHost != host:
             Changed = True
         try:
             self.SqueezeServerHost = str(host)
         except TypeError:
             self.SqueezeServerHost = 'localhost'
-        self.squeezeConCtrl.ServerHostSet(self.SqueezeServerHost)
-        port = self.GetSqueezeServerPort() 
-        host = self.GetSqueezeServerHost()
-        if host != None and port != None:
-            self.squeezeConCtrl.ConectionStringSet("%s:%s" % (self.GetSqueezeServerHost(),self.GetSqueezeServerPort()))
+        
+        if Changed:
+            print " host has changed to %s"  % (self.SqueezeServerHost)
+            self.squeezeConCtrl.ServerHostSet(self.SqueezeServerHost)
+            self.squeezeConCtrl.RecConnectionOnline()
+            
         
     def GetSqueezeServerHost(self):
         if hasattr(self,'SqueezeServerHost'):
@@ -764,10 +836,11 @@ class myapp(wx.App):
                 self.SqueezeServerPort = int(port)
             except TypeError:
                 squeezeServerPort = 9000
-        if hasattr(self,'ConMan'):
-            self.ConMan.SetSqueezeServerPort(self.SqueezeServerPort)
-        self.squeezeConCtrl.ServerPortSet(self.SqueezeServerPort)
-        port = self.GetSqueezeServerPort() 
+        if Changed:
+            print " it has changed to %s"  % (self.SqueezeServerPort)
+            self.squeezeConCtrl.ServerPortSet(self.SqueezeServerPort)
+            self.squeezeConCtrl.RecConnectionOnline()
+
     def GetSqueezeServerPort(self):
         if hasattr(self,'SqueezeServerHost'):
             return self.SqueezeServerPort
@@ -777,9 +850,7 @@ class myapp(wx.App):
         
         
         
-    def GetSqueezeServerPlayer(self):
-        
-        
+    def GetSqueezeServerPlayer(self):        
         if hasattr(self,'SqueezeServerPlayer'):
             return self.SqueezeServerPlayer
         return None
