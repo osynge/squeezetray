@@ -49,38 +49,6 @@ class ResultEvent(wx.PyEvent):
         self.data = data
 
 
-
-
-class Worker(Thread):
-    """Thread executing tasks from a given tasks queue"""
-    def __init__(self, tasks):
-        Thread.__init__(self)
-        self.tasks = tasks
-        self.daemon = True
-        self.start()
-    
-    def run(self):
-        while True:
-            func, args, kargs = self.tasks.get()
-            try: func(*args, **kargs)
-            except Exception, e: print e
-            self.tasks.task_done()
-
-class ThreadPool:
-    """Pool of threads consuming tasks from a queue"""
-    def __init__(self, num_threads = 10):
-        self.tasks = Queue(num_threads)
-        for _ in range(num_threads): Worker(self.tasks)
-
-    def add_task(self, func, *args, **kargs):
-        """Add a task to the queue"""
-        self.tasks.put((func, args, kargs))
-
-    def wait_completion(self):
-        """Wait for completion of all the tasks in the queue"""
-        self.tasks.join()
-
-
 class Observable:
     def __init__(self, initialValue=None):
         self.data = initialValue
@@ -111,6 +79,19 @@ class squeezePlayerMdl:
         self.index = Observable(index)
         self.identifier = Observable(identifier)
         self.name = Observable(Name)
+        self.discovered = Observable(False)
+        self.index.addCallback(self.OnAtribChange)
+        self.identifier.addCallback(self.OnAtribChange)
+        self.name.addCallback(self.OnAtribChange)
+        
+    def OnAtribChange(self,value):
+        discovered = False
+        if  (self.identifier != None) and (self.name != None):
+            discovered = True
+        previously = self.discovered.get()
+        if not previously == discovered:
+            previously = discovered
+            self.discovered.set(discovered)
 
 class squeezeConMdle:
     def __init__(self):
@@ -125,6 +106,8 @@ class squeezeConMdle:
         self.port.addCallback(self.OnConnectionStrChange)
         self.connected.addCallback(self.OnConnectedChange)
         self.playersCount.addCallback(self.OnPlayersCountChange)
+        self.CbPlayersAvailable= []
+        
     def OnConnectionStrChange(self,value):
         NewConstr = "%s:%s" % (self.host.get(),self.port.get())
         OldConstr = self.connectionStr.get()
@@ -137,7 +120,25 @@ class squeezeConMdle:
         self.playerList = []
         for index in range(value):
             self.playerList.append(squeezePlayerMdl(index))
-            
+            self.playerList[index].discovered.addCallback(self.OnPlayersAvailableChange)
+    
+    def OnPlayersAvailableChange(self,value):
+        print 'dsdsd',value
+        availablePlayewrs = []
+        for index in range(len(self.playerList)):
+            #print index
+            if self.playerList[index].discovered.get():
+                availablePlayewrs.append(str(self.playerList[index].name.get()))
+        for func, args, kargs in self.CbPlayersAvailable:
+            func(value,availablePlayewrs,*args, **kargs)
+
+    def CbPlayersAvailableAdd(self,func, *args, **kargs):
+        self.CbPlayersAvailable.append((func, args, kargs))
+
+    
+    
+    
+        
 class SqueezeConnectionWorker(Thread):
     """Thread executing tasks from a given tasks queue"""
     def __init__(self, tasks):
@@ -166,10 +167,11 @@ class SqueezeConnectionWorker(Thread):
             #return response.read()
             rep = json.loads(response.read())
             if func != None:
-                try: func(rep)
-                except Exception, e: 
-                    print e
-                    #traceback.print_tb(e, limit=1, file=sys.stdout)
+                func(rep)
+                #try: func(rep)
+                #except Exception, e: 
+                #    print e
+                #    #traceback.print_tb(e, limit=1, file=sys.stdout)
             self.tasks.task_done()
             
             
@@ -188,8 +190,6 @@ class SqueezeConnectionThreadPool:
         for _ in range(num_threads): 
             new = SqueezeConnectionWorker(self.tasks)
             self.arrayOfSqueezeConnectionWorker.append(new)
-
-   
 
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
@@ -250,8 +250,13 @@ class squeezeConCtrl:
         self.model = squeezeConMdle()
         self.view1 = SqueezeConnectionThreadPool(self.model)
         self.model.connectionStr.addCallback(self.view1.OnConnectionStrChange)
-        self.model.playersCount.addCallback(self._OnPlayersCountChange)
+       
+        self.model.CbPlayersAvailableAdd(self._OnPlayersNameChange)
+        
+        self.model.connected.addCallback(self.OnConnection)
         self.mapping = {}
+        self.CbConnection = []
+        self.CbPlayersList = []
     def ConectionStringSet(self,Conecxtionstring):
         oldConecxtionstring = self.model.connectionStr.get()
         if oldConecxtionstring != Conecxtionstring:
@@ -264,22 +269,50 @@ class squeezeConCtrl:
         oldPort = self.model.port.get()
         if oldPort != port:
             self.model.port.set(port)
-    def _OnPlayersCountChange(self,value):
-        self.mapping = {}
-        for index in range(value):
-            name = self.model.playerList[index].name.addCallback(self._OnPlayersNameChange)
-    def _OnPlayersNameChange(self,value):
+    def _OnPlayersNameChange(self,value,dfd):
+        print (self,value,dfd)
+        
         playersCount = self.model.playersCount.get()
         for index in range(playersCount):
+            print index
             if self.model.playerList[index].name.get() == value:
                 self.mapping[value] = index
-                return
-            
+        print self.PlayersList()    
     def PlayersList(self):
-        return list(self.mapping.keys())
+        playerList = []
+        playersCount = self.model.playersCount.get()
+        for index in range(playersCount):
+            player = self.model.playerList[index].name.get()
+            if player != None:
+                playerList.append(player)
+        #return list(self.mapping.keys())
+        return playerList
         
-            
-            
+    def CbPlayersListAdd(self, func, *args, **kargs):
+        """Add a task to the queue"""
+        self.CbPlayersList.append((func, args, kargs))
+        
+        
+        
+    def CbPlayersLisCbPlayersAvailableAdd(self, func, *args, **kargs):    
+        self.model.CbPlayersAvailableAdd(func, args, kargs)
+        
+    def CbConnectionAdd(self, func, *args, **kargs):
+        """Add a task to the queue"""
+        self.CbConnection.append((func, args, kargs))
+    def OnConnection(self,value):
+        #print "OnConnection(value)=%s" % value
+        self.mapping = {}
+        for func, args, kargs in self.CbConnection:
+            func(value,*args, **kargs)
+    def OnPlayersList(self,value):
+        #print "OnConnection(value)=%s" % value
+        self.mapping = {}
+        for func, args, kargs in self.CbConnection:
+            func(value,*args, **kargs)
+    
+    def ConnectionOnline(self):
+        return self.model.connected.get()
             
     def Pause(self,player):
         if not self.model.connected.get():
@@ -345,167 +378,9 @@ class squeezeConCtrl:
                     ["randomplay",'tracks']
                 ]
             }))
-class squeezecmd:
-    def __init__(self):
-        self.connected = False
-    def SetSqueezeServerHost(self, Host):
-        changed = False
-        if not hasattr(self,'Host'):
-            self.Host = Host
-            changed = True
-        else:
-            if self.Host != Host:
-                changed = True
-                self.Host = Host
-        if changed:
-            self.OnHostChange()
-    def GetSqueezeServerHost(self):
-        if not hasattr(self,'Host'):
-            return 'localhost'
-        else:
-            return self.Host
-    def SetSqueezeServerPort(self, Port):
-        changed = False
-        if not hasattr(self,'Port'):
-            self.Port = Port
-            changed = True
-        else:
-            if self.Port != Port:
-                changed = True
-                self.Port = Port
-        if changed:
-            self.OnHostChange()
 
-    def GetSqueezeServerPort(self):
-        if not hasattr(self,'host'):
-            return '9000'
-        else:
-            return self.Port
-    def OnHostChange(self):
-        Changed = False
-        constr = "%s:%s" % (self.GetSqueezeServerHost(),self.GetSqueezeServerPort())
-        #print constr
-        if not hasattr(self,'_constr'):
-            self._constr = constr
-            Changed = True
-        if self._constr != constr:
-            Changed = True
-            self._constr = constr
-        if not Changed:
-            return
-        #print "here"
-        if hasattr(self,'players'):
-            del(self.players)
-        self.conn = httplib.HTTPConnection(self._constr)
-        reponce = self.sendmsg({ 
-            "method":"slim.request",
-            "params": [ '-', [ 'player', 'count', '?' ] ]
-        })
-        if reponce == None:
-            return
-        rep = json.loads(reponce)
-        if rep == None:
-            return
-        players = {}
-        self.noPlayers = rep["result"]["_count"]
-        for index in range(self.noPlayers):
-            reponce = self.sendmsg({ 
-                "method":"slim.request",
-                "params": [ '-', [ 'player', 'id', index ,"?"] ]
-            })
-            rep = json.loads(reponce)
-            playerId = rep["result"]["_id"]
-            reponce = self.sendmsg({ 
-                "method":"slim.request",
-                "params": [ '-', [ 'player', 'name', index ,"?"] ]
-            })
-            rep = json.loads(reponce)
-            playerName = rep["result"]["_name"]
-            playerDetails = {"name" : playerName,
-                "id" : playerId,
-                "index" : index }
-            players[playerName] = playerDetails
-        self.players = players
-        self.connected = True
-        return
-    def GetSqueezeServerPlayers(self):
-        if  hasattr(self,'players'):
-            return self.players.keys()
-        return []
-    def hasPlayer(self,player):
-        if not player in self.GetSqueezeServerPlayers():
-            return False
-        return True
-    def GetSqueezeServerConnected(self):
-        return self.connected
-    
-    def sendmsg(self,msg):
-        if not hasattr(self,'conn'):
-            return
-        params = json.dumps(msg, sort_keys=True, indent=4)
-        try:
-            self.conn.request("POST", "/jsonrpc.js", params)
-        except socket.error:
-            return
-        try:
-            response = self.conn.getresponse()
-        except httplib.BadStatusLine:
-            self.conn = httplib.HTTPConnection("mini.yokel.org:9000")
-            self.conn.request("POST", "/jsonrpc.js", params)
-            response = self.conn.getresponse()
-        if response.status != 200:
-            print response.status, response.reason
-        return response.read()
-    def squeezecmd_play(self,player):
-        if not self.hasPlayer(player):
-            return None
-        playerIndex = self.players[player]["index"]
-        playerId =self.players[player]["id"]
-        reponce = self.sendmsg({ 
-            "id" : playerIndex,
-            "method":"slim.request",
-            "params":[ playerId, 
-                    ["play"]
-                ]
-        })
-        
-        
-    def squeezecmd_pause(self,player):
-        if not self.hasPlayer(player):
-            return None
-        playerIndex = self.players[player]["index"]
-        playerId =self.players[player]["id"]
-        reponce = self.sendmsg({ 
-            "id":playerIndex,
-            "method":"slim.request",
-            "params":[ playerId, 
-                    ["pause"]
-                ]
-        })
-    def squeezecmd_randomplay(self,player):
-        playerIndex = self.players[player]["index"]
-        playerId =self.players[player]["id"]
-        reponce = self.sendmsg({ 
-            "id":playerIndex,
-            "method":"slim.request",
-            "params":[ playerId, 
-                    ["randomplay",'tracks']
-                ]
-            })
-    def squeezecmd_Index(self,player,Count):
-        """Jumps player on currentplaylist"""
-        prefix = ""
-        if Count > 0:
-            prefix = "+"
-        playerIndex = self.players[player]["index"]
-        playerId =self.players[player]["id"]
-        reponce = self.sendmsg({ 
-            "id":playerIndex,
-            "method":"slim.request",
-            "params":[ playerId, 
-                    ["playlist","index",prefix + str(Count)]
-                ]
-        })
+
+
 
 class TaskBarIcon(wx.TaskBarIcon):
     def __init__(self):
@@ -645,15 +520,12 @@ class TaskBarIcon(wx.TaskBarIcon):
             self.Example = None
 
     def OnResult(self, event):
-        """Show Result status."""
-        if event.data is None:
-            # Thread aborted (using our convention of None return)
-            self.status.SetLabel('Computation aborted')
-        else:
-            # Process results here
-            self.status.SetLabel('Computation Result: %s' % event.data)
-        # In either event, the worker is done
-        self.worker = None
+        if (self.Example == None):
+            return
+        
+        self.Example.OnConnected(event)
+        return
+        
 
         
 class Example(wx.Frame):
@@ -725,18 +597,22 @@ class Example(wx.Frame):
         self.Centre()
         #self.SetSize(wx.Size(w, h))
         super(Example, self).Show()
-
+    def OnConnected(self,event):
+        
+        if True == self.app.squeezeConCtrl.ConnectionOnline():
+            self.SetStatusText("Server Connected.")
+        else:
+            self.SetStatusText("Server not connected.")
+        self.OnUpdate()
+        print "self.app.squeezeConCtrl.PlayersList()=%s" % self.app.squeezeConCtrl.PlayersList()
     def OnUpdate(self):
         
         self.cbPlayer.Clear()
         
         #availablePlayers = self.app.ConMan.GetSqueezeServerPlayers()
         availablePlayers = self.app.squeezeConCtrl.PlayersList()
+        print "availablePlayers=%s" % (availablePlayers)
         
-        if True == self.app.ConMan.GetSqueezeServerConnected():
-            self.SetStatusText("Server Connected.")
-        else:
-            self.SetStatusText("Server not connected.")
         
         for player in availablePlayers:
             self.cbPlayer.Append(player)
@@ -785,7 +661,9 @@ def runner(context):
 def runner2(context,naughtyApp):
     model = naughtyApp.model
     connection = context
-    
+
+
+
 
 class myapp(wx.App):
     def __init__(self):
@@ -798,22 +676,16 @@ class myapp(wx.App):
                                     localFilename=".squeezetray.cfg", 
                                     style=wx.CONFIG_USE_LOCAL_FILE)
         self.squeezeConCtrl = squeezeConCtrl()
+        
         self.configRead()
-        #self.ConMan = squeezecmd()
-        #self.ConMan.SetSqueezeServerHost(self.GetSqueezeServerHost())
-        #self.ConMan.SetSqueezeServerPort(self.GetSqueezeServerPort())
-        
-        
         self.tb = TaskBarIcon()
+        #print "tb=%s" %self.tb
         self.tb.app = self
-         
-        
         self.tb.cfg = self.cfg
+        self.squeezeConCtrl.CbConnectionAdd(self.handleConnectionChange,self.tb)
+        self.squeezeConCtrl.CbPlayersLisCbPlayersAvailableAdd(self.handlePlayersChange,self.tb)
         
-        
-        #self.squeezeConCtrl.Pause()
-        
-        #self.squeezeConCtrl.ConectionStringSet("%s:%s" % (self.GetSqueezeServerHost(),self.GetSqueezeServerPort()))
+
     def configRead(self):
         squeezeServerHost = 'localhost'
         if self.cfg.Exists('squeezeServerHost'):
@@ -838,6 +710,26 @@ class myapp(wx.App):
         self.cfg.WriteInt("squeezeServerPort", self.GetSqueezeServerPort())
         self.cfg.Write("SqueezeServerPlayer", self.GetSqueezeServerPlayer())
         self.cfg.Flush()
+        
+    def handleConnectionChange(self,value,window):
+        print "value=%s" % value
+        #print self.GetSqueezeServerHost()
+        #print dir(self)
+        if not hasattr(self,'tb'):
+            print "no tb"
+            return
+        wx.PostEvent(self.tb, ResultEvent(value))
+    
+    def handlePlayersChange(self,value,window,asda,asdfg):
+        print "value=%s,%s,%s,%s" % (value,window,asda,asdfg)
+        #print self.GetSqueezeServerHost()
+        #print dir(self)
+        if not hasattr(self,'tb'):
+            print "no tb"
+            return
+        wx.PostEvent(self.tb, ResultEvent(value))
+        
+
     def SetSqueezeServerHost(self,host):
         Changed = False
         if not hasattr(self,'SqueezeServerHost'):
@@ -849,8 +741,6 @@ class myapp(wx.App):
             self.SqueezeServerHost = str(host)
         except TypeError:
             self.SqueezeServerHost = 'localhost'
-        if hasattr(self,'ConMan'):
-            self.ConMan.SetSqueezeServerHost(self.SqueezeServerHost)
         self.squeezeConCtrl.ServerHostSet(self.SqueezeServerHost)
         port = self.GetSqueezeServerPort() 
         host = self.GetSqueezeServerHost()
