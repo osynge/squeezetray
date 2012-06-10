@@ -171,13 +171,8 @@ class SqueezeConnectionWorker(Thread):
             func,params, args, kargs = self.tasks.get()
             
             if self.connectionString == None:
-                print "self.connectionString == None"
-                print func,params, args, kargs 
                 self.tasks.task_done()
                 return
-            else:
-                print "self.connectionString == %s" % self.connectionString
-            
             try:
                 self.conn.request("POST", "/jsonrpc.js", params)
             except socket.error:
@@ -586,14 +581,14 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.Example.OnConnected(event)
         return
     def OnConnected(self, event):
-        print "OnConnected(=%s)" % (Event)
+        #print "OnConnected(=%s)" % (Event)
         if (self.Example == None):
             return
             self.Example.OnConnected(event)
         return
         
     def OnPlayers(self, event):
-        print "OnPlayers(=%s)" % (Event)
+        #print "OnPlayers(=%s)" % (Event)
         if (self.Example != None):
             self.Example.UpdateCbPlayer()
             return
@@ -820,7 +815,7 @@ class myapp(wx.App):
             self.SqueezeServerHost = 'localhost'
         
         if Changed:
-            print " host has changed to %s"  % (self.SqueezeServerHost)
+            #print " host has changed to %s"  % (self.SqueezeServerHost)
             self.squeezeConCtrl.ServerHostSet(self.SqueezeServerHost)
             self.squeezeConCtrl.RecConnectionOnline()
             
@@ -843,7 +838,7 @@ class myapp(wx.App):
             except TypeError:
                 squeezeServerPort = 9000
         if Changed:
-            print " it has changed to %s"  % (self.SqueezeServerPort)
+            #print " it has changed to %s"  % (self.SqueezeServerPort)
             self.squeezeConCtrl.ServerPortSet(self.SqueezeServerPort)
             self.squeezeConCtrl.RecConnectionOnline()
 
