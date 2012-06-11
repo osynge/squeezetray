@@ -162,7 +162,7 @@ class squeezeConMdle:
     def OnCurrentTrack(self,value):
         print "OnCurrentTrack (%s)" % value
         for func, args, kargs in self.CbChurrentTrack:
-            func(value,availablePlayewrs,*args, **kargs)
+            func(value,*args, **kargs)
     
     
     
@@ -267,6 +267,9 @@ class SqueezeConnectionThreadPool:
         self.noPlayers = noPlayers
         #print "self.noPlayers=%s" % ( noPlayers )
         self.squeezeConMdle.connected.set(True)
+        oldValue = self.squeezeConMdle.connected.get()
+        if oldValue == noPlayers:
+            return
         self.squeezeConMdle.playersCount.set(noPlayers)
         oldValue = self.squeezeConMdle.connected.get()
         if oldValue != True:
@@ -292,8 +295,8 @@ class SqueezeConnectionThreadPool:
         playerIndex = int(responce['params'][1][2])
         self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
     def OnPlayerStatus(self,responce):
-        print "hello:",datetime.datetime.now()
-        print str(json.dumps(responce, sort_keys=True, indent=4))
+        #print "hello:",datetime.datetime.now()
+        #print str(json.dumps(responce, sort_keys=True, indent=4))
         playerName = responce["result"]["player_name"] 
         playerIndex = int(responce['id'])
         playlist_cur_index = responce["result"]["playlist_cur_index"]
@@ -318,8 +321,8 @@ class SqueezeConnectionThreadPool:
             
        
 class squeezeConCtrl:
-    def __init__(self):  
-        self.model = squeezeConMdle()
+    def __init__(self,model):  
+        self.model = model
         self.view1 = SqueezeConnectionThreadPool(self.model)
         
         self.model.connectionStr.addCallback(self.view1.OnConnectionStrChange)
@@ -327,6 +330,8 @@ class squeezeConCtrl:
         self.model.CbPlayersAvailableAdd(self._OnPlayersNameChange)
         
         self.model.connected.addCallback(self.OnConnection)
+        
+        
         self.mapping = {}
         self.CbConnection = []
         self.CbPlayersList = []
@@ -523,7 +528,8 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.Connect(-1, -1, EVT_RESULT_ID, self.OnResult)
         self.Connect(-1, -1, EVT_RESULT_CONNECTED_ID, self.OnConnected)
         self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayers)
-        self.Connect(-1, -1, EVT_RESULT_CURRENT_TRACK_ID, self.OnPlayers)
+        self.Connect(-1, -1, EVT_RESULT_CURRENT_TRACK_ID, self.OnTrack)
+        self.ToolTipText = TRAY_TOOLTIP
     def GetSqueezeServerPlayer(self):
         if not hasattr(self,'app'):
             return None
@@ -559,8 +565,17 @@ class TaskBarIcon(wx.TaskBarIcon):
         create_menu_item(toolsMENU, 'Exit', self.on_exit)
         return toolsMENU
     def set_icon(self, path):
-        icon = wx.IconFromBitmap(wx.Bitmap(path))
-        self.SetIcon(icon, TRAY_TOOLTIP)
+        self.icon = wx.IconFromBitmap(wx.Bitmap(path))
+        CurrentToolTip = TRAY_TOOLTIP
+        if hasattr(self,'ToolTipText'):
+            CurrentToolTip = self.ToolTipText
+        self.SetIcon(self.icon, CurrentToolTip)
+    def set_toolTip(self, tooltip):
+        if self.ToolTipText == tooltip:
+            return
+        if hasattr(self,'icon'):
+            self.SetIcon(self.icon, tooltip)
+        self.ToolTipText = str(tooltip)
     def on_move(self, event):
         #print 'on_move'
         pass
@@ -568,8 +583,8 @@ class TaskBarIcon(wx.TaskBarIcon):
         #print self.ScreenToClient(wx.GetMousePosition())
     def on_left_up(self, event):
         print 'on_left_up'
+        print self.GetSqueezeServerPlayer()
         player = self.GetSqueezeServerPlayer()
-        print player
         if player != None:
             self.app.squeezeConCtrl.RecPlayerStatus(player)
         else:
@@ -669,8 +684,15 @@ class TaskBarIcon(wx.TaskBarIcon):
             self.Example.UpdateCbPlayer()
             return
         
+    def OnTrack(self, event):
+        player = self.GetSqueezeServerPlayer()
+        if player != None:
+            for index in  range(len(self.app.model.playerList)):
+                playerName = self.app.model.playerList[index].name.get()
+                if playerName == player:
+                    newToolTip = self.app.model.playerList[index].CurrentTrackTitle.get()
+                    self.set_toolTip(newToolTip)
 
-        
 class Example(wx.Frame):
   
     def __init__(self, parent,  title):
@@ -788,13 +810,13 @@ class myapp(wx.App):
     def __init__(self):
         super(myapp, self).__init__()
         
-        self.model = {}
+        self.model = squeezeConMdle()
         self.SqueezeServerPort = None
         self.cfg = wx.FileConfig(appName="ApplicationName", 
                                     vendorName="VendorName", 
                                     localFilename=".squeezetray.cfg", 
                                     style=wx.CONFIG_USE_LOCAL_FILE)
-        self.squeezeConCtrl = squeezeConCtrl()
+        self.squeezeConCtrl = squeezeConCtrl(self.model)
         
         self.configRead()
         self.tb = TaskBarIcon()
@@ -802,8 +824,8 @@ class myapp(wx.App):
         self.tb.app = self
         self.tb.cfg = self.cfg
         self.squeezeConCtrl.CbConnectionAdd(self.handleConnectionChange,self.tb)
-        self.squeezeConCtrl.CbPlayersLisCbPlayersAvailableAdd(self.handlePlayersChange,self.tb)
-        
+        self.model.CbPlayersAvailableAdd(self.handlePlayersChange,self.tb)
+        self.model.CbChurrentTrackAdd(self.handleTrackChange)
         
 
     def configRead(self):
@@ -845,8 +867,8 @@ class myapp(wx.App):
         wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
         
     
-    def handlePlayersChange(self,value,window,asda,asdfg):
-        #print "value=%s,%s,%s,%s" % (value,window,asda,asdfg)
+    def handlePlayersChange(self,value,window,asda):
+        #print "value=%s,%s,%s,%s" % (value,window,asda)
         #print self.GetSqueezeServerHost()
         #print dir(self)
         if not hasattr(self,'tb'):
@@ -855,7 +877,7 @@ class myapp(wx.App):
         value = 0
         wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_PLAYERS_ID,value))
         
-    def handleTrackChange(self,value,window,asda,asdfg):
+    def handleTrackChange(self,value):
         #print "value=%s,%s,%s,%s" % (value,window,asda,asdfg)
         #print self.GetSqueezeServerHost()
         #print dir(self)
