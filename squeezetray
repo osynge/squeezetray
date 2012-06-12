@@ -43,6 +43,8 @@ EVT_RESULT_CONNECTED_ID = wx.NewId()
 EVT_RESULT_PLAYERS_ID = wx.NewId()
 EVT_RESULT_CURRENT_TRACK_ID = wx.NewId()
 
+
+
 class ResultEvent(wx.PyEvent):
     """Simple event to carry arbitrary result data."""
     def __init__(self, data):
@@ -151,7 +153,7 @@ class squeezeConMdle:
         for index in range(len(self.playerList)):
             #print index
             if self.playerList[index].discovered.get():
-                availablePlayewrs.append(str(self.playerList[index].name.get()))
+                availablePlayewrs.append(unicode(self.playerList[index].name.get()))
         for func, args, kargs in self.CbPlayersAvailable:
             func(value,availablePlayewrs,*args, **kargs)
     
@@ -160,7 +162,7 @@ class squeezeConMdle:
     def CbChurrentTrackAdd(self,func, *args, **kargs):
         self.CbChurrentTrack.append((func, args, kargs))
     def OnCurrentTrack(self,value):
-        print "OnCurrentTrack (%s)" % value
+        #print "OnCurrentTrack (%s)" % value
         for func, args, kargs in self.CbChurrentTrack:
             func(value,*args, **kargs)
     
@@ -243,13 +245,13 @@ class SqueezeConnectionThreadPool:
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
         self.tasks.join()
-    def seldMessage(self,func,message, *args, **kargs):
+    def sendMessage(self,func,message, *args, **kargs):
         params = json.dumps(message, sort_keys=True, indent=4)
         self.tasks.put((func,params, args, kargs))
         
     def RecConnectionOnline(self):
         
-        self.seldMessage(self.OnPlayerCount,{ 
+        self.sendMessage(self.OnPlayerCount,{ 
             "method":"slim.request",
             "params": [ '-', [ 'player', 'count', '?' ] ]
         })
@@ -279,12 +281,12 @@ class SqueezeConnectionThreadPool:
                 "method":"slim.request",
                 "params": [ '-', [ 'player', 'id', index ,"?"] ]
             }
-            self.seldMessage(self.OnPlayerIndex,msg)
+            self.sendMessage(self.OnPlayerIndex,msg)
             msg = { 
                 "method":"slim.request",
                 "params": [ '-', [ 'player', 'name', index ,"?"] ]
             }
-            self.seldMessage(self.OnPlayerName,msg)
+            self.sendMessage(self.OnPlayerName,msg)
 
     def OnPlayerIndex(self,responce):
         playerId = responce["result"]["_id"]
@@ -295,9 +297,9 @@ class SqueezeConnectionThreadPool:
         playerIndex = int(responce['params'][1][2])
         self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
     def OnPlayerStatus(self,responce):
-        #print "hello:",datetime.datetime.now()
-        #print str(json.dumps(responce, sort_keys=True, indent=4))
-        playerName = responce["result"]["player_name"] 
+        #print "OnPlayerStatus:",datetime.datetime.now()
+        print unicode(json.dumps(responce, sort_keys=True, indent=4))
+        playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
         playlist_cur_index = responce["result"]["playlist_cur_index"]
         playlist_loop = responce["result"]["playlist_loop"]
@@ -307,17 +309,23 @@ class SqueezeConnectionThreadPool:
             "pause" : "paused",
             "off" : "Off"
         }
-        if lsbsMode in mappings:
-            self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
+        OldplayerName = self.squeezeConMdle.playerList[playerIndex].name.get()
+        if OldplayerName != playerName:
+            self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
         
+        
+        if lsbsMode in mappings:
+            
+            self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
+            
         CurrentTrackTitle = None
         for item in playlist_loop:
             if item["playlist index"] == playlist_cur_index:
-                CurrentTrackTitle = str(item["title"])
+                CurrentTrackTitle = unicode(item["title"])
                 OldCurrentTrackTitle = self.squeezeConMdle.playerList[playerIndex].CurrentTrackTitle.get()
                 if CurrentTrackTitle  != OldCurrentTrackTitle:
                     self.squeezeConMdle.playerList[playerIndex].CurrentTrackTitle.set(CurrentTrackTitle)
-            
+                    
             
        
 class squeezeConCtrl:
@@ -338,7 +346,7 @@ class squeezeConCtrl:
     def  RecConnectionOnline(self):
         
         #self.view1.RecConnectionOnline()
-        self.view1.seldMessage(self.view1.OnPlayerCount,{ 
+        self.view1.sendMessage(self.view1.OnPlayerCount,{ 
             "method":"slim.request",
             "params": [ '-', [ 'player', 'count', '?' ] ]
         })
@@ -416,7 +424,7 @@ class squeezeConCtrl:
         #print "self.mapping,player"
         playerIndex = self.mapping[player]
         playerId = self.model.playerList[playerIndex].identifier.get()
-        reponce = self.view1.seldMessage(self.view1.OnPlayerStatus,{ 
+        reponce = self.view1.sendMessage(self.view1.OnPlayerStatus,{ 
             "id":playerIndex,
             "method":"slim.request",
             "params":[ playerId, 
@@ -425,7 +433,7 @@ class squeezeConCtrl:
         })
         
         
-        #Eself.view1.seldMessage(self.view1.OnPlayerCount,{ 
+        #Eself.view1.sendMessage(self.view1.OnPlayerCount,{ 
         #    "method":"slim.request",
         #    "params": [ '-', [ 'player', 'count', '?' ] ]
         #})
@@ -438,7 +446,7 @@ class squeezeConCtrl:
             return None
         playerIndex = self.mapping[player]
         playerId = self.model.playerList[playerIndex].identifier.get()
-        reponce = self.view1.seldMessage(None,{ 
+        reponce = self.view1.sendMessage(None,{ 
             "id":playerIndex,
             "method":"slim.request",
             "params":[ playerId, 
@@ -452,7 +460,7 @@ class squeezeConCtrl:
             return None
         playerIndex = self.mapping[player]
         playerId = self.model.playerList[playerIndex].identifier.get()
-        reponce = self.view1.seldMessage(None,({ 
+        reponce = self.view1.sendMessage(None,({ 
             "id" : playerIndex,
             "method":"slim.request",
             "params":[ playerId, 
@@ -469,11 +477,11 @@ class squeezeConCtrl:
             prefix = "+"
         playerIndex = self.mapping[player]
         playerId = self.model.playerList[playerIndex].identifier.get()
-        reponce = self.view1.seldMessage(None,({ 
+        reponce = self.view1.sendMessage(None,({ 
             "id":playerIndex,
             "method":"slim.request",
             "params":[ playerId, 
-                    ["playlist","index",prefix + str(Count)]
+                    ["playlist","index",prefix + unicode(Count)]
                 ]
         }))
 
@@ -485,7 +493,7 @@ class squeezeConCtrl:
             return None
         playerIndex = self.mapping[player]
         playerId = self.model.playerList[playerIndex].identifier.get()
-        reponce = self.view1.seldMessage(None,({ 
+        reponce = self.view1.sendMessage(None,({ 
             "id":playerIndex,
             "method":"slim.request",
             "params":[ playerId, 
@@ -494,21 +502,21 @@ class squeezeConCtrl:
             }))
     
     def PlayerStatus(self,player):
+        
         if not self.model.connected.get():
             return None
         if not player in self.mapping:
             return None
         playerIndex = self.mapping[player]
         playerId = self.model.playerList[playerIndex].identifier.get()
-        reponce = self.view1.seldMessage(None,({ 
+        reponce = self.view1.sendMessage(self.view1.OnPlayerStatus,({ 
             "id":playerIndex,
             "method":"slim.request",
             "params":[ playerId, 
                     ["status",'-','2','tags']
                 ]
             }))
-        
-
+        #print "PlayerStatus:",datetime.datetime.now()
 
 class TaskBarIcon(wx.TaskBarIcon):
     def __init__(self):
@@ -530,6 +538,15 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayers)
         self.Connect(-1, -1, EVT_RESULT_CURRENT_TRACK_ID, self.OnTrack)
         self.ToolTipText = TRAY_TOOLTIP
+        
+        
+        TIMER_ID = wx.NewId()  # pick a number
+        self.timer = wx.Timer(self, TIMER_ID)  # message will be sent to the panel
+        self.timer.Start(9000)  # x100 milliseconds
+        wx.EVT_TIMER(self, TIMER_ID, self.on_timer)  # call the on_timer function
+        
+        
+        
     def GetSqueezeServerPlayer(self):
         if not hasattr(self,'app'):
             return None
@@ -542,9 +559,17 @@ class TaskBarIcon(wx.TaskBarIcon):
         
         #pos = self.panel.ScreenToClient(pos)
 
-    
+    def on_timer(self,event):
+        #print "on_timer"
+        player = self.app.GetSqueezeServerPlayer()
+        if player != None:
+            self.app.squeezeConCtrl.PlayerStatus(player)
+            return
+        self.app.squeezeConCtrl.RecConnectionOnline()
+
     def CreatePopupMenu(self):
         toolsMENU = wx.Menu()
+        
         create_menu_item(toolsMENU, 'Play', self.onScPlay)
         create_menu_item(toolsMENU, 'Pause', self.onScPause)
         create_menu_item(toolsMENU, 'Next', self.onScNext)
@@ -575,7 +600,7 @@ class TaskBarIcon(wx.TaskBarIcon):
             return
         if hasattr(self,'icon'):
             self.SetIcon(self.icon, tooltip)
-        self.ToolTipText = str(tooltip)
+        self.ToolTipText = unicode(tooltip)
     def on_move(self, event):
         #print 'on_move'
         pass
@@ -737,7 +762,7 @@ class Example(wx.Frame):
         
         self.sizer.Add(label3, (2, 0), wx.DefaultSpan, wx.EXPAND)
         
-        self.scPort = wx.SpinCtrl(self, -1, str(9000),  min=1, max=99999)
+        self.scPort = wx.SpinCtrl(self, -1, unicode(9000),  min=1, max=99999)
         self.sizer.Add(self.scPort, (1, 1),wx.DefaultSpan, wx.EXPAND)
         #self.statusbar = self.CreateStatusBar()
         #self.sizer.Add(self.statusbar, (9, 0),(2,9), wx.EXPAND)
@@ -798,7 +823,7 @@ class Example(wx.Frame):
 
     def OnApply(self, event):
         self.app.SetSqueezeServerHost(self.tcHost.GetValue())
-        self.app.SetSqueezeServerPort(int(self.scPort.GetValue()))
+        self.app.SqueezeServerPort.set((int(self.scPort.GetValue())))
         self.app.SetSqueezeServerPlayer(self.cbPlayer.GetValue())
         self.UpdateCbPlayer()
     def OnCancel(self, event):
@@ -811,7 +836,8 @@ class myapp(wx.App):
         super(myapp, self).__init__()
         
         self.model = squeezeConMdle()
-        self.SqueezeServerPort = None
+        self.SqueezeServerPort = Observable(9000)
+        self.SqueezeServerPort.addCallback(self.OnSqueezeServerPort)
         self.cfg = wx.FileConfig(appName="ApplicationName", 
                                     vendorName="VendorName", 
                                     localFilename=".squeezetray.cfg", 
@@ -840,8 +866,8 @@ class myapp(wx.App):
                 squeezeServerPortTmp = int(self.cfg.ReadInt('squeezeServerPort'))
             except ValueError:
                 squeezeServerPort = 9000
-        self.SetSqueezeServerPort(squeezeServerPort)
-        self.squeezeConCtrl.ConectionStringSet("%s:%s" % (self.GetSqueezeServerHost(),self.GetSqueezeServerPort()))
+        self.SqueezeServerPort.set(squeezeServerPort)
+        self.squeezeConCtrl.ConectionStringSet("%s:%s" % (self.GetSqueezeServerHost(),self.SqueezeServerPort.get()))
         
         SqueezeServerPlayer = None
         if self.cfg.Exists('SqueezeServerPlayer'):
@@ -849,6 +875,7 @@ class myapp(wx.App):
             
         self.SetSqueezeServerPlayer(SqueezeServerPlayer)
         self.squeezeConCtrl.RecConnectionOnline()
+        
     def configSave(self):
         self.cfg.Write("squeezeServerHost", self.GetSqueezeServerHost())
         self.cfg.WriteInt("squeezeServerPort", self.GetSqueezeServerPort())
@@ -887,19 +914,18 @@ class myapp(wx.App):
         value = 0
         wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CURRENT_TRACK_ID,value))    
 
+
     def SetSqueezeServerHost(self,host):
         Changed = False
         if not hasattr(self,'SqueezeServerHost'):
             Changed = True
             self.SqueezeServerHost = 'localhost'
-        
         if self.SqueezeServerHost != host:
             Changed = True
         try:
-            self.SqueezeServerHost = str(host)
+            self.SqueezeServerHost = unicode(host)
         except TypeError:
             self.SqueezeServerHost = 'localhost'
-        
         if Changed:
             #print " host has changed to %s"  % (self.SqueezeServerHost)
             self.squeezeConCtrl.ServerHostSet(self.SqueezeServerHost)
@@ -911,35 +937,24 @@ class myapp(wx.App):
             return self.SqueezeServerHost
         return 'localhost'
         
-        
-    def SetSqueezeServerPort(self,port):
-        Changed = False
-        if not hasattr(self,'SqueezeServerPort'):
-            Changed = True
-            self.SqueezeServerPort = 9000
-        if self.SqueezeServerPort != port:
-            Changed = True
-            try:
-                self.SqueezeServerPort = int(port)
-            except TypeError:
-                squeezeServerPort = 9000
-        if Changed:
-            #print " it has changed to %s"  % (self.SqueezeServerPort)
-            self.squeezeConCtrl.ServerPortSet(self.SqueezeServerPort)
-            self.squeezeConCtrl.RecConnectionOnline()
+    def OnSqueezeServerPort(self,value):
+        self.squeezeConCtrl.ServerPortSet(self.SqueezeServerPort)
+        self.squeezeConCtrl.RecConnectionOnline()
 
     def GetSqueezeServerPort(self):
         if hasattr(self,'SqueezeServerHost'):
-            return self.SqueezeServerPort
+            return self.SqueezeServerPort.get()
         return 9000
     def SetSqueezeServerPlayer(self,player):
         self.SqueezeServerPlayer = player
-        
+        #print "player=%s" % player
         self.squeezeConCtrl.RecPlayerStatus(player)
         
     def GetSqueezeServerPlayer(self):        
         if hasattr(self,'SqueezeServerPlayer'):
             return self.SqueezeServerPlayer
+        if self.model.playersCount.get() > 0:
+            return unicode(self.model.playerList[0].name.get())
         return None
     
         
