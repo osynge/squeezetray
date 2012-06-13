@@ -1,7 +1,13 @@
 import wx
 from sqtray.models import Observable, squeezeConMdle, squeezePlayerMdl
 from sqtray.JrpcServer import squeezeConCtrl
-from sqtray.wxEvents import *
+
+
+from wxEvents import EVT_RESULT_CONNECTED_ID
+from wxEvents import EVT_RESULT_PLAYERS_ID
+from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
+from sqtray.wxEvents import ResultEvent2
+
 
 from sqtray.wxTaskBarIcon import TaskBarIcon
 from sqtray.wxFrmSettings import Example
