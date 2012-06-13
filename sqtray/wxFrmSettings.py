@@ -71,7 +71,7 @@ class FrmSettings(wx.Frame):
         
         self.Centre()
         #self.SetSize(wx.Size(w, h))
-        super(Example, self).Show()
+        super(FrmSettings, self).Show()
     def OnConnected(self,event):
         
         if True == self.app.squeezeConCtrl.ConnectionOnline():

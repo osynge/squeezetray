@@ -10,8 +10,35 @@ from sqtray.wxEvents import ResultEvent2
 
 
 from sqtray.wxTaskBarIcon import TaskBarIcon
-from sqtray.wxFrmSettings import FrmSettings as Example
+from sqtray.wxFrmSettings import FrmSettings
 
+
+class FrmCtrl:
+    def  __init__(self,model):
+        self.model = model
+        self.tb = TaskBarIcon(model)
+        self.tb.FrmCtrl = self
+        self.tb.Bind(wx.EVT_CLOSE, self.Exit)
+        self.Example = None
+    def setApp(self,app):
+        self.app = app
+        self.tb.app = app
+    def setCfg(self,cfg):
+        self.cfg = cfg
+    def showSettings(self):
+        if (self.Example == None):
+            self.Example = FrmSettings(None, title='Settings')
+            self.Example.Bind(wx.EVT_CLOSE, self.closeSettings)
+            self.Example.cfg = self.cfg
+            self.Example.app = self.app
+            self.Example.Show()
+    def closeSettings(self,wxExvent):
+        if (self.Example != None):
+            self.Example.Destroy()
+            self.Example = None    
+    def Exit(self):
+        self.closeSettings(None)
+        self.tb.Destroy()
 
 class myapp(wx.App):
     def __init__(self):
@@ -27,9 +54,12 @@ class myapp(wx.App):
         self.squeezeConCtrl = squeezeConCtrl(self.model)
         
         self.configRead()
-        self.tb = TaskBarIcon()
+        self.frmCtrl = FrmCtrl(self.model )
+        self.frmCtrl.setApp(self)
+        self.frmCtrl.setCfg(self.cfg)
+        self.tb = self.frmCtrl.tb
+        
         #print "tb=%s" %self.tb
-        self.tb.app = self
         self.tb.cfg = self.cfg
         self.squeezeConCtrl.CbConnectionAdd(self.handleConnectionChange,self.tb)
         self.model.CbPlayersAvailableAdd(self.handlePlayersChange,self.tb)

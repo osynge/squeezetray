@@ -21,8 +21,9 @@ def create_menu_item(menu, label, func):
 
 
 class TaskBarIcon(wx.TaskBarIcon):
-    def __init__(self):
+    def __init__(self,model):
         super(TaskBarIcon, self).__init__()
+        self.model = model
         self.set_icon(TRAY_ICON)
         
         self.Bind(wx.EVT_TASKBAR_MOVE, self.on_move)
@@ -62,7 +63,7 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def on_timer(self,event):
         #print "on_timer"
-        if not self.app.model.connected.get():
+        if not self.model.connected.get():
             print "not on line"
             self.app.RecConnectionOnline()
             return
@@ -143,8 +144,9 @@ class TaskBarIcon(wx.TaskBarIcon):
     def on_hello(self, event):
         print 'Hello, world!'
     def on_exit(self, event):
-        self.on_settings_close(event)
-        wx.CallAfter(self.Destroy)
+        #self.on_settings_close(event)
+        #wx.CallAfter(self.Destroy)
+        self.app.Exit()
     def onScPlay(self, event):
         player = self.GetSqueezeServerPlayer()
         if player != None:
@@ -183,16 +185,7 @@ class TaskBarIcon(wx.TaskBarIcon):
 
 
     def on_settings(self, event):
-        if (self.Example == None):
-            self.Example = FrmSettings(None, title='Settings')
-            self.Example.Bind(wx.EVT_CLOSE, self.on_settings_close)
-            self.Example.cfg = self.cfg
-            self.Example.app = self.app
-            self.Example.Show()
-    def on_settings_close(self, event):
-        if (self.Example != None):
-            self.Example.Destroy()
-            self.Example = None
+        self.FrmCtrl.showSettings()
 
     def OnConnected(self, event):
         #print "OnConnected(=%s)" % (Event)
@@ -210,8 +203,8 @@ class TaskBarIcon(wx.TaskBarIcon):
     def OnTrack(self, event):
         player = self.GetSqueezeServerPlayer()
         if player != None:
-            for index in  range(len(self.app.model.playerList)):
-                playerName = self.app.model.playerList[index].name.get()
+            for index in  range(len(self.model.playerList)):
+                playerName = self.model.playerList[index].name.get()
                 if playerName == player:
-                    newToolTip = self.app.model.playerList[index].CurrentTrackTitle.get()
+                    newToolTip = self.model.playerList[index].CurrentTrackTitle.get()
                     self.set_toolTip(newToolTip)
