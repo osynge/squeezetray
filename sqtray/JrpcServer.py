@@ -6,9 +6,6 @@ from threading import *
 from Queue import Queue
 from threading import Thread
 
-from wxEvents import ResultEvent2
-
-
 if float(sys.version[:3]) >= 2.6:
     import json
 else:
