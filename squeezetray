@@ -301,10 +301,10 @@ class SqueezeConnectionThreadPool:
         print unicode(json.dumps(responce, sort_keys=True, indent=4))
         playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
-        playlist_cur_index = responce["result"]["playlist_cur_index"]
+        playlist_cur_index = int(responce["result"]["playlist_cur_index"])
         playlist_loop = responce["result"]["playlist_loop"]
         
-        lsbsMode = responce["result"]["mode"]
+        lsbsMode = unicode(responce["result"]["mode"])
         mappings = {"play" : "playing",
             "pause" : "paused",
             "off" : "Off"
@@ -315,12 +315,12 @@ class SqueezeConnectionThreadPool:
         
         
         if lsbsMode in mappings:
-            
             self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
-            
+        
         CurrentTrackTitle = None
         for item in playlist_loop:
-            if item["playlist index"] == playlist_cur_index:
+            playlistIndex = int(item["playlist index"])
+            if playlistIndex == playlist_cur_index:
                 CurrentTrackTitle = unicode(item["title"])
                 OldCurrentTrackTitle = self.squeezeConMdle.playerList[playerIndex].CurrentTrackTitle.get()
                 if CurrentTrackTitle  != OldCurrentTrackTitle:
@@ -332,19 +332,14 @@ class squeezeConCtrl:
     def __init__(self,model):  
         self.model = model
         self.view1 = SqueezeConnectionThreadPool(self.model)
-        
         self.model.connectionStr.addCallback(self.view1.OnConnectionStrChange)
-        
         self.model.CbPlayersAvailableAdd(self._OnPlayersNameChange)
-        
         self.model.connected.addCallback(self.OnConnection)
-        
-        
         self.mapping = {}
         self.CbConnection = []
         self.CbPlayersList = []
+
     def  RecConnectionOnline(self):
-        
         #self.view1.RecConnectionOnline()
         self.view1.sendMessage(self.view1.OnPlayerCount,{ 
             "method":"slim.request",
@@ -367,17 +362,17 @@ class squeezeConCtrl:
         if oldPort != port:
             self.model.port.set(port)
             self.RecConnectionOnline()
+
     def _OnPlayersNameChange(self,value,dfd):
         #print (self,value,dfd)
-        
         playersCount = self.model.playersCount.get()
         for index in range(playersCount):
             #print index
             name = self.model.playerList[index].name.get()
             if None != name:
-                self.mapping[ name] =index 
+                self.mapping[ name] =index
+
     def PlayersList(self):
-        
         self.mapping = {}
         playerList = []
         playersCount = self.model.playersCount.get()
@@ -387,16 +382,14 @@ class squeezeConCtrl:
                 playerList.append(player)
                 self.mapping[player] = index
         return playerList
-        
+
     def CbPlayersListAdd(self, func, *args, **kargs):
         """Add a task to the queue"""
         self.CbPlayersList.append((func, args, kargs))
-        
-        
-        
+
     def CbPlayersLisCbPlayersAvailableAdd(self, func, *args, **kargs):    
         self.model.CbPlayersAvailableAdd(func, args, kargs)
-        
+
     def CbConnectionAdd(self, func, *args, **kargs):
         """Add a task to the queue"""
         self.CbConnection.append((func, args, kargs))
@@ -405,23 +398,22 @@ class squeezeConCtrl:
         self.mapping = {}
         for func, args, kargs in self.CbConnection:
             func(value,*args, **kargs)
-        
-            
+
     def OnPlayersList(self,value):
         #print "OnConnection(value)=%s" % value
         for func, args, kargs in self.CbConnection:
             func(value,*args, **kargs)
-    
+
     def ConnectionOnline(self):
         return self.model.connected.get()
         
     def RecPlayerStatus(self,player):
-        #print "self.mapping,player"
+        print "self.mapping,player1"
         if not self.model.connected.get():
             return None
         if not player in self.mapping:
             return None
-        #print "self.mapping,player"
+        print "self.mapping,player2"
         playerIndex = self.mapping[player]
         playerId = self.model.playerList[playerIndex].identifier.get()
         reponce = self.view1.sendMessage(self.view1.OnPlayerStatus,{ 
@@ -561,6 +553,10 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def on_timer(self,event):
         #print "on_timer"
+        if not self.app.model.connected.get():
+            print "not on line"
+            self.app.RecConnectionOnline()
+            return
         player = self.app.GetSqueezeServerPlayer()
         if player != None:
             self.app.squeezeConCtrl.PlayerStatus(player)
