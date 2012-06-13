@@ -3,7 +3,7 @@ import wx
 from wxEvents import EVT_RESULT_CONNECTED_ID
 from wxEvents import EVT_RESULT_PLAYERS_ID
 from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
-from sqtray.wxFrmSettings import Example as FrmSettings
+from sqtray.wxFrmSettings import FrmSettings
 
 TRAY_TOOLTIP = 'SqueezeTray'
 TRAY_ICON = 'icon.png'

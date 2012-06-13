@@ -3,7 +3,7 @@
 import wx
 
 
-class Example(wx.Frame):
+class FrmSettings(wx.Frame):
   
     def __init__(self, parent,  title):
         

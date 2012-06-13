@@ -10,7 +10,7 @@ from sqtray.wxEvents import ResultEvent2
 
 
 from sqtray.wxTaskBarIcon import TaskBarIcon
-from sqtray.wxFrmSettings import Example
+from sqtray.wxFrmSettings import FrmSettings as Example
 
 
 class myapp(wx.App):
