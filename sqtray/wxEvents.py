@@ -1,7 +1,6 @@
 
 import wx
 # Define notification event for thread completion
-EVT_RESULT_ID = wx.NewId()
 EVT_RESULT_CONNECTED_ID = wx.NewId()
 EVT_RESULT_PLAYERS_ID = wx.NewId()
 EVT_RESULT_CURRENT_TRACK_ID = wx.NewId()
