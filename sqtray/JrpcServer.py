@@ -167,10 +167,16 @@ class squeezeConCtrl:
         self.model.connectionStr.addCallback(self.view1.OnConnectionStrChange)
         self.model.CbPlayersAvailableAdd(self._OnPlayersNameChange)
         self.model.connected.addCallback(self.OnConnection)
+        self.model.playersCount.addCallback(self.OnPlayersCount)
         self.mapping = {}
         self.CbConnection = []
         self.CbPlayersList = []
-
+    def OnPlayersCount(self,value):
+        for i in range(len(self.model.playerList)):
+            identifier = self.model.playerList[i].identifier.get()
+            name = self.model.playerList[i].name.get()
+            if identifier == None:
+                print "would make a name request"
     def  RecConnectionOnline(self):
         #self.view1.RecConnectionOnline()
         self.view1.sendMessage(self.view1.OnPlayerCount,{ 
