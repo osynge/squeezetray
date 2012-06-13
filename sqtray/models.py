@@ -54,8 +54,8 @@ class squeezeConMdle:
         self.port = Observable("9000")
         self.connectionStr = Observable("localhost:9000")
         self.connected = Observable(False)
+        # Number of players on the server that can be used
         self.playersCount = Observable(0)
-        
         self.playerList = []
         self.connected.addCallback(self.OnConnectedChange)
         self.playersCount.addCallback(self.OnPlayersCountChange)
@@ -75,7 +75,6 @@ class squeezeConMdle:
             self.playersCount.set(0)
             
     def OnConnectedChange(self,value):
-        #print "value=%s" % value
         if not self.connected.get():
             self.playersCount.set(0)
     def OnPlayersCountChange(self,value):

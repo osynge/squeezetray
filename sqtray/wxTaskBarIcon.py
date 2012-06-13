@@ -3,9 +3,9 @@ import wx
 from wxEvents import EVT_RESULT_CONNECTED_ID
 from wxEvents import EVT_RESULT_PLAYERS_ID
 from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
-from sqtray.wxFrmSettings import Example
+from sqtray.wxFrmSettings import Example as FrmSettings
 
-TRAY_TOOLTIP = 'System Tray Demo'
+TRAY_TOOLTIP = 'SqueezeTray'
 TRAY_ICON = 'icon.png'
 
 
@@ -184,7 +184,7 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def on_settings(self, event):
         if (self.Example == None):
-            self.Example = Example(None, title='Settings')
+            self.Example = FrmSettings(None, title='Settings')
             self.Example.Bind(wx.EVT_CLOSE, self.on_settings_close)
             self.Example.cfg = self.cfg
             self.Example.app = self.app

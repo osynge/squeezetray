@@ -87,13 +87,7 @@ class SqueezeConnectionThreadPool:
     def sendMessage(self,func,message, *args, **kargs):
         params = json.dumps(message, sort_keys=True, indent=4)
         self.tasks.put((func,params, args, kargs))
-        
-    def RecConnectionOnline(self):
-        
-        self.sendMessage(self.OnPlayerCount,{ 
-            "method":"slim.request",
-            "params": [ '-', [ 'player', 'count', '?' ] ]
-        })
+  
         
     def OnConnectionStrChange(self,value):
         oldvalue = self.squeezeConMdle.connectionStr.get()
@@ -151,11 +145,8 @@ class SqueezeConnectionThreadPool:
         OldplayerName = self.squeezeConMdle.playerList[playerIndex].name.get()
         if OldplayerName != playerName:
             self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
-        
-        
         if lsbsMode in mappings:
             self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
-        
         CurrentTrackTitle = None
         for item in playlist_loop:
             playlistIndex = int(item["playlist index"])
@@ -169,6 +160,8 @@ class SqueezeConnectionThreadPool:
        
 class squeezeConCtrl:
     def __init__(self,model):  
+        """Controler class for takes a model as a constructor (class squeezeConMdle)"""
+
         self.model = model
         self.view1 = SqueezeConnectionThreadPool(self.model)
         self.model.connectionStr.addCallback(self.view1.OnConnectionStrChange)
