@@ -120,7 +120,7 @@ class myapp(wx.App):
         return 'localhost'
         
     def OnSqueezeServerPort(self,value):
-        self.squeezeConCtrl.ServerPortSet(self.SqueezeServerPort)
+        self.squeezeConCtrl.ServerPortSet(self.SqueezeServerPort.get())
         self.squeezeConCtrl.RecConnectionOnline()
 
     def GetSqueezeServerPort(self):
