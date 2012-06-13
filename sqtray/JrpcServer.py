@@ -137,7 +137,7 @@ class SqueezeConnectionThreadPool:
         self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
     def OnPlayerStatus(self,responce):
         #print "OnPlayerStatus:",datetime.datetime.now()
-        print unicode(json.dumps(responce, sort_keys=True, indent=4))
+        #print unicode(json.dumps(responce, sort_keys=True, indent=4))
         playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
         playlist_cur_index = int(responce["result"]["playlist_cur_index"])
