@@ -47,12 +47,32 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.timer.Start(9000)  # x100 milliseconds
         wx.EVT_TIMER(self, TIMER_ID, self.on_timer)  # call the on_timer function
         
-        
+    def Show(self):
+        self.app.squeezeConCtrl.RecConnectionOnline()
+        super(TaskBarIcon, self).Show()        
         
     def GetSqueezeServerPlayer(self):
-        if not hasattr(self,'app'):
+        if not hasattr(self,'model'):
             return None
-        return self.app.GetSqueezeServerPlayer()
+        return self.model.GuiPlayer.get()
+
+    def OnPlayers(self, event):
+        #print "OnPlayers(=%s)" % (Event)
+        if (self.Example != None):
+            self.Example.UpdateCbPlayer()
+            return
+        
+    def OnTrack(self, event):
+        player = self.GetSqueezeServerPlayer()
+        if player != None:
+            for index in  range(len(self.model.playerList)):
+                playerName = self.model.playerList[index].name.get()
+                if playerName == player:
+                    newToolTip = self.model.playerList[index].CurrentTrackTitle.get()
+                    self.set_toolTip(newToolTip)
+
+
+
     def OnShowPopup(self, event):
         pos = wx.GetMousePosition()
         #pos = event.GetPosition()
@@ -63,11 +83,16 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def on_timer(self,event):
         #print "on_timer"
-        if not self.model.connected.get():
+        ConnectionStatus = self.model.connected.get()
+        #print "on_timer.ConnectionStatus",ConnectionStatus
+        if not ConnectionStatus:
+            #print "not on line"
             self.app.squeezeConCtrl.RecConnectionOnline()
             return
-        player = self.app.GetSqueezeServerPlayer()
+        player = self.model.GuiPlayer.get()
+        #print "on_timer.player",player
         if player != None:
+            
             self.app.squeezeConCtrl.PlayerStatus(player)
             return
         self.app.squeezeConCtrl.RecConnectionOnline()
@@ -154,6 +179,7 @@ class TaskBarIcon(wx.TaskBarIcon):
     
     def onScPause(self, event):
         player = self.GetSqueezeServerPlayer()
+        #print "player",player
         if player != None:
             self.app.squeezeConCtrl.Pause(player)
         else:
@@ -192,17 +218,3 @@ class TaskBarIcon(wx.TaskBarIcon):
             self.Example.OnConnected(event)
         return
         
-    def OnPlayers(self, event):
-        #print "OnPlayers(=%s)" % (Event)
-        if (self.Example != None):
-            self.Example.UpdateCbPlayer()
-            return
-        
-    def OnTrack(self, event):
-        player = self.GetSqueezeServerPlayer()
-        if player != None:
-            for index in  range(len(self.model.playerList)):
-                playerName = self.model.playerList[index].name.get()
-                if playerName == player:
-                    newToolTip = self.model.playerList[index].CurrentTrackTitle.get()
-                    self.set_toolTip(newToolTip)
