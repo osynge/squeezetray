@@ -51,7 +51,7 @@ class FrmCtrl:
     def handleConnectionChange(self,value, window):
         wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
         if (self.Example != None):
-            wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_PLAYERS_ID,value))
+            wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
     
     def handlePlayersChange(self,value,window = None,asda= None):
         wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_PLAYERS_ID,value))
@@ -151,7 +151,8 @@ class myapp(wx.App):
         self.cfg.Flush()
         
     def OnPlayerAvailable(self,AvailablePlayers,extra):
-        print "AvailablePlayers",AvailablePlayers,extra
+        #print "AvailablePlayers",AvailablePlayers,extra
+        pass
     def SetSqueezeServerHost(self,host):
         OldHost = self.model.host.get()
         if OldHost != host:
