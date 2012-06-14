@@ -36,7 +36,6 @@ class TaskBarIcon(wx.TaskBarIcon):
         #self.Bind(wx.EVT_TASKBAR_CLICK, self.on_click )
         #self.squeezecmd = sc
         self.Example = None
-        self.Connect(-1, -1, EVT_RESULT_CONNECTED_ID, self.OnConnected)
         self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayers)
         self.Connect(-1, -1, EVT_RESULT_CURRENT_TRACK_ID, self.OnTrack)
         self.ToolTipText = TRAY_TOOLTIP
@@ -210,11 +209,4 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def on_settings(self, event):
         self.FrmCtrl.showSettings()
-
-    def OnConnected(self, event):
-        #print "OnConnected(=%s)" % (Event)
-        if (self.Example == None):
-            return
-            self.Example.OnConnected(event)
-        return
         
