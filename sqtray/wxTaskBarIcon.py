@@ -64,7 +64,6 @@ class TaskBarIcon(wx.TaskBarIcon):
     def on_timer(self,event):
         #print "on_timer"
         if not self.model.connected.get():
-            print "not on line"
             self.app.squeezeConCtrl.RecConnectionOnline()
             return
         player = self.app.GetSqueezeServerPlayer()
@@ -113,8 +112,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         
         #print self.ScreenToClient(wx.GetMousePosition())
     def on_left_up(self, event):
-        print 'on_left_up'
-        print self.GetSqueezeServerPlayer()
+        print 'on_left_up' , self.GetSqueezeServerPlayer()
         player = self.GetSqueezeServerPlayer()
         if player != None:
             self.app.squeezeConCtrl.RecPlayerStatus(player)

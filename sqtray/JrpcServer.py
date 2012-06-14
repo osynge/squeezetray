@@ -289,10 +289,11 @@ class squeezeConCtrl:
         #})
         #self.view1.RecPlayerStatus()        
     def Pause(self,player):
-        
         if not self.model.connected.get():
+            print "connectionStr=",self.model.connectionStr.get()
             return None
         if not player in self.mapping:
+            print "self.mapping" , self.mapping
             return None
         playerIndex = self.mapping[player]
         playerId = self.model.playerList[playerIndex].identifier.get()

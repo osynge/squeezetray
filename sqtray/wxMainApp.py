@@ -29,8 +29,10 @@ class FrmCtrl:
         if (self.Example == None):
             self.Example = FrmSettings(None, title='Settings')
             self.Example.Bind(wx.EVT_CLOSE, self.closeSettings)
+            self.Example.FrmCtrl = self
             self.Example.cfg = self.cfg
             self.Example.app = self.app
+            self.Example.ModelSet(self.model)
             self.Example.Show()
     def closeSettings(self,wxExvent):
         if (self.Example != None):
@@ -68,7 +70,7 @@ class myapp(wx.App):
                                     style=wx.CONFIG_USE_LOCAL_FILE)
         self.squeezeConCtrl = squeezeConCtrl(self.model)
         
-        self.configRead()
+        
         self.frmCtrl = FrmCtrl(self.model )
         self.frmCtrl.setApp(self)
         self.frmCtrl.setCfg(self.cfg)
@@ -79,13 +81,17 @@ class myapp(wx.App):
         self.squeezeConCtrl.CbConnectionAdd(self.frmCtrl.handleConnectionChange,None)
         self.model.CbPlayersAvailableAdd(self.frmCtrl.handlePlayersChange,None)
         self.model.CbChurrentTrackAdd(self.frmCtrl.handleTrackChange,None)
-        
+        self.configRead()
 
     def configRead(self):
         squeezeServerHost = 'localhost'
         if self.cfg.Exists('squeezeServerHost'):
             squeezeServerHost = self.cfg.Read('squeezeServerHost')
-            
+        OldSqueezeServerHost = self.model.host.get()
+        
+        if squeezeServerHost != OldSqueezeServerHost:
+           
+            self.model.host.set(squeezeServerHost)
         self.SetSqueezeServerHost(squeezeServerHost)
         squeezeServerPort = 9000
         if self.cfg.Exists('squeezeServerPort'):
@@ -96,6 +102,9 @@ class myapp(wx.App):
         OldSqueezeServerPort = self.SqueezeServerPort.get()
         if squeezeServerPort != OldSqueezeServerPort:
             self.SqueezeServerPort.set(squeezeServerPort)
+        OldSqueezeServerPort = self.model.port.get()
+        if squeezeServerPort != OldSqueezeServerPort:
+            self.model.port.set(squeezeServerPort)
         
         
         SqueezeServerPlayer = None
@@ -113,25 +122,10 @@ class myapp(wx.App):
         
 
     def SetSqueezeServerHost(self,host):
-        #print "newhost" , host
         OldHost = self.model.host.get()
         if OldHost != host:
             self.model.host.set(host)
             #print "set" ,self.model.host.get()
-            
-        Changed = False
-        if not hasattr(self,'SqueezeServerHost'):
-            Changed = True
-            self.SqueezeServerHost = 'localhost'
-        if self.SqueezeServerHost != host:
-            Changed = True
-        try:
-            self.SqueezeServerHost = unicode(host)
-        except TypeError:
-            self.SqueezeServerHost = 'localhost'
-        if Changed:
-            #print " host has changed to %s"  % (self.SqueezeServerHost)
-            self.squeezeConCtrl.ServerHostSet(self.SqueezeServerHost)
             self.squeezeConCtrl.RecConnectionOnline()
             
         

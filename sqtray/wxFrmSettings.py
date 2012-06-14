@@ -66,12 +66,17 @@ class FrmSettings(wx.Frame):
         self.sizer.AddGrowableCol(2)
         
         self.SetSizerAndFit(self.sizer)
+    def ModelSet(self,model):
+        self.model = model
     
     def Show(self):
         self.UpdateCbPlayer()
         
-        self.tcHost.SetValue(self.app.GetSqueezeServerHost())
-        self.scPort.SetValue(self.app.GetSqueezeServerPort())
+        
+        
+        
+        self.tcHost.SetValue(self.model.host.get())
+        self.scPort.SetValue(self.model.port.get())
         
         self.Centre()
         #self.SetSize(wx.Size(w, h))
@@ -114,10 +119,20 @@ class FrmSettings(wx.Frame):
         
 
     def OnApply(self, event):
-        self.app.SetSqueezeServerHost(self.tcHost.GetValue())
-        self.app.SqueezeServerPort.set((int(self.scPort.GetValue())))
+        newHost = self.tcHost.GetValue()
+        oldHost = self.model.host.get()
+        if newHost != oldHost:
+            self.model.host.set(newHost)
+        newPort = int(self.scPort.GetValue())
+        oldPort = self.model.port.get()
+        if newPort != oldPort:
+            self.model.port.set(newPort)
+        
         self.app.SetSqueezeServerPlayer(self.cbPlayer.GetValue())
         self.UpdateCbPlayer()
     def OnCancel(self, event):
-        self.app.tb.on_settings_close(event)
+        self.FrmCtrl.closeSettings(event)
+        #self.app.tb.on_settings_close(event)
+        #close = wx.PyEvent()
+        #wx.EVT_CLOSE
         
