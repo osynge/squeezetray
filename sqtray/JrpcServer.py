@@ -233,8 +233,7 @@ class squeezeConCtrl:
     def PlayersList(self):
         self.mapping = {}
         playerList = []
-        playersCount = self.model.playersCount.get()
-        for index in range(playersCount):
+        for index in range(len(self.model.playerList)):
             player = self.model.playerList[index].name.get()
             if player != None:
                 playerList.append(player)
