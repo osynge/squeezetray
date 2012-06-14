@@ -223,13 +223,13 @@ class squeezeConCtrl:
             self.RecConnectionOnline()
 
     def OnPlayersAvailable(self,value,dfd):
-        #print ("OnPlayersAvailable",value,dfd)
-        playersCount = self.model.playersCount.get()
+        #print "OnPlayersAvailable",value,dfd
+        #playersCount = self.model.playersCount.get()
         for index in range(len(self.model.playerList)):
             name = self.model.playerList[index].name.get()
             if None != name:
                 self.mapping[ name] = index
-        #print self.mapping
+        
     def PlayersList(self):
         self.mapping = {}
         playerList = []
@@ -292,6 +292,7 @@ class squeezeConCtrl:
         if not self.model.connected.get():
             print "connectionStr=",self.model.connectionStr.get()
             return None
+         
         if not player in self.mapping:
             print "self.mapping" , self.mapping
             return None
@@ -304,6 +305,7 @@ class squeezeConCtrl:
                     ["pause"]
                 ]
         })
+        #print " sent Pays",playerIndex,playerId
 
     def Play(self,player):
         if not self.model.connected.get():
