@@ -41,9 +41,9 @@ class squeezePlayerMdl:
     def OnAtribChange(self,value):
         
         discovered = True
-        if  (self.name == None):
+        if  (self.name.get() == None):
             discovered = False
-        if  (self.identifier == None):
+        if  (self.identifier.get() == None):
             discovered = False
         previously = self.discovered.get()
         if not previously == discovered:
@@ -79,7 +79,7 @@ class squeezeConMdle:
         newConnectionStr = "%s:%s" % (self.host.get(),self.port.get())
         if newConnectionStr != self.connectionStr.get():
             self.connectionStr.set(newConnectionStr)
-    
+
             
     def OnConnectedChange(self,value):
         if not self.connected.get():
@@ -95,7 +95,6 @@ class squeezeConMdle:
     def OnPlayersAvailableChange(self,value):
         availablePlayewrs = []
         for index in range(len(self.playerList)):
-            #print index
             if self.playerList[index].discovered.get():
                 availablePlayewrs.append(unicode(self.playerList[index].name.get()))
         for func, args, kargs in self.CbPlayersAvailable:
