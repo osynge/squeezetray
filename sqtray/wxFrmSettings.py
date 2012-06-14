@@ -90,12 +90,11 @@ class FrmSettings(wx.Frame):
             self.SetStatusText("Server Connected.")
         else:
             self.SetStatusText("Server not connected.")
-        self.OnUpdate()
-        print "self.app.squeezeConCtrl.PlayersList()=%s" % self.app.squeezeConCtrl.PlayersList()
+        #print "self.app.squeezeConCtrl.PlayersList()=%s" % self.app.squeezeConCtrl.PlayersList()
     
     def OnPlayers(self):
         host = self.model.host.get()
-        print 'host', host
+        #print 'host', host
         self.tcHost.SetValue(host)
         port = self.model.port.get()
         self.scPort.SetValue(port)
