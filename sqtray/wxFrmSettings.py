@@ -4,7 +4,7 @@ import wx
 from wxEvents import EVT_RESULT_CONNECTED_ID
 from wxEvents import EVT_RESULT_PLAYERS_ID
 from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
-
+from wxEvents import EVT_RESULT_CONNECTION_ID
 class FrmSettings(wx.Frame):
   
     def __init__(self, parent,  title):
@@ -19,8 +19,8 @@ class FrmSettings(wx.Frame):
         self.sizer = wx.GridBagSizer(8, 3)
         
         self.Connect(-1, -1, EVT_RESULT_CONNECTED_ID, self.OnConnected)
-        self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayers)
-        
+        self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayersEvt)
+        self.Connect(-1, -1, EVT_RESULT_CONNECTION_ID, self.OnPlayersEvt)
         self.BtnApply = wx.Button(self,-1, "Apply")
         self.BtnCancel = wx.Button(self,-1, "Cancel")
         self.BtnSave = wx.Button(self,-1, "Save")
@@ -71,16 +71,19 @@ class FrmSettings(wx.Frame):
     
     def Show(self):
         self.UpdateCbPlayer()
-        
-        
-        
-        
-        self.tcHost.SetValue(self.model.host.get())
-        self.scPort.SetValue(self.model.port.get())
-        
+        self.OnPlayers()
         self.Centre()
         #self.SetSize(wx.Size(w, h))
         super(FrmSettings, self).Show()
+        
+    def OnConnectionChange(self,event):
+        host = self.model.host.get()
+        #print 'host', host
+        self.tcHost.SetValue(host)
+        port = self.model.port.get()
+        self.scPort.SetValue(port)
+        self.UpdateCbPlayer()
+        
     def OnConnected(self,event):
         
         if True == self.app.squeezeConCtrl.ConnectionOnline():
@@ -90,21 +93,30 @@ class FrmSettings(wx.Frame):
         self.OnUpdate()
         print "self.app.squeezeConCtrl.PlayersList()=%s" % self.app.squeezeConCtrl.PlayersList()
     
-    def OnPlayers(self, event):
+    def OnPlayers(self):
+        host = self.model.host.get()
+        print 'host', host
+        self.tcHost.SetValue(host)
+        port = self.model.port.get()
+        self.scPort.SetValue(port)
         self.UpdateCbPlayer()
+    def OnPlayersEvt(self,event):
+        self.OnPlayers()
     def UpdateCbPlayer(self):
-        
-        self.cbPlayer.Clear()
-        
-        #availablePlayers = self.app.ConMan.GetSqueezeServerPlayers()
+        #print "here we go" , self.cbPlayer.GetStrings()
+        currentOptions = self.cbPlayer.GetStrings()
         availablePlayers = self.app.squeezeConCtrl.PlayersList()
-        #print "availablePlayers=%s" % (availablePlayers)
-        
-        
-        for player in availablePlayers:
-            self.cbPlayer.Append(player)
-        if len(availablePlayers) > 0:
-            CurrentPlayer = self.app.GetSqueezeServerPlayer()
+        if currentOptions != availablePlayers:
+            self.cbPlayer.Clear()
+            for player in availablePlayers:
+                self.cbPlayer.Append(player)
+        else:
+            pass
+        if len(availablePlayers) == 0:
+            self.cbPlayer.Clear()
+            self.cbPlayer.SetSelection(-1)
+        else:
+            CurrentPlayer = self.model.GuiPlayer.get()
             playerIndex = 0
             if CurrentPlayer != None:
                 try:
@@ -112,7 +124,6 @@ class FrmSettings(wx.Frame):
                 except:
                     playerIndex = 0
             self.cbPlayer.SetSelection(playerIndex)
-        
     def OnSave(self, event):
         self.OnApply(event)
         self.app.configSave()
@@ -122,14 +133,25 @@ class FrmSettings(wx.Frame):
         newHost = self.tcHost.GetValue()
         oldHost = self.model.host.get()
         if newHost != oldHost:
+            #print 'hostchanged',newHost
             self.model.host.set(newHost)
+            #print 'donehostchanged',newHost
         newPort = int(self.scPort.GetValue())
         oldPort = self.model.port.get()
         if newPort != oldPort:
             self.model.port.set(newPort)
-        
-        self.app.SetSqueezeServerPlayer(self.cbPlayer.GetValue())
+        newDefaultPlayer = unicode(self.cbPlayer.GetValue())
+        #print "newDefaultPlayer",newDefaultPlayer
+        oldDefaultPlayer = self.model.GuiPlayerDefault.get()
+        #print "oldDefaultPlayer",oldDefaultPlayer
+        if oldDefaultPlayer != newDefaultPlayer:
+            self.model.GuiPlayerDefault.set(newDefaultPlayer)
         self.UpdateCbPlayer()
+        oldPlayer =  self.model.GuiPlayer.get()
+        if oldPlayer != newDefaultPlayer:
+            #print "oldPlayer",oldPlayer 
+            self.model.GuiPlayer.set(newDefaultPlayer)
+        #print 'dddd',self.model.host.get(),self.model.port.get(),self.model.GuiPlayer.get()
     def OnCancel(self, event):
         self.FrmCtrl.closeSettings(event)
         #self.app.tb.on_settings_close(event)
