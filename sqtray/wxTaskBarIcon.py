@@ -65,7 +65,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         #print "on_timer"
         if not self.model.connected.get():
             print "not on line"
-            self.app.RecConnectionOnline()
+            self.app.squeezeConCtrl.RecConnectionOnline()
             return
         player = self.app.GetSqueezeServerPlayer()
         if player != None:

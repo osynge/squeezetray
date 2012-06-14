@@ -39,44 +39,52 @@ class squeezePlayerMdl:
         self.CurrentTrackEnds = Observable(None)
         
     def OnAtribChange(self,value):
-        discovered = False
-        if  (self.identifier != None) and (self.name != None):
-            discovered = True
+        
+        discovered = True
+        if  (self.name == None):
+            discovered = False
+        if  (self.identifier == None):
+            discovered = False
         previously = self.discovered.get()
         if not previously == discovered:
-            previously = discovered
             self.discovered.set(discovered)
 
 class squeezeConMdle:
     def __init__(self):
         self.host = Observable("localhost")
-        
         self.port = Observable("9000")
+        # connectionStr : a simple to observe break of connection settings obj
         self.connectionStr = Observable("localhost:9000")
         self.connected = Observable(False)
         # Number of players on the server that can be used
         self.playersCount = Observable(0)
         self.playerList = []
-        self.connected.addCallback(self.OnConnectedChange)
-        self.playersCount.addCallback(self.OnPlayersCountChange)
         self.CbPlayersAvailable= []
         self.CbChurrentTrack = []
-        self.connectionStr.addCallback(self.OnConnectedChange)
+        self.host.addCallback(self.OnHostChange)
+        self.port.addCallback(self.OnPortChange)
         
-    def OnConnectionStrChange(self,value):
-        """ Note ignores parmewters"""
-        print "OnConnectionStrChange='%s'" % value
-        NewConstr = "%s:%s" % (self.host.get(),self.port.get())
-        OldConstr = self.connectionStr.get()
-        if NewConstr != OldConstr:
-            print "OnConnectionStrChange checnged=%s" % (NewConstr)
-            #self.connectionStr.set(NewConstr)
-            #self.ConectionStringSet(NewConstr)
-            self.playersCount.set(0)
+        self.connectionStr.addCallback(self.OnConnectedChange)
+        self.connected.addCallback(self.OnConnectedChange)
+        self.playersCount.addCallback(self.OnPlayersCountChange)
+    def OnHostChange(self,value):
+        newHost = self.host.get()
+        newPort = self.port.get()
+        newConnectionStr = "%s:%s" % (self.host.get(),self.port.get())
+        if newConnectionStr != self.connectionStr.get():
+            self.connectionStr.set(newConnectionStr)
+    def OnPortChange(self,value):
+        newHost = self.host.get()
+        newPort = self.port.get()
+        newConnectionStr = "%s:%s" % (self.host.get(),self.port.get())
+        if newConnectionStr != self.connectionStr.get():
+            self.connectionStr.set(newConnectionStr)
+    
             
     def OnConnectedChange(self,value):
         if not self.connected.get():
-            self.playersCount.set(0)
+            if 0 != self.playersCount.get():
+                self.playersCount.set(0)
     def OnPlayersCountChange(self,value):
         self.playerList = []
         for index in range(value):
@@ -85,7 +93,6 @@ class squeezeConMdle:
             self.playerList[index].CurrentTrackTitle.addCallback(self.OnCurrentTrack)
     
     def OnPlayersAvailableChange(self,value):
-        #print 'dsdsd',value
         availablePlayewrs = []
         for index in range(len(self.playerList)):
             #print index
@@ -107,4 +114,5 @@ class squeezeConMdle:
     
     def playerListClear(self):
         self.playerList = []
-        self.playersCount.set(0)
+        if 0 != self.playersCount.get():
+            self.playersCount.set(0)

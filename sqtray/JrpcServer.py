@@ -1,4 +1,4 @@
-
+import socket
 import httplib, urllib
 import sys, traceback
 from threading import *
@@ -25,6 +25,7 @@ class SqueezeConnectionWorker(Thread):
         while True:
             func,params, args, kargs = self.tasks.get()
             if not hasattr(self,'conn'):
+                #print "connectionString", self.connectionString 
                 self.tasks.task_done()
                 return
             if self.connectionString == None:
@@ -40,8 +41,11 @@ class SqueezeConnectionWorker(Thread):
             except httplib.BadStatusLine:
                 self.conn = httplib.HTTPConnection(self.connectionString)
                 self.conn.request("POST", "/jsonrpc.js", params)
-                response = self.conn.getresponse()
-
+                try:
+                    response = self.conn.getresponse()
+                except httplib.BadStatusLine:
+                    self.tasks.task_done()
+                    return
             if response.status != 200:
                 print response.status, response.reason
             #return response.read()
@@ -56,6 +60,7 @@ class SqueezeConnectionWorker(Thread):
             
             
     def ConnectionSet(self,connectionStr):
+        #print "connectionStr", connectionStr
         Changed =  False
         if not hasattr(self,'connectionString'):
             Changed =  True
@@ -66,6 +71,7 @@ class SqueezeConnectionWorker(Thread):
         if not hasattr(self,'conn'):
             Changed =  True
         if Changed:
+            #print connectionStr
             self.conn = httplib.HTTPConnection(connectionStr)
             
         
@@ -74,17 +80,20 @@ class SqueezeConnectionThreadPool:
     def __init__(self, squeezeConMdle,num_threads = 10):
         
         self.squeezeConMdle = squeezeConMdle
-        
+        connectionString = self.squeezeConMdle.connectionStr.get()
         self.tasks = Queue(num_threads)
         self.arrayOfSqueezeConnectionWorker = []
         for _ in range(num_threads): 
             new = SqueezeConnectionWorker(self.tasks)
+            new.ConnectionSet(connectionString)
             self.arrayOfSqueezeConnectionWorker.append(new)
-
+        self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
+        
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
         self.tasks.join()
     def sendMessage(self,func,message, *args, **kargs):
+        #print "connectionString =" ,  self.squeezeConMdle.connectionStr.get()
         params = json.dumps(message, sort_keys=True, indent=4)
         self.tasks.put((func,params, args, kargs))
   
@@ -109,29 +118,24 @@ class SqueezeConnectionThreadPool:
         oldValue = self.squeezeConMdle.connected.get()
         if oldValue != True:
             self.squeezeConMdle.connected.set(True)
-        for index in range(self.noPlayers):            
-            msg = { 
-                "method":"slim.request",
-                "params": [ '-', [ 'player', 'id', index ,"?"] ]
-            }
-            self.sendMessage(self.OnPlayerIndex,msg)
-            msg = { 
-                "method":"slim.request",
-                "params": [ '-', [ 'player', 'name', index ,"?"] ]
-            }
-            self.sendMessage(self.OnPlayerName,msg)
 
     def OnPlayerIndex(self,responce):
         playerId = responce["result"]["_id"]
         playerIndex = int(responce['params'][1][2])
-        self.squeezeConMdle.playerList[playerIndex].identifier.set(playerId)
+        OldPlayerId =  self.squeezeConMdle.playerList[playerIndex].identifier.get()
+        if OldPlayerId != playerId:
+            self.squeezeConMdle.playerList[playerIndex].identifier.set(playerId)
     def OnPlayerName(self,responce):
+        #print "OnPlayerName",unicode(json.dumps(responce, sort_keys=True, indent=4))
         playerName = responce["result"]["_name"] 
         playerIndex = int(responce['params'][1][2])
-        self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
+        OldPlayerName = self.squeezeConMdle.playerList[playerIndex].name.get()
+        if playerName != OldPlayerName:
+            self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
+            
     def OnPlayerStatus(self,responce):
         #print "OnPlayerStatus:",datetime.datetime.now()
-        #print unicode(json.dumps(responce, sort_keys=True, indent=4))
+        #print "OnPlayerStatus",unicode(json.dumps(responce, sort_keys=True, indent=4))
         playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
         playlist_cur_index = int(responce["result"]["playlist_cur_index"])
@@ -146,7 +150,10 @@ class SqueezeConnectionThreadPool:
         if OldplayerName != playerName:
             self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
         if lsbsMode in mappings:
-            self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
+            newOperationMode = mappings[lsbsMode]
+            oldOperationMode = self.squeezeConMdle.playerList[playerIndex].operationMode.get()
+            if newOperationMode != oldOperationMode:
+                self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
         CurrentTrackTitle = None
         for item in playlist_loop:
             playlistIndex = int(item["playlist index"])
@@ -165,19 +172,33 @@ class squeezeConCtrl:
         self.model = model
         self.view1 = SqueezeConnectionThreadPool(self.model)
         self.model.connectionStr.addCallback(self.view1.OnConnectionStrChange)
-        self.model.CbPlayersAvailableAdd(self._OnPlayersNameChange)
+        self.model.CbPlayersAvailableAdd(self.OnPlayersAvailable)
         self.model.connected.addCallback(self.OnConnection)
         self.model.playersCount.addCallback(self.OnPlayersCount)
         self.mapping = {}
         self.CbConnection = []
         self.CbPlayersList = []
     def OnPlayersCount(self,value):
-        for i in range(len(self.model.playerList)):
-            identifier = self.model.playerList[i].identifier.get()
-            name = self.model.playerList[i].name.get()
+        #print "OnPlayersCount", value
+        for index in range(len(self.model.playerList)):
+            identifier = self.model.playerList[index].identifier.get()
+            name = self.model.playerList[index].name.get()
             if identifier == None:
-                print "would make a name request"
+                #print "would make a name request"
+                msg = { 
+                    "method":"slim.request",
+                    "params": [ '-', [ 'player', 'id', index ,"?"] ]
+                }
+                self.view1.sendMessage(self.view1.OnPlayerIndex,msg)
+            if name == None:
+                #print "would make a name request"
+                msg = { 
+                    "method":"slim.request",
+                    "params": [ '-', [ 'player', 'name', index ,"?"] ]
+                }
+                self.view1.sendMessage(self.view1.OnPlayerName,msg)
     def  RecConnectionOnline(self):
+        #print "sdfdsfsF"
         #self.view1.RecConnectionOnline()
         self.view1.sendMessage(self.view1.OnPlayerCount,{ 
             "method":"slim.request",
@@ -201,15 +222,14 @@ class squeezeConCtrl:
             self.model.port.set(port)
             self.RecConnectionOnline()
 
-    def _OnPlayersNameChange(self,value,dfd):
-        #print (self,value,dfd)
+    def OnPlayersAvailable(self,value,dfd):
+        #print ("OnPlayersAvailable",value,dfd)
         playersCount = self.model.playersCount.get()
-        for index in range(playersCount):
-            #print index
+        for index in range(len(self.model.playerList)):
             name = self.model.playerList[index].name.get()
             if None != name:
-                self.mapping[ name] =index
-
+                self.mapping[ name] = index
+        #print self.mapping
     def PlayersList(self):
         self.mapping = {}
         playerList = []
@@ -269,7 +289,7 @@ class squeezeConCtrl:
         #})
         #self.view1.RecPlayerStatus()        
     def Pause(self,player):
-        #print self.mapping,player
+        
         if not self.model.connected.get():
             return None
         if not player in self.mapping:
@@ -283,6 +303,7 @@ class squeezeConCtrl:
                     ["pause"]
                 ]
         })
+
     def Play(self,player):
         if not self.model.connected.get():
             return None

@@ -1,7 +1,9 @@
 
 
 import wx
-
+from wxEvents import EVT_RESULT_CONNECTED_ID
+from wxEvents import EVT_RESULT_PLAYERS_ID
+from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
 
 class FrmSettings(wx.Frame):
   
@@ -16,6 +18,8 @@ class FrmSettings(wx.Frame):
         self.SetStatusText("Demonstration of wxPython")
         self.sizer = wx.GridBagSizer(8, 3)
         
+        self.Connect(-1, -1, EVT_RESULT_CONNECTED_ID, self.OnConnected)
+        self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayers)
         
         self.BtnApply = wx.Button(self,-1, "Apply")
         self.BtnCancel = wx.Button(self,-1, "Cancel")
@@ -80,6 +84,9 @@ class FrmSettings(wx.Frame):
             self.SetStatusText("Server not connected.")
         self.OnUpdate()
         print "self.app.squeezeConCtrl.PlayersList()=%s" % self.app.squeezeConCtrl.PlayersList()
+    
+    def OnPlayers(self, event):
+        self.UpdateCbPlayer()
     def UpdateCbPlayer(self):
         
         self.cbPlayer.Clear()

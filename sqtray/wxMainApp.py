@@ -40,11 +40,26 @@ class FrmCtrl:
         self.closeSettings(None)
         self.tb.Destroy()
 
+    def handleConnectionChange(self,value,window):
+        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
+        if (self.Example != None):
+            wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_PLAYERS_ID,value))
+    
+    def handlePlayersChange(self,value,window,asda):
+        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_PLAYERS_ID,value))
+        if (self.Example != None):
+            wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_PLAYERS_ID,value))
+        
+    def handleTrackChange(self,value,other):
+        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CURRENT_TRACK_ID,value))    
+
 class myapp(wx.App):
     def __init__(self):
         super(myapp, self).__init__()
         
         self.model = squeezeConMdle()
+        self.GuiPlayer = Observable(None)
+        self.GuiPlayerDefault = Observable(None)
         self.SqueezeServerPort = Observable(9000)
         self.SqueezeServerPort.addCallback(self.OnSqueezeServerPort)
         self.cfg = wx.FileConfig(appName="ApplicationName", 
@@ -61,9 +76,9 @@ class myapp(wx.App):
         
         #print "tb=%s" %self.tb
         self.tb.cfg = self.cfg
-        self.squeezeConCtrl.CbConnectionAdd(self.handleConnectionChange,self.tb)
-        self.model.CbPlayersAvailableAdd(self.handlePlayersChange,self.tb)
-        self.model.CbChurrentTrackAdd(self.handleTrackChange)
+        self.squeezeConCtrl.CbConnectionAdd(self.frmCtrl.handleConnectionChange,None)
+        self.model.CbPlayersAvailableAdd(self.frmCtrl.handlePlayersChange,None)
+        self.model.CbChurrentTrackAdd(self.frmCtrl.handleTrackChange,None)
         
 
     def configRead(self):
@@ -78,8 +93,10 @@ class myapp(wx.App):
                 squeezeServerPortTmp = int(self.cfg.ReadInt('squeezeServerPort'))
             except ValueError:
                 squeezeServerPort = 9000
-        self.SqueezeServerPort.set(squeezeServerPort)
-        self.squeezeConCtrl.ConectionStringSet("%s:%s" % (self.GetSqueezeServerHost(),self.SqueezeServerPort.get()))
+        OldSqueezeServerPort = self.SqueezeServerPort.get()
+        if squeezeServerPort != OldSqueezeServerPort:
+            self.SqueezeServerPort.set(squeezeServerPort)
+        
         
         SqueezeServerPlayer = None
         if self.cfg.Exists('SqueezeServerPlayer'):
@@ -94,40 +111,14 @@ class myapp(wx.App):
         self.cfg.Write("SqueezeServerPlayer", self.GetSqueezeServerPlayer())
         self.cfg.Flush()
         
-    def handleConnectionChange(self,value,window):
-        #self.squeezeConCtrl.RecConnectionOnline()
-        #print "value=%s" % value
-        #print self.GetSqueezeServerHost()
-        #print dir(self)
-        if not hasattr(self,'tb'):
-            print "no tb"
-            return
-        
-        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
-        
-    
-    def handlePlayersChange(self,value,window,asda):
-        #print "value=%s,%s,%s,%s" % (value,window,asda)
-        #print self.GetSqueezeServerHost()
-        #print dir(self)
-        if not hasattr(self,'tb'):
-            print "no tb"
-            return
-        value = 0
-        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_PLAYERS_ID,value))
-        
-    def handleTrackChange(self,value):
-        #print "value=%s,%s,%s,%s" % (value,window,asda,asdfg)
-        #print self.GetSqueezeServerHost()
-        #print dir(self)
-        if not hasattr(self,'tb'):
-            print "no tb"
-            return
-        value = 0
-        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CURRENT_TRACK_ID,value))    
-
 
     def SetSqueezeServerHost(self,host):
+        #print "newhost" , host
+        OldHost = self.model.host.get()
+        if OldHost != host:
+            self.model.host.set(host)
+            #print "set" ,self.model.host.get()
+            
         Changed = False
         if not hasattr(self,'SqueezeServerHost'):
             Changed = True
