@@ -8,16 +8,12 @@ from wxEvents import EVT_RESULT_CONNECTION_ID
 class FrmSettings(wx.Frame):
   
     def __init__(self, parent,  title):
-        
         self.parent = parent
         self.title = title
         w, h = (250, 250)
         wx.Frame.__init__(self, self.parent, -1, self.title, wx.DefaultPosition, wx.Size(w, h))
         self.CreateStatusBar()
-        
-        self.SetStatusText("Demonstration of wxPython")
         self.sizer = wx.GridBagSizer(8, 3)
-        
         self.Connect(-1, -1, EVT_RESULT_CONNECTED_ID, self.OnConnected)
         self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayersEvt)
         self.Connect(-1, -1, EVT_RESULT_CONNECTION_ID, self.OnPlayersEvt)
@@ -66,14 +62,29 @@ class FrmSettings(wx.Frame):
         self.sizer.AddGrowableCol(2)
         
         self.SetSizerAndFit(self.sizer)
+    def UpdateStatusbar(self):
+        if not hasattr(self,'model'):
+            self.SetStatusText("")
+            return
+        if False == self.model.connected.get():
+            self.SetStatusText("Server not connected.")
+            return
+        CurrentPlayer = self.model.GuiPlayer.get()
+        if CurrentPlayer != None:
+            host = self.model.host.get()
+            port = self.model.port.get()
+            self.SetStatusText("%s@%s:%s" % (CurrentPlayer,host,port))
+            return
     def ModelSet(self,model):
         self.model = model
     
     def Show(self):
+        self.UpdateStatusbar()
         self.UpdateCbPlayer()
         self.OnPlayers()
         self.Centre()
         #self.SetSize(wx.Size(w, h))
+        
         super(FrmSettings, self).Show()
         
     def OnConnectionChange(self,event):
@@ -83,14 +94,10 @@ class FrmSettings(wx.Frame):
         port = self.model.port.get()
         self.scPort.SetValue(port)
         self.UpdateCbPlayer()
-        
+        self.UpdateStatusbar()
+
     def OnConnected(self,event):
-        
-        if True == self.app.squeezeConCtrl.ConnectionOnline():
-            self.SetStatusText("Server Connected.")
-        else:
-            self.SetStatusText("Server not connected.")
-        #print "self.app.squeezeConCtrl.PlayersList()=%s" % self.app.squeezeConCtrl.PlayersList()
+        self.UpdateStatusbar()
     
     def OnPlayers(self):
         host = self.model.host.get()
@@ -101,6 +108,7 @@ class FrmSettings(wx.Frame):
         self.UpdateCbPlayer()
     def OnPlayersEvt(self,event):
         self.OnPlayers()
+        self.UpdateStatusbar()
     def UpdateCbPlayer(self):
         #print "here we go" , self.cbPlayer.GetStrings()
         currentOptions = self.cbPlayer.GetStrings()
