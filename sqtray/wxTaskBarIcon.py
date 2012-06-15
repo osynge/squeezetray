@@ -58,9 +58,7 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def OnPlayers(self, event):
         #print "OnPlayers(=%s)" % (Event)
-        if (self.Example != None):
-            self.Example.UpdateCbPlayer()
-            return
+        self.UpdateToolTip()
         
     def OnTrack(self, event):
         self.UpdateToolTip()
@@ -70,7 +68,10 @@ class TaskBarIcon(wx.TaskBarIcon):
             for index in  range(len(self.model.playerList)):
                 playerName = self.model.playerList[index].name.get()
                 if playerName == player:
-                    newToolTip = "SqueezeTray:"
+                    newToolTip = unicode(player)
+                    CurrentOperationMode = self.model.playerList[index].operationMode.get()
+                    if CurrentOperationMode != None:
+                        newToolTip += ":%s" % (CurrentOperationMode)
                     CurrentTrackTitle = self.model.playerList[index].CurrentTrackTitle.get()
                     if CurrentTrackTitle != None:
                         newToolTip += "\nTrack:%s" % (CurrentTrackTitle)
