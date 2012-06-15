@@ -5,7 +5,7 @@ from threading import *
 
 from Queue import Queue
 from threading import Thread
-
+import datetime
 if float(sys.version[:3]) >= 2.6:
     import json
 else:
@@ -134,12 +134,15 @@ class SqueezeConnectionThreadPool:
             self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
             
     def OnPlayerStatus(self,responce):
+        now = datetime.datetime.now()
         #print "OnPlayerStatus:",datetime.datetime.now()
-        #print "OnPlayerStatus",unicode(json.dumps(responce, sort_keys=True, indent=4))
+        #print "OnPlayerStatus",unicode(json.dumps(responce, indent=4))
         playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
         playlist_cur_index = int(responce["result"]["playlist_cur_index"])
         playlist_loop = responce["result"]["playlist_loop"]
+        
+        CurrentTrackTime = responce["result"]["time"]
         
         lsbsMode = unicode(responce["result"]["mode"])
         mappings = {"play" : "playing",
@@ -162,7 +165,28 @@ class SqueezeConnectionThreadPool:
                 OldCurrentTrackTitle = self.squeezeConMdle.playerList[playerIndex].CurrentTrackTitle.get()
                 if CurrentTrackTitle  != OldCurrentTrackTitle:
                     self.squeezeConMdle.playerList[playerIndex].CurrentTrackTitle.set(CurrentTrackTitle)
-                    
+                CurrentTrackArtist = unicode(item["artist"])
+                OldCurrentTrackArtist = self.squeezeConMdle.playerList[playerIndex].CurrentTrackArtist.get()
+                if CurrentTrackArtist  != OldCurrentTrackArtist:
+                    self.squeezeConMdle.playerList[playerIndex].CurrentTrackArtist.set(CurrentTrackArtist)
+                CurrentTrackDuration = None
+                try:
+                    CurrentTrackDuration = responce["result"]["duration"]
+                except KeyError:
+                    pass
+                if (CurrentTrackDuration != None) and (self.squeezeConMdle.playerList[playerIndex].operationMode.get() == "playing"):
+                    CurrentTrackRemaining = CurrentTrackDuration - CurrentTrackTime
+                    CurrentTrackEnds = datetime.datetime.now() + datetime.timedelta(seconds=CurrentTrackRemaining)
+                    OldCurrentTrackEnds = self.squeezeConMdle.playerList[playerIndex].CurrentTrackEnds.get()
+                    if OldCurrentTrackEnds == None:
+                        self.squeezeConMdle.playerList[playerIndex].CurrentTrackEnds.set(CurrentTrackEnds)
+                    else:
+                        timediff = abs(CurrentTrackEnds - OldCurrentTrackEnds)
+                        if timediff.seconds > 0:
+                            self.squeezeConMdle.playerList[playerIndex].CurrentTrackEnds.set(CurrentTrackEnds)
+                else:
+                    if None != self.squeezeConMdle.playerList[playerIndex].CurrentTrackEnds.get():
+                        self.squeezeConMdle.playerList[playerIndex].CurrentTrackEnds.set(None)
             
        
 class squeezeConCtrl:

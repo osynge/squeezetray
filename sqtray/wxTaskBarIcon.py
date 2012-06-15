@@ -4,6 +4,7 @@ from wxEvents import EVT_RESULT_CONNECTED_ID
 from wxEvents import EVT_RESULT_PLAYERS_ID
 from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
 from sqtray.wxFrmSettings import FrmSettings
+import datetime
 
 TRAY_TOOLTIP = 'SqueezeTray'
 TRAY_ICON = 'icon.png'
@@ -62,15 +63,26 @@ class TaskBarIcon(wx.TaskBarIcon):
             return
         
     def OnTrack(self, event):
+        self.UpdateToolTip()
+    def UpdateToolTip(self):
         player = self.GetSqueezeServerPlayer()
         if player != None:
             for index in  range(len(self.model.playerList)):
                 playerName = self.model.playerList[index].name.get()
                 if playerName == player:
-                    newToolTip = self.model.playerList[index].CurrentTrackTitle.get()
+                    newToolTip = "SqueezeTray:"
+                    CurrentTrackTitle = self.model.playerList[index].CurrentTrackTitle.get()
+                    if CurrentTrackTitle != None:
+                        newToolTip += "\nTrack:%s" % (CurrentTrackTitle)
+                    CurrentTrackArtist = self.model.playerList[index].CurrentTrackArtist.get()
+                    if CurrentTrackArtist != None:
+                        newToolTip += "\nArtist:%s" % (CurrentTrackArtist)
+                    CurrentTrackEnds = self.model.playerList[index].CurrentTrackEnds.get()
+                    #print "CurrentTrackEnds=%s" % (CurrentTrackEnds)
+                    if CurrentTrackEnds != None:
+                        seconds = (CurrentTrackEnds - datetime.datetime.now()).total_seconds()
+                        newToolTip += "\nRemaining:%s" % (seconds)
                     self.set_toolTip(newToolTip)
-
-
 
     def OnShowPopup(self, event):
         pos = wx.GetMousePosition()
@@ -81,6 +93,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         #pos = self.panel.ScreenToClient(pos)
 
     def on_timer(self,event):
+        self.UpdateToolTip()
         #print "on_timer"
         ConnectionStatus = self.model.connected.get()
         #print "on_timer.ConnectionStatus",ConnectionStatus

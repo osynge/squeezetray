@@ -36,6 +36,7 @@ class squeezePlayerMdl:
         self.name.addCallback(self.OnAtribChange)
         self.operationMode = Observable(None)
         self.CurrentTrackTitle = Observable(None)
+        self.CurrentTrackArtist = Observable(None)
         self.CurrentTrackEnds = Observable(None)
         
     def OnAtribChange(self,value):
