@@ -136,6 +136,7 @@ class SqueezeConnectionThreadPool:
     def OnPlayerStatus(self,responce):
         now = datetime.datetime.now()
         #print "OnPlayerStatus:",datetime.datetime.now()
+        #print  "OnPlayerStatus",responce
         #print "OnPlayerStatus",unicode(json.dumps(responce, indent=4))
         playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
@@ -161,6 +162,7 @@ class SqueezeConnectionThreadPool:
         for item in playlist_loop:
             playlistIndex = int(item["playlist index"])
             if playlistIndex == playlist_cur_index:
+                CurrentTrackId = unicode(item["id"])
                 CurrentTrackTitle = unicode(item["title"])
                 OldCurrentTrackTitle = self.squeezeConMdle.playerList[playerIndex].CurrentTrackTitle.get()
                 if CurrentTrackTitle  != OldCurrentTrackTitle:
@@ -190,7 +192,10 @@ class SqueezeConnectionThreadPool:
                 else:
                     if None != self.squeezeConMdle.playerList[playerIndex].CurrentTrackEnds.get():
                         self.squeezeConMdle.playerList[playerIndex].CurrentTrackEnds.set(None)
-            
+                # Now Change the ID last so people shoudl call back on this.
+                OldCurrentTrackId = self.squeezeConMdle.playerList[playerIndex].CurrentTrackId.get()
+                if OldCurrentTrackId != CurrentTrackId:
+                    self.squeezeConMdle.playerList[playerIndex].CurrentTrackId.set(CurrentTrackId)
        
 class squeezeConCtrl:
     def __init__(self,model):  
@@ -202,7 +207,6 @@ class squeezeConCtrl:
         self.model.CbPlayersAvailableAdd(self.OnPlayersAvailable)
         self.model.connected.addCallback(self.OnConnection)
         self.model.playersCount.addCallback(self.OnPlayersCount)
-        self.mapping = {}
         self.CbConnection = []
         self.CbPlayersList = []
     def OnPlayersCount(self,value):
@@ -224,6 +228,7 @@ class squeezeConCtrl:
                     "params": [ '-', [ 'player', 'name', index ,"?"] ]
                 }
                 self.view1.sendMessage(self.view1.OnPlayerName,msg)
+            
     def  RecConnectionOnline(self):
         #print "sdfdsfsF"
         #self.view1.RecConnectionOnline()
@@ -252,21 +257,11 @@ class squeezeConCtrl:
     def OnPlayersAvailable(self,value,dfd):
         #print "OnPlayersAvailable",value,dfd
         #playersCount = self.model.playersCount.get()
-        for index in range(len(self.model.playerList)):
-            name = self.model.playerList[index].name.get()
-            if None != name:
-                self.mapping[ name] = index
+        for player in self.model.Players:
+            CurrentTrackId = self.model.Players[player].CurrentTrackId.get()
+            if None == CurrentTrackId:
+                self.RecPlayerStatus(player)
         
-    def PlayersList(self):
-        self.mapping = {}
-        playerList = []
-        for index in range(len(self.model.playerList)):
-            player = self.model.playerList[index].name.get()
-            if player != None:
-                playerList.append(player)
-                self.mapping[player] = index
-        return playerList
-
     def CbPlayersListAdd(self, func, *args, **kargs):
         """Add a task to the queue"""
         self.CbPlayersList.append((func, args, kargs))
@@ -279,7 +274,6 @@ class squeezeConCtrl:
         self.CbConnection.append((func, args, kargs))
     def OnConnection(self,value):
         #print "OnConnection(value)=%s" % value
-        self.mapping = {}
         for func, args, kargs in self.CbConnection:
             func(value,*args, **kargs)
 
@@ -292,14 +286,12 @@ class squeezeConCtrl:
         return self.model.connected.get()
         
     def RecPlayerStatus(self,player):
-        #print "self.mapping,player1"
         if not self.model.connected.get():
             return None
-        if not player in self.mapping:
+        if not player in self.model.Players:
             return None
-        #print "self.mapping,player2"
-        playerIndex = self.mapping[player]
-        playerId = self.model.playerList[playerIndex].identifier.get()
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
         reponce = self.view1.sendMessage(self.view1.OnPlayerStatus,{ 
             "id":playerIndex,
             "method":"slim.request",
@@ -318,12 +310,10 @@ class squeezeConCtrl:
         if not self.model.connected.get():
             print "connectionStr=",self.model.connectionStr.get()
             return None
-         
-        if not player in self.mapping:
-            print "self.mapping" , self.mapping
+        if not player in self.model.Players:
             return None
-        playerIndex = self.mapping[player]
-        playerId = self.model.playerList[playerIndex].identifier.get()
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
         reponce = self.view1.sendMessage(None,{ 
             "id":playerIndex,
             "method":"slim.request",
@@ -336,10 +326,10 @@ class squeezeConCtrl:
     def Play(self,player):
         if not self.model.connected.get():
             return None
-        if not player in self.mapping:
+        if not player in self.model.Players:
             return None
-        playerIndex = self.mapping[player]
-        playerId = self.model.playerList[playerIndex].identifier.get()
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
         reponce = self.view1.sendMessage(None,({ 
             "id" : playerIndex,
             "method":"slim.request",
@@ -350,13 +340,13 @@ class squeezeConCtrl:
     def Index(self,player,Count):
         if not self.model.connected.get():
             return None
-        if not player in self.mapping:
-            return None
         prefix = ""
         if Count > 0:
             prefix = "+"
-        playerIndex = self.mapping[player]
-        playerId = self.model.playerList[playerIndex].identifier.get()
+        if not player in self.model.Players:
+            return None
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
         reponce = self.view1.sendMessage(None,({ 
             "id":playerIndex,
             "method":"slim.request",
@@ -369,10 +359,10 @@ class squeezeConCtrl:
     def PlayRandomSong(self,player):
         if not self.model.connected.get():
             return None
-        if not player in self.mapping:
+        if not player in self.model.Players:
             return None
-        playerIndex = self.mapping[player]
-        playerId = self.model.playerList[playerIndex].identifier.get()
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
         reponce = self.view1.sendMessage(None,({ 
             "id":playerIndex,
             "method":"slim.request",
@@ -385,10 +375,10 @@ class squeezeConCtrl:
         
         if not self.model.connected.get():
             return None
-        if not player in self.mapping:
+        if not player in self.model.Players:
             return None
-        playerIndex = self.mapping[player]
-        playerId = self.model.playerList[playerIndex].identifier.get()
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
         reponce = self.view1.sendMessage(self.view1.OnPlayerStatus,({ 
             "id":playerIndex,
             "method":"slim.request",
