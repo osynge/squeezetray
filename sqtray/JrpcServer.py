@@ -165,7 +165,10 @@ class SqueezeConnectionThreadPool:
                 OldCurrentTrackTitle = self.squeezeConMdle.playerList[playerIndex].CurrentTrackTitle.get()
                 if CurrentTrackTitle  != OldCurrentTrackTitle:
                     self.squeezeConMdle.playerList[playerIndex].CurrentTrackTitle.set(CurrentTrackTitle)
-                CurrentTrackArtist = unicode(item["artist"])
+                try:
+                    CurrentTrackArtist = unicode(item["artist"])
+                except KeyError:
+                    CurrentTrackArtist = None
                 OldCurrentTrackArtist = self.squeezeConMdle.playerList[playerIndex].CurrentTrackArtist.get()
                 if CurrentTrackArtist  != OldCurrentTrackArtist:
                     self.squeezeConMdle.playerList[playerIndex].CurrentTrackArtist.set(CurrentTrackArtist)
