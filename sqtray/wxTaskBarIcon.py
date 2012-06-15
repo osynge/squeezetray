@@ -5,7 +5,7 @@ from wxEvents import EVT_RESULT_PLAYERS_ID
 from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
 from sqtray.wxFrmSettings import FrmSettings
 import datetime
-
+import functools
 TRAY_TOOLTIP = 'SqueezeTray'
 TRAY_ICON = 'icon.png'
 
@@ -46,7 +46,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.timer = wx.Timer(self, TIMER_ID)  # message will be sent to the panel
         self.timer.Start(9000)  # x100 milliseconds
         wx.EVT_TIMER(self, TIMER_ID, self.on_timer)  # call the on_timer function
-        
+
     def Show(self):
         self.app.squeezeConCtrl.RecConnectionOnline()
         super(TaskBarIcon, self).Show()        
@@ -57,7 +57,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         return self.model.GuiPlayer.get()
 
     def OnPlayers(self, event):
-        #print "OnPlayers(=%s)" % (Event)
+        #print "OnPlayers(=%s)" % (Event)            
         self.UpdateToolTip()
         
     def OnTrack(self, event):
@@ -112,12 +112,33 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def CreatePopupMenu(self):
         toolsMENU = wx.Menu()
+        ConnectionStatus = self.model.connected.get()
+        if ConnectionStatus:
+            create_menu_item(toolsMENU, 'Play', self.onScPlay)
+            create_menu_item(toolsMENU, 'Pause', self.onScPause)
+            create_menu_item(toolsMENU, 'Next', self.onScNext)
+            create_menu_item(toolsMENU, 'Previous', self.onScPrevious)
+            create_menu_item(toolsMENU, 'Rnd', self.onScRandom)
+            toolsMENU.AppendSeparator()
+        playersLen = len(self.model.Players)
+        #print "Players=\n%s\n%s" % (self.model.Players,self.model.playerList)
+        if playersLen >1:
+            playersMENU = wx.Menu()
+            toolsMENU.AppendMenu(-1, "Change Player", playersMENU) 
+            player = self.GetSqueezeServerPlayer()
+            if player != None:
+                MenuItem = wx.MenuItem(playersMENU, -1, player)
+                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.ChangePlayer,player = player), id=MenuItem.GetId())
+                playersMENU.AppendItem(MenuItem)
+                playersMENU.AppendSeparator()
+            for playerName in  self.model.Players:
+                if playerName != player:
+                    MenuItem = wx.MenuItem(playersMENU, -1, playerName)
+                    playersMENU.Bind(wx.EVT_MENU, functools.partial(self.ChangePlayer,player = playerName), id=MenuItem.GetId())
+                    playersMENU.AppendItem(MenuItem)
+                    
+            toolsMENU.AppendSeparator()
         
-        create_menu_item(toolsMENU, 'Play', self.onScPlay)
-        create_menu_item(toolsMENU, 'Pause', self.onScPause)
-        create_menu_item(toolsMENU, 'Next', self.onScNext)
-        create_menu_item(toolsMENU, 'Previous', self.onScPrevious)
-        create_menu_item(toolsMENU, 'Rnd', self.onScRandom)
         #machinesMENU = wx.Menu() 
         
         #moldsMENU = wx.Menu() 
@@ -127,7 +148,6 @@ class TaskBarIcon(wx.TaskBarIcon):
         #toolsMENU.AppendMenu(-1, "Molds", moldsMENU) 
 
         #create_menu_item(moldsMENU, 'Say Hello', self.on_hello)
-        toolsMENU.AppendSeparator()
         create_menu_item(toolsMENU, 'Settings', self.on_settings)
         toolsMENU.AppendSeparator()
         create_menu_item(toolsMENU, 'Exit', self.on_exit)
@@ -224,3 +244,8 @@ class TaskBarIcon(wx.TaskBarIcon):
     def on_settings(self, event):
         self.FrmCtrl.showSettings()
         
+    def ChangePlayer(self, event,player):
+        oldPlayer = self.model.GuiPlayer.get()
+        if oldPlayer != player:
+            self.model.GuiPlayer.set(player)
+        self.UpdateToolTip()
