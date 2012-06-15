@@ -38,7 +38,7 @@ class squeezePlayerMdl:
         self.CurrentTrackTitle = Observable(None)
         self.CurrentTrackArtist = Observable(None)
         self.CurrentTrackEnds = Observable(None)
-        
+        self.CurrentTrackId = Observable(None)
     def OnAtribChange(self,value):
         
         discovered = True
