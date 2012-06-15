@@ -60,6 +60,7 @@ class squeezeConMdle:
         # Number of players on the server that can be used
         self.playersCount = Observable(0)
         self.playerList = []
+        self.Players = {}
         self.CbPlayersAvailable= []
         self.CbChurrentTrack = []
         self.host.addCallback(self.OnHostChange)
@@ -92,14 +93,27 @@ class squeezeConMdle:
             self.playerList.append(squeezePlayerMdl(index))
             self.playerList[index].discovered.addCallback(self.OnPlayersAvailableChange)
             self.playerList[index].CurrentTrackTitle.addCallback(self.OnCurrentTrack)
+        self.OnPlayersAvailableChange(value)
+        
+    
     
     def OnPlayersAvailableChange(self,value):
-        availablePlayewrs = []
+        #print "OnPlayersAvailableChange"
+        AvailablePlayersList = []
         for index in range(len(self.playerList)):
-            if self.playerList[index].discovered.get():
-                availablePlayewrs.append(unicode(self.playerList[index].name.get()))
+            if True != self.playerList[index].discovered.get():
+                continue
+            PlayerName = self.playerList[index].name.get()
+            AvailablePlayersList.append(PlayerName)
+            if PlayerName in self.Players:
+                continue
+            self.Players[PlayerName] = self.playerList[index]
+        AvailablePlayersSet = set(AvailablePlayersList)
+        for item in AvailablePlayersSet.symmetric_difference(self.Players):
+            del self.Players[item]
+        
         for func, args, kargs in self.CbPlayersAvailable:
-            func(value,availablePlayewrs,*args, **kargs)
+            func(value,AvailablePlayersList,*args, **kargs)
     
     def CbPlayersAvailableAdd(self,func, *args, **kargs):
         self.CbPlayersAvailable.append((func, args, kargs))
