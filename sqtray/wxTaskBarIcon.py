@@ -128,6 +128,7 @@ class TaskBarIcon(wx.TaskBarIcon):
             player = self.GetSqueezeServerPlayer()
             if player != None:
                 MenuItem = wx.MenuItem(playersMENU, -1, player)
+                # Bind event to self.ChangePlayer but add the parameter "player" to the call back, with the value "player"
                 playersMENU.Bind(wx.EVT_MENU, functools.partial(self.ChangePlayer,player = player), id=MenuItem.GetId())
                 playersMENU.AppendItem(MenuItem)
                 playersMENU.AppendSeparator()
