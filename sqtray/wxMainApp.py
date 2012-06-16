@@ -90,6 +90,7 @@ class myapp(wx.App):
         self.model.CbPlayersAvailableAdd(self.OnPlayers)
         self.model.CbChurrentTrackAdd(self.frmCtrl.handleTrackChange,None)
         self.model.connectionStr.addCallback(self.frmCtrl.handlePlayersChange)
+        self.model.SocketErrNo.addCallback(self.frmCtrl.handlePlayersChange)
         self.configRead()
     def OnPlayers(self,connected,playerlist):
         # If Not connected set None
@@ -97,19 +98,27 @@ class myapp(wx.App):
             if None != self.model.GuiPlayer.get():
                 self.model.GuiPlayer.set(None)
             return
+        # If no players Available:
+        AvailableArray = self.model.Players.keys()
+        if len(AvailableArray) == 0:
+            if None != self.model.GuiPlayer.get():
+                self.model.GuiPlayer.set(None)
+            return
         # Try to Apply Default Player
         DefaultPlayer = self.model.GuiPlayerDefault.get()
-        if DefaultPlayer in playerlist:
+        if DefaultPlayer in AvailableArray:
             OldDefaultPlayer = self.model.GuiPlayer.get()
             if OldDefaultPlayer != DefaultPlayer:
                 self.model.GuiPlayer.set(DefaultPlayer)
             return
+        # If the GuiPlayer is still set to right thing
+        GuiPlayer = self.model.GuiPlayer.get()
+        if GuiPlayer in AvailableArray:
+            return
         # Try to find any player
-        for index in range(len(self.model.playerList)):
-            Name = self.model.playerList[index].name.get()
-            if Name != None:
-                self.model.GuiPlayer.set(unicode(Name))
-                return
+        for PlayerName in self.model.Players:
+            self.model.GuiPlayer.set(unicode(PlayerName))
+            return
             
     def configRead(self):
         # Set Host
@@ -141,9 +150,9 @@ class myapp(wx.App):
         self.SetSqueezeServerPlayer(SqueezeServerPlayer)
         self.model.GuiPlayerDefault.set(SqueezeServerPlayer)
         self.squeezeConCtrl.RecConnectionOnline()
-        
+        #print "self.model.GuiPlayerDefault", self.model.GuiPlayerDefault.get()
     def configSave(self):
-        print 'saving'
+        #print 'saving'
         self.cfg.Write("squeezeServerHost", self.model.host.get())
         self.cfg.WriteInt("squeezeServerPort", self.model.port.get())
         SqueezeServerPlayer = self.GetSqueezeServerPlayer()
