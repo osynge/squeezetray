@@ -284,7 +284,7 @@ class squeezeConCtrl:
             self.model.port.set(port)
             self.RecConnectionOnline()
 
-    def OnPlayersAvailable(self,value,dfd):
+    def OnPlayersAvailable(self):
         #print "OnPlayersAvailable",value,dfd
         #playersCount = self.model.playersCount.get()
         AllPlayers = list (self.model.Players)

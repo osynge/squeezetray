@@ -118,7 +118,7 @@ class squeezeConMdle:
             del self.Players[item]
         
         for func, args, kargs in self.CbPlayersAvailable:
-            func(value,AvailablePlayersList,*args, **kargs)
+            func(*args, **kargs)
     
     def CbPlayersAvailableAdd(self,func, *args, **kargs):
         self.CbPlayersAvailable.append((func, args, kargs))
@@ -127,7 +127,7 @@ class squeezeConMdle:
     def OnCurrentTrack(self,value):
         #print "OnCurrentTrack (%s)" % value
         for func, args, kargs in self.CbChurrentTrack:
-            func(value,*args, **kargs)
+            func(*args, **kargs)
     
     
     

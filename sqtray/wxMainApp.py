@@ -48,18 +48,18 @@ class FrmCtrl:
         if (self.Example != None):
             wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_CONNECTION_ID,value))
             
-    def handleConnectionChange(self,value, window):
+    def handleConnectionChange(self,value):
         wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
         if (self.Example != None):
             wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
     
-    def handlePlayersChange(self,value,window = None,asda= None):
-        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_PLAYERS_ID,value))
+    def handlePlayersChange(self,value):
+        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_PLAYERS_ID,None))
         if (self.Example != None):
-            wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_PLAYERS_ID,value))
+            wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_PLAYERS_ID,None))
         
-    def handleTrackChange(self,value,other):
-        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CURRENT_TRACK_ID,value))
+    def handleTrackChange(self):
+        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CURRENT_TRACK_ID,None))
 
 class myapp(wx.App):
     def __init__(self):
@@ -68,7 +68,7 @@ class myapp(wx.App):
         self.model = squeezeConMdle()
         self.model.GuiPlayer = Observable(None)
         self.model.GuiPlayerDefault = Observable(None)
-        self.model.CbPlayersAvailableAdd(self.OnPlayerAvailable)
+        
         self.SqueezeServerPort = Observable(9000)
         self.SqueezeServerPort.addCallback(self.OnSqueezeServerPort)
         self.cfg = wx.FileConfig(appName="ApplicationName", 
@@ -85,16 +85,19 @@ class myapp(wx.App):
         #print "tb=%s" %self.tb
         self.tb.cfg = self.cfg
         self.model.GuiPlayer.addCallback(self.frmCtrl.handleConnectionStrChange)
-        self.squeezeConCtrl.CbConnectionAdd(self.frmCtrl.handleConnectionChange,None)
+        self.squeezeConCtrl.CbConnectionAdd(self.frmCtrl.handleConnectionChange)
+        
         self.model.CbPlayersAvailableAdd(self.frmCtrl.handlePlayersChange,None)
         self.model.CbPlayersAvailableAdd(self.OnPlayers)
-        self.model.CbChurrentTrackAdd(self.frmCtrl.handleTrackChange,None)
+        self.model.CbPlayersAvailableAdd(self.OnPlayerAvailable)
+        
+        self.model.CbChurrentTrackAdd(self.frmCtrl.handleTrackChange)
         self.model.connectionStr.addCallback(self.frmCtrl.handlePlayersChange)
         self.model.SocketErrNo.addCallback(self.frmCtrl.handlePlayersChange)
         self.configRead()
-    def OnPlayers(self,connected,playerlist):
+    def OnPlayers(self):
         # If Not connected set None
-        if not connected:
+        if not self.model.connected:
             if None != self.model.GuiPlayer.get():
                 self.model.GuiPlayer.set(None)
             return
@@ -159,7 +162,7 @@ class myapp(wx.App):
         self.cfg.Write("SqueezeServerPlayer", self.model.GuiPlayerDefault.get())
         self.cfg.Flush()
         
-    def OnPlayerAvailable(self,AvailablePlayers,extra):
+    def OnPlayerAvailable(self):
         #print "AvailablePlayers",AvailablePlayers,extra
         pass
     def SetSqueezeServerHost(self,host):
