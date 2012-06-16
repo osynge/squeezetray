@@ -59,7 +59,8 @@ class SqueezeConnectionWorker(Thread):
                 self.conn.request("POST", "/jsonrpc.js", params)
                 try:
                     response = self.conn.getresponse()
-                except httplib.BadStatusLine:
+                except httplib.BadStatusLine, E:
+                    print "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E)
                     self.tasks.task_done()
                     return
             if response.status != 200:
