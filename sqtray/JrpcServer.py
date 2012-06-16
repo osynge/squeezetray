@@ -6,6 +6,9 @@ from threading import *
 from Queue import Queue
 from threading import Thread
 import datetime
+
+from models import Observable
+
 if float(sys.version[:3]) >= 2.6:
     import json
 else:
@@ -21,6 +24,9 @@ class SqueezeConnectionWorker(Thread):
         self.daemon = True
         self.start()
         self.connectionString = None
+        self.SocketErrNo = Observable(0)
+        self.SocketErrMsg = Observable("")
+        
     def run(self):
         while True:
             func,params, args, kargs = self.tasks.get()
@@ -33,9 +39,19 @@ class SqueezeConnectionWorker(Thread):
                 return
             try:
                 self.conn.request("POST", "/jsonrpc.js", params)
-            except socket.error:
+            except socket.error, E:
+                #print "socket.error E.errno", E.errno
+                
+                #print "socket.error ", dir(E)
+                errorNumber = int(E.errno)
+                self.SocketErrNo.set(errorNumber)
+                self.SocketErrMsg.set(unicode(E.strerror))
+                    #print "socket.error E.strerror=%s", E.strerror
                 self.tasks.task_done()
                 return
+            errorNoOld = self.SocketErrNo.get()
+            self.SocketErrNo.set(0)
+            self.SocketErrMsg.set(unicode(""))
             try:
                 response = self.conn.getresponse()
             except httplib.BadStatusLine:
@@ -86,6 +102,8 @@ class SqueezeConnectionThreadPool:
         for _ in range(num_threads): 
             new = SqueezeConnectionWorker(self.tasks)
             new.ConnectionSet(connectionString)
+            new.SocketErrNo.addCallback(self.OnSocketErrNo)
+            new.SocketErrMsg.addCallback(self.OnSocketErrMsg)
             self.arrayOfSqueezeConnectionWorker.append(new)
         self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
         
@@ -96,8 +114,20 @@ class SqueezeConnectionThreadPool:
         #print "connectionString =" ,  self.squeezeConMdle.connectionStr.get()
         params = json.dumps(message, sort_keys=True, indent=4)
         self.tasks.put((func,params, args, kargs))
-  
-        
+    
+    def OnSocketErrNo(self,value):
+        #print "OnSocketErrNo='%s'" % (value)
+        SocketErrNo = self.squeezeConMdle.SocketErrNo.get()
+        if SocketErrNo != value:
+            #print "OnSocketErrNo from '%s' to '%s'" % (SocketErrNo,value)
+            self.squeezeConMdle.SocketErrNo.set(value)        
+    
+    def OnSocketErrMsg(self,value):
+        #print "OnSocketErrMsg='%s'" % (value)
+        SocketErrMsg = self.squeezeConMdle.SocketErrMsg.get()
+        if SocketErrMsg != value:
+            #print "OnSocketErrMsg from '%s' to '%s'" % (SocketErrMsg,value)
+            self.squeezeConMdle.SocketErrMsg.set(value)
     def OnConnectionStrChange(self,value):
         oldvalue = self.squeezeConMdle.connectionStr.get()
         for player in range(len(self.arrayOfSqueezeConnectionWorker)):
@@ -257,7 +287,8 @@ class squeezeConCtrl:
     def OnPlayersAvailable(self,value,dfd):
         #print "OnPlayersAvailable",value,dfd
         #playersCount = self.model.playersCount.get()
-        for player in self.model.Players:
+        AllPlayers = list (self.model.Players)
+        for player in AllPlayers:
             CurrentTrackId = self.model.Players[player].CurrentTrackId.get()
             if None == CurrentTrackId:
                 self.RecPlayerStatus(player)
