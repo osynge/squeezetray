@@ -58,7 +58,7 @@ class FrmCtrl:
         if (self.Example != None):
             wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_PLAYERS_ID,None))
         
-    def handleTrackChange(self):
+    def handleCurrentTrackChange(self):
         wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CURRENT_TRACK_ID,None))
 
 class myapp(wx.App):
@@ -91,7 +91,7 @@ class myapp(wx.App):
         self.model.CbPlayersAvailableAdd(self.OnPlayers)
         self.model.CbPlayersAvailableAdd(self.OnPlayerAvailable)
         
-        self.model.CbChurrentTrackAdd(self.frmCtrl.handleTrackChange)
+        self.model.CbChurrentTrackAdd(self.frmCtrl.handleCurrentTrackChange)
         self.model.connectionStr.addCallback(self.frmCtrl.handlePlayersChange)
         self.model.SocketErrNo.addCallback(self.frmCtrl.handlePlayersChange)
         self.configRead()
