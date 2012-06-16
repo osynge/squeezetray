@@ -66,7 +66,13 @@ class FrmSettings(wx.Frame):
         if not hasattr(self,'model'):
             self.SetStatusText("")
             return
+        #print "model.SocketErrNo.get()=%s" % self.model.SocketErrNo.get()
+        if  0 != self.model.SocketErrNo.get():
+            SocketErrMsg = unicode(self.model.SocketErrMsg.get())
+            self.SetStatusText(SocketErrMsg)
+            return
         if False == self.model.connected.get():
+            
             self.SetStatusText("Server not connected.")
             return
         CurrentPlayer = self.model.GuiPlayer.get()
@@ -112,8 +118,9 @@ class FrmSettings(wx.Frame):
     def UpdateCbPlayer(self):
         #print "here we go" , self.cbPlayer.GetStrings()
         currentOptions = self.cbPlayer.GetStrings()
-        availablePlayers = self.app.squeezeConCtrl.PlayersList()
+        availablePlayers = self.model.Players.keys()
         if currentOptions != availablePlayers:
+            self.cbPlayer.SetSelection(-1)
             self.cbPlayer.Clear()
             for player in availablePlayers:
                 self.cbPlayer.Append(player)
@@ -123,7 +130,8 @@ class FrmSettings(wx.Frame):
             self.cbPlayer.Clear()
             self.cbPlayer.SetSelection(-1)
         else:
-            CurrentPlayer = self.model.GuiPlayer.get()
+            CurrentPlayer = self.model.GuiPlayerDefault.get()
+            #print "CurrentPlayer",CurrentPlayer
             playerIndex = 0
             if CurrentPlayer != None:
                 try:
