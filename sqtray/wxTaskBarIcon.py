@@ -125,16 +125,6 @@ class TaskBarIcon(wx.TaskBarIcon):
                     playersMENU.AppendItem(MenuItem)
                     
             toolsMENU.AppendSeparator()
-        
-        #machinesMENU = wx.Menu() 
-        
-        #moldsMENU = wx.Menu() 
-        #toolsMENU.AppendMenu(-1, "Command", machinesMENU) 
-        
-        
-        #toolsMENU.AppendMenu(-1, "Molds", moldsMENU) 
-
-        #create_menu_item(moldsMENU, 'Say Hello', self.on_hello)
         create_menu_item(toolsMENU, 'Settings', self.on_settings)
         toolsMENU.AppendSeparator()
         create_menu_item(toolsMENU, 'Exit', self.on_exit)
