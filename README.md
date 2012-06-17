@@ -5,7 +5,21 @@ Controls the Logitech squeeze box, with basic commands from the system tray. Bas
 
 
 Getting the source
+=============
 
+Check ithe code out on the command line with:
+
+    git clone git://github.com/osynge/squeezetray.git
+
+Change into the right directory:
+
+    cd squeezetray
+
+Then run the program:
+    
+    python squeezetray
+
+python squeezetray
 ==============
 
 Installing squeezetray
