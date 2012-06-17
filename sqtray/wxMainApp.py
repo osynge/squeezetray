@@ -105,6 +105,24 @@ class myapp(wx.App):
         self.model.connectionStr.addCallback(self.frmCtrl.handlePlayersChange)
         self.model.SocketErrNo.addCallback(self.frmCtrl.handlePlayersChange)
         self.configRead()
+        TIMER_ID = wx.NewId()  # pick a number
+        self.timer = wx.Timer(self, TIMER_ID)  # message will be sent to the panel
+        self.timer.Start(9000)  # x100 milliseconds
+        wx.EVT_TIMER(self, TIMER_ID, self.OnTimer)  # call the on_timer function
+    def OnTimer(self,event):
+        self.frmCtrl.tb.UpdateToolTip()
+        ConnectionStatus = self.model.connected.get()
+        if not ConnectionStatus:
+            #print "not on line"
+            self.squeezeConCtrl.RecConnectionOnline()
+            return
+        player = self.model.GuiPlayer.get()
+        #print "on_timer.player",player
+        if player != None:
+            self.squeezeConCtrl.PlayerStatus(player)
+            return
+        self.squeezeConCtrl.RecConnectionOnline()
+        
     def OnPlayers(self):
         # If Not connected set None
         if not self.model.connected:

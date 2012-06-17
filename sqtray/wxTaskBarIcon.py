@@ -28,7 +28,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.model = model
         #self.set_icon(TRAY_ICON)
         self.icon = wxIcons.trayDefault.getIcon()
-        self.SetIcon(self.icon,"S")
+        self.SetIcon(self.icon,"SqueezeTray")
         self.Bind(wx.EVT_TASKBAR_MOVE, self.on_move)
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_TASKBAR_LEFT_UP, self.on_left_up )
@@ -95,23 +95,6 @@ class TaskBarIcon(wx.TaskBarIcon):
         
         
         #pos = self.panel.ScreenToClient(pos)
-
-    def on_timer(self,event):
-        self.UpdateToolTip()
-        #print "on_timer"
-        ConnectionStatus = self.model.connected.get()
-        #print "on_timer.ConnectionStatus",ConnectionStatus
-        if not ConnectionStatus:
-            #print "not on line"
-            self.app.squeezeConCtrl.RecConnectionOnline()
-            return
-        player = self.model.GuiPlayer.get()
-        #print "on_timer.player",player
-        if player != None:
-            
-            self.app.squeezeConCtrl.PlayerStatus(player)
-            return
-        self.app.squeezeConCtrl.RecConnectionOnline()
 
     def CreatePopupMenu(self):
         toolsMENU = wx.Menu()
