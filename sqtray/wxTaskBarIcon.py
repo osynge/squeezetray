@@ -43,11 +43,6 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.Connect(-1, -1, EVT_RESULT_CURRENT_TRACK_ID, self.OnTrack)
         #self.ToolTipText = TRAY_TOOLTIP
         
-        
-        TIMER_ID = wx.NewId()  # pick a number
-        self.timer = wx.Timer(self, TIMER_ID)  # message will be sent to the panel
-        self.timer.Start(9000)  # x100 milliseconds
-        wx.EVT_TIMER(self, TIMER_ID, self.on_timer)  # call the on_timer function
 
     def Show(self):
         
