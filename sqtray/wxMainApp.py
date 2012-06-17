@@ -13,6 +13,16 @@ from sqtray.wxEvents import ResultEvent2
 from sqtray.wxTaskBarIcon import TaskBarIcon
 from sqtray.wxFrmSettings import FrmSettings
 
+def StoreConfig(FilePath,squeezeConMdle):
+    cfg = wx.FileConfig(appName="ApplicationName", 
+                                vendorName="VendorName", 
+                                localFilename=FilePath, 
+                                style=wx.CONFIG_USE_LOCAL_FILE)
+    cfg.Write("squeezeServerHost", squeezeConMdle.host.get())
+
+    cfg.WriteInt("squeezeServerPort", squeezeConMdle.port.get())
+    cfg.Flush()
+
 
 class FrmCtrl:
     def  __init__(self,model):
