@@ -98,7 +98,7 @@ class myapp(wx.App):
         self.squeezeConCtrl.CbConnectionAdd(self.frmCtrl.handleConnectionChange)
         
         self.model.CbPlayersAvailableAdd(self.frmCtrl.handlePlayersChange,None)
-        self.model.CbPlayersAvailableAdd(self.OnPlayers)
+
         self.model.CbPlayersAvailableAdd(self.OnPlayerAvailable)
         
         self.model.CbChurrentTrackAdd(self.frmCtrl.handleCurrentTrackChange)
@@ -123,7 +123,7 @@ class myapp(wx.App):
             return
         self.squeezeConCtrl.RecConnectionOnline()
         
-    def OnPlayers(self):
+    def OnPlayerAvailable(self):
         # If Not connected set None
         if not self.model.connected:
             if None != self.model.GuiPlayer.get():
@@ -189,10 +189,7 @@ class myapp(wx.App):
         SqueezeServerPlayer = self.GetSqueezeServerPlayer()
         self.cfg.Write("SqueezeServerPlayer", self.model.GuiPlayerDefault.get())
         self.cfg.Flush()
-        
-    def OnPlayerAvailable(self):
-        #print "AvailablePlayers",AvailablePlayers,extra
-        pass
+
     def SetSqueezeServerHost(self,host):
         OldHost = self.model.host.get()
         if OldHost != host:
