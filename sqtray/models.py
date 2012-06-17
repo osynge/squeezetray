@@ -97,7 +97,7 @@ class squeezeConMdle:
         for index in range(value):
             self.playerList.append(squeezePlayerMdl(index))
             self.playerList[index].discovered.addCallback(self.OnPlayersAvailableChange)
-            self.playerList[index].CurrentTrackTitle.addCallback(self.OnCurrentTrack)
+            self.playerList[index].CurrentTrackId.addCallback(self.OnCurrentTrack)
         self.OnPlayersAvailableChange(value)
         
     
