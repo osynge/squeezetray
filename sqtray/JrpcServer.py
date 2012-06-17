@@ -40,13 +40,9 @@ class SqueezeConnectionWorker(Thread):
             try:
                 self.conn.request("POST", "/jsonrpc.js", params)
             except socket.error, E:
-                #print "socket.error E.errno", E.errno
-                
-                #print "socket.error ", dir(E)
                 errorNumber = int(E.errno)
                 self.SocketErrNo.set(errorNumber)
                 self.SocketErrMsg.set(unicode(E.strerror))
-                    #print "socket.error E.strerror=%s", E.strerror
                 self.tasks.task_done()
                 return
             errorNoOld = self.SocketErrNo.get()
@@ -54,6 +50,12 @@ class SqueezeConnectionWorker(Thread):
             self.SocketErrMsg.set(unicode(""))
             try:
                 response = self.conn.getresponse()
+            except socket.error, E:
+                errorNumber = int(E.errno)
+                self.SocketErrNo.set(errorNumber)
+                self.SocketErrMsg.set(unicode(E.strerror))
+                self.tasks.task_done()
+                return
             except httplib.BadStatusLine:
                 self.conn = httplib.HTTPConnection(self.connectionString)
                 self.conn.request("POST", "/jsonrpc.js", params)
