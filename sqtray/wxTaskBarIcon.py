@@ -6,6 +6,7 @@ from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
 from sqtray.wxFrmSettings import FrmSettings
 import datetime
 import functools
+import wxIcons
 TRAY_TOOLTIP = 'SqueezeTray'
 TRAY_ICON = 'icon.png'
 
@@ -25,8 +26,9 @@ class TaskBarIcon(wx.TaskBarIcon):
     def __init__(self,model):
         super(TaskBarIcon, self).__init__()
         self.model = model
-        self.set_icon(TRAY_ICON)
-        
+        #self.set_icon(TRAY_ICON)
+        self.icon = wxIcons.trayDefault.getIcon()
+        self.SetIcon(self.icon,"S")
         self.Bind(wx.EVT_TASKBAR_MOVE, self.on_move)
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_TASKBAR_LEFT_UP, self.on_left_up )
@@ -39,7 +41,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.Example = None
         self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayers)
         self.Connect(-1, -1, EVT_RESULT_CURRENT_TRACK_ID, self.OnTrack)
-        self.ToolTipText = TRAY_TOOLTIP
+        #self.ToolTipText = TRAY_TOOLTIP
         
         
         TIMER_ID = wx.NewId()  # pick a number
@@ -48,6 +50,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         wx.EVT_TIMER(self, TIMER_ID, self.on_timer)  # call the on_timer function
 
     def Show(self):
+        
         self.app.squeezeConCtrl.RecConnectionOnline()
         super(TaskBarIcon, self).Show()        
         
@@ -160,8 +163,9 @@ class TaskBarIcon(wx.TaskBarIcon):
             CurrentToolTip = self.ToolTipText
         self.SetIcon(self.icon, CurrentToolTip)
     def set_toolTip(self, tooltip):
-        if self.ToolTipText == tooltip:
-            return
+        if hasattr(self,'ToolTipText'):
+            if self.ToolTipText == tooltip:
+                return
         if hasattr(self,'icon'):
             self.SetIcon(self.icon, tooltip)
         self.ToolTipText = unicode(tooltip)
