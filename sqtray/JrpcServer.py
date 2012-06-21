@@ -195,7 +195,7 @@ class SqueezeConnectionThreadPool:
         for item in playlist_loop:
             playlistIndex = int(item["playlist index"])
             if playlistIndex == playlist_cur_index:
-                CurrentTrackId = unicode(item["id"])
+                CurrentTrackId = int(item["id"])
                 CurrentTrackTitle = unicode(item["title"])
                 OldCurrentTrackTitle = self.squeezeConMdle.playerList[playerIndex].CurrentTrackTitle.get()
                 if CurrentTrackTitle  != OldCurrentTrackTitle:
@@ -229,7 +229,50 @@ class SqueezeConnectionThreadPool:
                 OldCurrentTrackId = self.squeezeConMdle.playerList[playerIndex].CurrentTrackId.get()
                 if OldCurrentTrackId != CurrentTrackId:
                     self.squeezeConMdle.playerList[playerIndex].CurrentTrackId.set(CurrentTrackId)
-       
+    def OnTrackInfo(self,responce):
+        now = datetime.datetime.now()
+        #print "OnPlayerStatus:",datetime.datetime.now()
+        #print  "OnPlayerStatus",responce
+        #print "OnTrackInfo",unicode(json.dumps(responce, indent=4))
+        
+        def cleanList(inputStr):
+            inputList = inputStr.split(",")
+            outputList = []
+            for item in inputList:
+                cleanItem = item.strip()
+                if len(cleanItem) > 0:
+                    outputList.append(cleanItem)
+            return outputList
+        SongId = None 
+        SongTitle = None
+        SongArtists = []
+        SongGenres = []
+        duration = None
+        SongSampleWidth = None
+        SongDuration = None
+        SongTrackNo = None
+        SongYear = None
+
+        for metadata in  responce["result"]["songinfo_loop"]:
+            print metadata
+            for key in metadata:
+                if key == u'id':
+                    SongId = metadata[key]
+                if key == u'title':
+                    SongTitle = metadata[key]
+                if key == u'genres':
+                    SongGenres = cleanList(metadata[key])
+                if key == u'artist':
+                    SongArtists = cleanList(metadata[key])
+                if key == u'samplesize':
+                    SongSampleWidth = cleanList(metadata[key])
+                if key == u'duration':
+                    SongDuration = cleanList(metadata[key])
+                if key == u'tracknum':
+                    SongDuration = cleanList(metadata[key])
+                if key == u'year':
+                    SongYear = cleanList(metadata[key])
+        print SongId,SongTitle,SongArtists,SongGenres
 class squeezeConCtrl:
     def __init__(self,model):  
         """Controler class for takes a model as a constructor (class squeezeConMdle)"""
@@ -242,6 +285,9 @@ class squeezeConCtrl:
         self.model.playersCount.addCallback(self.OnPlayersCount)
         self.CbConnection = []
         self.CbPlayersList = []
+        self.model.CbChurrentTrackAdd(self.OnTrackChange)
+    
+    
     def OnPlayersCount(self,value):
         #print "OnPlayersCount", value
         for index in range(len(self.model.playerList)):
@@ -295,6 +341,20 @@ class squeezeConCtrl:
             CurrentTrackId = self.model.Players[player].CurrentTrackId.get()
             if None == CurrentTrackId:
                 self.RecPlayerStatus(player)
+
+    def OnTrackChange(self):
+        print "OnTrackChange"
+        for player in self.model.Players:
+            trackId = self.model.Players[player].CurrentTrackId.get()
+            if trackId == None:
+                continue
+            trackId = int(trackId)
+            if trackId <= 0:
+                continue
+            print "trackId=%s" % (trackId)
+            self.view1.sendMessage(self.view1.OnTrackInfo,{ 
+                    "method":"slim.request",
+                    "params": ["-",['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPASIediqtymkovrfijnCcYXRTIuwxN"] ]     })
         
     def CbPlayersListAdd(self, func, *args, **kargs):
         """Add a task to the queue"""
@@ -316,6 +376,9 @@ class squeezeConCtrl:
         for func, args, kargs in self.CbConnection:
             func(value,*args, **kargs)
 
+
+
+
     def ConnectionOnline(self):
         return self.model.connected.get()
         
@@ -333,13 +396,8 @@ class squeezeConCtrl:
                     ["status","-","4","tags:playlist_id"]
                 ]
         })
-        
-        
-        #Eself.view1.sendMessage(self.view1.OnPlayerCount,{ 
-        #    "method":"slim.request",
-        #    "params": [ '-', [ 'player', 'count', '?' ] ]
-        #})
-        #self.view1.RecPlayerStatus()        
+    def RecTrackInfo(self, track):
+        print "RecTrackInfo=%s" % (track)
     def Pause(self,player):
         if not self.model.connected.get():
             print "connectionStr=",self.model.connectionStr.get()

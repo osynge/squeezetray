@@ -1,14 +1,14 @@
 import wx
 from sqtray.models import Observable, squeezeConMdle, squeezePlayerMdl
 from sqtray.JrpcServer import squeezeConCtrl
-
+from sqtray.wxTrayIconPopUpMenu import CreatePopupMenu
 
 from wxEvents import EVT_RESULT_CONNECTED_ID
 from wxEvents import EVT_RESULT_PLAYERS_ID
 from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
 from wxEvents import EVT_RESULT_CONNECTION_ID
 from sqtray.wxEvents import ResultEvent2
-
+import datetime
 
 from sqtray.wxTaskBarIcon import TaskBarIcon
 from sqtray.wxFrmSettings import FrmSettings
@@ -53,7 +53,10 @@ class FrmCtrl:
         self.closeSettings(None)
         self.tb.Destroy()
 
-
+    def CreatePopUp(self,param):
+        ################################################################
+        print param
+        CreatePopupMenu()
     def handleConnectionStrChange(self,value):
         if (self.Example != None):
             wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_CONNECTION_ID,value))
@@ -109,8 +112,27 @@ class myapp(wx.App):
         self.timer = wx.Timer(self, TIMER_ID)  # message will be sent to the panel
         self.timer.Start(9000)  # x100 milliseconds
         wx.EVT_TIMER(self, TIMER_ID, self.OnTimer)  # call the on_timer function
+        self.BindApp()
+        
+    def BindApp(self):
+        self.frmCtrl.tb.Bind(wx.EVT_TASKBAR_MOVE, self.on_move)
+        self.frmCtrl.tb.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
+        self.frmCtrl.tb.Bind(wx.EVT_TASKBAR_LEFT_UP, self.on_left_up )
+        #self.frmCtrl.tb.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.on_right_down )
+        #self.frmCtrl.tb.Bind(wx.EVT_TASKBAR_RIGHT_UP, self.on_right_up )
+        self.frmCtrl.tb.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, self.on_left_dclick)
+        self.frmCtrl.tb.Bind(wx.EVT_TASKBAR_RIGHT_DCLICK, self.on_right_dclick)
+        
+        #self.Bind(wx.EVT_TASKBAR_CLICK, self.frmCtrl.tb.on_click )
+        
+        
+        self.frmCtrl.tb.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayers)
+        self.frmCtrl.tb.Connect(-1, -1, EVT_RESULT_CURRENT_TRACK_ID, self.OnTrack)
+        
+        
+        self.frmCtrl.tb.CbAddCreatePopupMenu(self.CreatePopupMenu)
     def OnTimer(self,event):
-        self.frmCtrl.tb.UpdateToolTip()
+        self.UpdateToolTip()
         ConnectionStatus = self.model.connected.get()
         if not ConnectionStatus:
             #print "not on line"
@@ -122,6 +144,11 @@ class myapp(wx.App):
             self.squeezeConCtrl.PlayerStatus(player)
             return
         self.squeezeConCtrl.RecConnectionOnline()
+    
+    
+    def CreatePopupMenu(self,context):
+        #print "asdasddddddddddddddddddddddads"
+        return CreatePopupMenu(self.model,self)
         
     def OnPlayerAvailable(self):
         # If Not connected set None
@@ -224,4 +251,116 @@ class myapp(wx.App):
         return None
     
         
+    def on_move(self, event):
+        #print 'on_move'
+        pass
+        
+        #print self.ScreenToClient(wx.GetMousePosition())
+    def on_left_up(self, event):
+        print 'on_left_up' , self.GetSqueezeServerPlayer()
+        player = self.GetSqueezeServerPlayer()
+        if player != None:
+            self.squeezeConCtrl.RecPlayerStatus(player)
+        else:
+            self.on_settings(event)
+    def on_right_down(self, event):
+        #print 'on_right_down'
+        pass
+    def on_right_up(self, event):
+        print 'on_right_up'
+        #menu = self.CreatePopupMenu()
+        #print dir (menu)
+    def on_right_dclick(self, event):
+        print 'on_right_dclick'
+        self.CreatePopUp(  event.GetPoint() )
+    def on_click(self, event):
+        pass
     
+    def on_left_down(self, event):
+        #print 'Tray icon was left-clicked.'
+        pass
+    def on_left_dclick(self, event):
+        #print 'Tray icon was on_left_dclick-clicked.'
+        self.set_icon('gnomedecor1.png')
+        self.OnShowPopup( event)
+    def on_hello(self, event):
+        print 'Hello, world!'
+    def on_exit(self, event):
+        #self.on_settings_close(event)
+        #wx.CallAfter(self.Destroy)
+        self.Exit()
+    def onScPlay(self, event):
+        player = self.GetSqueezeServerPlayer()
+        if player != None:
+            self.squeezeConCtrl.Play(player)
+        else:
+            self.on_settings(event)
+    
+    def onScPause(self, event):
+        player = self.GetSqueezeServerPlayer()
+        #print "player",player
+        if player != None:
+            self.squeezeConCtrl.Pause(player)
+        else:
+            self.on_settings(event)
+    def onScNext(self, event):
+        player = self.GetSqueezeServerPlayer()
+        if player != None:
+            #self.squeezecmd.squeezecmd_Index(player,1)
+            
+            self.squeezeConCtrl.Index(player,1)
+        else:
+            self.on_settings(event)
+    def onScPrevious(self, event):
+        player = self.GetSqueezeServerPlayer()
+        if player != None:
+            #self.squeezecmd.squeezecmd_Index(player,-1)
+            self.squeezeConCtrl.Index(player,-1)
+        else:
+            self.on_settings(event)
+    def onScRandom(self, event):
+        player = self.GetSqueezeServerPlayer()
+        if player != None:
+            #self.squeezecmd.squeezecmd_randomplay(player)
+            self.squeezeConCtrl.PlayRandomSong(player)
+        else:
+            self.on_settings(event)
+
+
+    def on_settings(self, event):
+        self.frmCtrl.showSettings()
+        
+    def ChangePlayer(self, event,player):
+        oldPlayer = self.model.GuiPlayer.get()
+        if oldPlayer != player:
+            self.model.GuiPlayer.set(player)
+        self.UpdateToolTip()
+    
+    def OnPlayers(self, event):
+        #print "OnPlayers(=%s)" % (Event)            
+        self.UpdateToolTip()
+        
+    def OnTrack(self, event):
+        self.UpdateToolTip()
+    def UpdateToolTip(self):
+        player = self.GetSqueezeServerPlayer()
+        if player != None:
+            for index in  range(len(self.model.playerList)):
+                playerName = self.model.playerList[index].name.get()
+                if playerName == player:
+                    newToolTip = unicode(player)
+                    CurrentOperationMode = self.model.playerList[index].operationMode.get()
+                    if CurrentOperationMode != None:
+                        newToolTip += ":%s" % (CurrentOperationMode)
+                    CurrentTrackTitle = self.model.playerList[index].CurrentTrackTitle.get()
+                    if CurrentTrackTitle != None:
+                        newToolTip += "\nTrack:%s" % (CurrentTrackTitle)
+                    CurrentTrackArtist = self.model.playerList[index].CurrentTrackArtist.get()
+                    if CurrentTrackArtist != None:
+                        newToolTip += "\nArtist:%s" % (CurrentTrackArtist)
+                    CurrentTrackEnds = self.model.playerList[index].CurrentTrackEnds.get()
+                    #print "CurrentTrackEnds=%s" % (CurrentTrackEnds)
+                    if CurrentTrackEnds != None:
+                        seconds = (CurrentTrackEnds - datetime.datetime.now()).total_seconds()
+                        newToolTip += "\nRemaining:%s" % (seconds)
+                    self.frmCtrl.tb.set_toolTip(newToolTip)
