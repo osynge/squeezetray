@@ -8,7 +8,7 @@ from threading import Thread
 import datetime
 
 from models import Observable
-
+import exceptions
 if float(sys.version[:3]) >= 2.6:
     import json
 else:
@@ -37,10 +37,15 @@ class SqueezeConnectionWorker(Thread):
             if self.connectionString == None:
                 self.tasks.task_done()
                 return
+            if self.conn == None:
+                self.conn = httplib.HTTPConnection(connectionStr)
+                self.tasks.task_done()
+                return
             try:
                 self.conn.request("POST", "/jsonrpc.js", params)
             except socket.error, E:
-                errorNumber = int(E.errno)
+                if hasattr(E,'errno'):
+                    errorNumber = int(E.errno)
                 self.SocketErrNo.set(errorNumber)
                 self.SocketErrMsg.set(unicode(E.strerror))
                 self.tasks.task_done()
@@ -50,6 +55,8 @@ class SqueezeConnectionWorker(Thread):
             self.SocketErrMsg.set(unicode(""))
             try:
                 response = self.conn.getresponse()
+            except exceptions.AttributeError, E:
+                return
             except socket.error, E:
                 errorNumber = int(E.errno)
                 self.SocketErrNo.set(errorNumber)
@@ -254,7 +261,7 @@ class SqueezeConnectionThreadPool:
         SongYear = None
 
         for metadata in  responce["result"]["songinfo_loop"]:
-            print metadata
+            #print metadata
             for key in metadata:
                 if key == u'id':
                     SongId = metadata[key]
@@ -272,7 +279,7 @@ class SqueezeConnectionThreadPool:
                     SongDuration = cleanList(metadata[key])
                 if key == u'year':
                     SongYear = cleanList(metadata[key])
-        print SongId,SongTitle,SongArtists,SongGenres
+        #print SongId,SongTitle,SongArtists,SongGenres
 class squeezeConCtrl:
     def __init__(self,model):  
         """Controler class for takes a model as a constructor (class squeezeConMdle)"""
@@ -343,7 +350,7 @@ class squeezeConCtrl:
                 self.RecPlayerStatus(player)
 
     def OnTrackChange(self):
-        print "OnTrackChange"
+        #print "OnTrackChange"
         for player in self.model.Players:
             trackId = self.model.Players[player].CurrentTrackId.get()
             if trackId == None:
@@ -351,7 +358,7 @@ class squeezeConCtrl:
             trackId = int(trackId)
             if trackId <= 0:
                 continue
-            print "trackId=%s" % (trackId)
+            #print "trackId=%s" % (trackId)
             self.view1.sendMessage(self.view1.OnTrackInfo,{ 
                     "method":"slim.request",
                     "params": ["-",['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPASIediqtymkovrfijnCcYXRTIuwxN"] ]     })
@@ -379,8 +386,6 @@ class squeezeConCtrl:
 
 
 
-    def ConnectionOnline(self):
-        return self.model.connected.get()
         
     def RecPlayerStatus(self,player):
         if not self.model.connected.get():
