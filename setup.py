@@ -3,8 +3,9 @@ from sys import version_info
 
 from distutils.core import setup
 
+Application = 'SqueezeWxTray'
 
-setup(name='SqueezeWxTray',
+setup(name=Application,
     version=version,
     description="VM Image list subscribing tool.",
     long_description="""This application attempts to be the equivalent of a modern Linux package update
@@ -26,5 +27,5 @@ back end, and caches available image lists.""",
         'Programming Language :: Python',
         ],
     scripts=['squeezetray'],
-    data_files=[('/usr/share/doc/hepixvmilsubscriber-%s' % (version),['README.md','LICENSE','logger.conf','ChangeLog'])]
+    data_files=[('/usr/share/doc/%s-%s' % (Application,version),['README.md','LICENSE','logger.conf','ChangeLog'])]
     )
