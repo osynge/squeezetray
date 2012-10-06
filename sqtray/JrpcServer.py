@@ -3,6 +3,7 @@ import httplib, urllib
 import sys, traceback
 from threading import *
 
+import logging
 from Queue import Queue
 from threading import Thread
 import datetime
@@ -16,6 +17,9 @@ else:
     # as working alternative to the json included.
     import simplejson as json
 
+
+
+
 class SqueezeConnectionWorker(Thread):
     """Thread executing tasks from a given tasks queue"""
     def __init__(self, tasks):
@@ -26,6 +30,7 @@ class SqueezeConnectionWorker(Thread):
         self.connectionString = None
         self.SocketErrNo = Observable(0)
         self.SocketErrMsg = Observable("")
+        self.log = logging.getLogger("JrpcServer.SqueezeConnectionWorker")
         
     def run(self):
         while True:
@@ -65,11 +70,14 @@ class SqueezeConnectionWorker(Thread):
                 return
             except httplib.BadStatusLine:
                 self.conn = httplib.HTTPConnection(self.connectionString)
-                self.conn.request("POST", "/jsonrpc.js", params)
+                try:
+                    self.conn.request("POST", "/jsonrpc.js", params)
+                except err, E:
+                    elf.log.info( "Connection excepotion exception.message=%s,E=%s" % (E.message,E))
                 try:
                     response = self.conn.getresponse()
                 except httplib.BadStatusLine, E:
-                    print "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E)
+                    self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E))
                     self.tasks.task_done()
                     return
             if response.status != 200:
@@ -103,8 +111,9 @@ class SqueezeConnectionWorker(Thread):
         
 class SqueezeConnectionThreadPool:
     """Pool of threads consuming tasks from a queue"""
+    
     def __init__(self, squeezeConMdle,num_threads = 10):
-        
+        self.log = logging.getLogger("JrpcServer.SqueezeConnectionThreadPool")
         self.squeezeConMdle = squeezeConMdle
         connectionString = self.squeezeConMdle.connectionStr.get()
         self.tasks = Queue(num_threads)
@@ -180,6 +189,9 @@ class SqueezeConnectionThreadPool:
         #print "OnPlayerStatus",unicode(json.dumps(responce, indent=4))
         playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
+        if not "playlist_cur_index" in responce["result"].keys():
+            self.log.error("Message contained no playlist_cur_index")
+            return
         playlist_cur_index = int(responce["result"]["playlist_cur_index"])
         playlist_loop = responce["result"]["playlist_loop"]
         
