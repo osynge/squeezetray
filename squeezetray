@@ -1,9 +1,47 @@
 #!/usr/bin/env python
+import sys
 from sqtray.wxMainApp import myapp
 import optparse
 
 import logging
 from sqtray.__version__ import version
+
+
+
+def checkEnviromentLinuxUbuntuWhiteList():
+    log = logging.getLogger("checkEnviromentLinuxUbuntuWhiteList")
+    from gi.repository import Gio,GLib
+    allschenamas = Gio.Settings.list_schemas()
+    if 'com.canonical.Unity.Panel' in allschenamas:
+        gsettings = Gio.Settings.new('com.canonical.Unity.Panel')
+        systrayWhiteListVariant = gsettings.get_value('systray-whitelist')
+        if "Python" in systrayWhiteListVariant:
+            log.info("Python is whitelisted in system tray.")
+            return
+        if "All" in systrayWhiteListVariant:
+            log.info("All items are whitelisted in system tray.")
+            return
+        
+        log.warning("systray-whitelist=%s" % (systrayWhiteListVariant))
+        systrayWhiteList = []
+        for item in tange(0 ,len(systrayWhiteListVariant)):
+            itemValue =  str(systrayWhiteListVariant[item])
+            systrayWhiteList.append(itemValue)
+        
+        systrayWhiteList.append("Python")
+        variant = GLib.Variant.new_strv(systrayWhiteList)
+        gsettings.set_value('systray-whitelist',variant)
+        log.info("whitelisted for system tray now includes Python.")
+def checkEnviromentLinux():
+    checkEnviromentLinuxUbuntuWhiteList()
+
+
+def checkEnviroment():
+    if sys.platform.startswith('linux'):
+        # Linux-specific code here...
+        checkEnviromentLinux()
+
+
 
 def main():
     p = optparse.OptionParser(version = "%prog " + version)
@@ -50,7 +88,7 @@ def main():
     log = logging.getLogger("main")
     # Now logging is set up process other options
 
-
+    checkEnviroment()
     app = myapp()
     app.MainLoop()
 
