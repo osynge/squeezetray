@@ -5,6 +5,7 @@ from wxEvents import EVT_RESULT_CONNECTED_ID
 from wxEvents import EVT_RESULT_PLAYERS_ID
 from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
 from wxEvents import EVT_RESULT_CONNECTION_ID
+import wxIcons
 class FrmSettings(wx.Frame):
   
     def __init__(self, parent,  title):
@@ -62,6 +63,11 @@ class FrmSettings(wx.Frame):
         self.sizer.AddGrowableCol(2)
         
         self.SetSizerAndFit(self.sizer)
+        
+        
+        self.icon = wxIcons.trayDefault.getIcon()
+        self.SetIcon(self.icon)
+        
     def UpdateStatusbar(self):
         if not hasattr(self,'model'):
             self.SetStatusText("")
