@@ -21,17 +21,15 @@ def checkEnviromentLinuxUbuntuWhiteList():
         if "All" in systrayWhiteListVariant:
             log.info("All items are whitelisted in system tray.")
             return
-        
-        log.warning("systray-whitelist=%s" % (systrayWhiteListVariant))
         systrayWhiteList = []
-        for item in tange(0 ,len(systrayWhiteListVariant)):
+        for item in range(0 ,len(systrayWhiteListVariant)):
             itemValue =  str(systrayWhiteListVariant[item])
             systrayWhiteList.append(itemValue)
         
         systrayWhiteList.append("Python")
         variant = GLib.Variant.new_strv(systrayWhiteList)
         gsettings.set_value('systray-whitelist',variant)
-        log.info("whitelisted for system tray now includes Python.")
+        log.warning("whitelisted for system tray now includes Python.")
 def checkEnviromentLinux():
     checkEnviromentLinuxUbuntuWhiteList()
 
