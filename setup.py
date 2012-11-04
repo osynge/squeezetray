@@ -27,5 +27,5 @@ back end, and caches available image lists.""",
         'Programming Language :: Python',
         ],
     scripts=['squeezetray'],
-    data_files=[('/usr/share/doc/%s-%s' % (Application,version),['README.md','LICENSE','logger.conf','ChangeLog'])]
+    data_files=[('/usr/share/doc/%s-%s' % (Application,version),['README.md','LICENSE','ChangeLog'])]
     )
