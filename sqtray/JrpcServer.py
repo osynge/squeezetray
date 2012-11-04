@@ -82,7 +82,11 @@ class SqueezeConnectionWorker(Thread):
                         self.tasks.task_done()
                         continue
                     else:
-                        raise
+                        raise exc
+                except IOError as E:
+                    self.log.info( "IOError error:%s" %(E))
+                    self.tasks.task_done()
+                    continue
                 try:
                     response = self.conn.getresponse()
                 except httplib.BadStatusLine, E:
@@ -94,7 +98,12 @@ class SqueezeConnectionWorker(Thread):
                 self.tasks.task_done()
                 continue
             #return response.read()
-            rep = json.loads(response.read())
+            try:
+                rep = json.loads(response.read())
+            except ValueError as E:
+                self.log.info( "Json decoding ValueError:%s" %(E))
+                self.tasks.task_done()
+                continue
             if func != None:
                 func(rep,*args, **kargs)
                 #try: func(rep)
