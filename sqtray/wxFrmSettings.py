@@ -6,9 +6,12 @@ from wxEvents import EVT_RESULT_PLAYERS_ID
 from wxEvents import EVT_RESULT_CURRENT_TRACK_ID
 from wxEvents import EVT_RESULT_CONNECTION_ID
 import wxIcons
+import logging
+
 class FrmSettings(wx.Frame):
   
     def __init__(self, parent,  title):
+        self.log = logging.getLogger("FrmSettings")
         self.parent = parent
         self.title = title
         w, h = (250, 250)
@@ -67,7 +70,8 @@ class FrmSettings(wx.Frame):
         
         self.icon = wxIcons.trayDefault.getIcon()
         self.SetIcon(self.icon)
-        
+        self.IconStatus = None
+        self.IconSize = None
     def UpdateStatusbar(self):
         if not hasattr(self,'model'):
             self.SetStatusText("")
@@ -179,3 +183,22 @@ class FrmSettings(wx.Frame):
         #close = wx.PyEvent()
         #wx.EVT_CLOSE
         
+    def set_icon(self, status,size):
+        if (self.IconStatus == status) and (self.IconSize == size):
+            self.log.debug("Icon unchanged")
+            return
+        self.IconStatus = status
+        self.IconSize = size
+        self.log.debug("Icon changed '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))
+        
+        
+        #self.icon = wxIcons.trayDefault.getIcon()
+        if status == None:
+            self.log.error("status == None")
+            return
+        testIcon = wx.ArtProvider.GetIcon(self.IconStatus,"WIBBLE" ,size)
+        if not testIcon.Ok():
+            self.log.debug("Icon not OK")
+            return
+        self.icon = testIcon
+        self.SetIcon(self.icon)
