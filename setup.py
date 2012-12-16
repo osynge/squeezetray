@@ -6,28 +6,27 @@ from distutils.core import setup
 Application = 'SqueezeWxTray'
 
 setup(name=Application,
- version=version,
- description="VM Image list subscribing tool.",
- long_description="""This application attempts to be the equivalent of a modern Linux package update
-manager but for lists of virtual machines signed with x509. It uses a database
-back end, and caches available image lists.""",
- author="O M Synge",
- author_email="owen.synge@desy.de",
- license='Apache License (2.0)',
- install_requires=[
- "wx",
- ],
- url = 'https://github.com/hepix-virtualisation/hepixvmilsubscriber',
- packages = ['sqtray'],
- classifiers=[
- 'Development Status :: 1 - UnStable',
- 'Environment :: GUI',
- 'License :: OSI Approved :: Apache Software License',
- 'Operating System :: POSIX',
- 'Programming Language :: Python',
- ],
- scripts=['squeezetray'],
- data_files=[('/usr/share/doc/%s-%s' % (Application,version),['README.md','LICENSE','logger.conf','ChangeLog']),
+    version=version,
+    description="GUI client for logitech squeesebox server.",
+    long_description="""Squeezebox control from your linux desktop. Based on wxpython and threads this 
+application allows control of your squeezeboxes via mouse.""",
+    author="O M Synge",
+    author_email="owen.synge@desy.de",
+    license='Apache License (2.0)',
+    install_requires=[
+       "wx",
+        ],
+    url = 'https://github.com/hepix-virtualisation/hepixvmilsubscriber',
+    packages = ['sqtray'],
+    classifiers=[
+        'Development Status :: 1 - UnStable',
+        'Environment :: GUI',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: POSIX',
+        'Programming Language :: Python',
+        ],
+    scripts=['squeezetray'],
+    data_files=[('/usr/share/doc/%s-%s' % (Application,version),['README.md','LICENSE','logger.conf','ChangeLog']),
             ('/usr/share/pixmaps/%s' % (Application),['icons/media_eject_128x128.png',
                 'icons/media_eject_16x16.png', 
                 'icons/media_eject_22x22.png', 
@@ -90,6 +89,5 @@ back end, and caches available image lists.""",
                 'icons/media_skip_forward_24x24.png',
                 'icons/media_skip_forward_32x32.png',
                 'icons/media_skip_forward_48x48.png',
-                'icons/media_skip_forward_72x72.png'])]
-
- )
+                'icons/media_skip_forward_72x72.png'])]    
+    )

@@ -10,7 +10,11 @@ from sqtray.__version__ import version
 
 def checkEnviromentLinuxUbuntuWhiteList():
     log = logging.getLogger("checkEnviromentLinuxUbuntuWhiteList")
-    from gi.repository import Gio,GLib
+    try:
+        from gi.repository import Gio,GLib
+    except:
+        log.warning("Could not import 'gi.repository', no gconf functionality.")
+        return None
     allschenamas = Gio.Settings.list_schemas()
     if 'com.canonical.Unity.Panel' in allschenamas:
         gsettings = Gio.Settings.new('com.canonical.Unity.Panel')

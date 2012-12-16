@@ -18,7 +18,7 @@ else:
     import simplejson as json
 
 
-
+import errno
 
 class SqueezeConnectionWorker(Thread):
     """Thread executing tasks from a given tasks queue"""
@@ -38,14 +38,12 @@ class SqueezeConnectionWorker(Thread):
             if not hasattr(self,'conn'):
                 #print "connectionString", self.connectionString 
                 self.tasks.task_done()
-                return
+                continue
             if self.connectionString == None:
                 self.tasks.task_done()
-                return
+                continue
             if self.conn == None:
-                self.conn = httplib.HTTPConnection(connectionStr)
-                self.tasks.task_done()
-                return
+                self.conn = httplib.HTTPConnection(self.connectionString)
             try:
                 self.conn.request("POST", "/jsonrpc.js", params)
             except socket.error, E:
@@ -54,36 +52,58 @@ class SqueezeConnectionWorker(Thread):
                 self.SocketErrNo.set(errorNumber)
                 self.SocketErrMsg.set(unicode(E.strerror))
                 self.tasks.task_done()
-                return
+                continue
+            except httplib.CannotSendRequest, E:
+                self.conn = None
+                self.log.error("Cannot Send Request, resetting connection.")
+                self.tasks.task_done()
+                continue
             errorNoOld = self.SocketErrNo.get()
             self.SocketErrNo.set(0)
             self.SocketErrMsg.set(unicode(""))
             try:
                 response = self.conn.getresponse()
             except exceptions.AttributeError, E:
-                return
+                self.tasks.task_done()
+                continue
             except socket.error, E:
                 errorNumber = int(E.errno)
                 self.SocketErrNo.set(errorNumber)
                 self.SocketErrMsg.set(unicode(E.strerror))
                 self.tasks.task_done()
-                return
+                continue
             except httplib.BadStatusLine:
                 self.conn = httplib.HTTPConnection(self.connectionString)
                 try:
                     self.conn.request("POST", "/jsonrpc.js", params)
-                except err, E:
-                    elf.log.info( "Connection excepotion exception.message=%s,E=%s" % (E.message,E))
+                except EnvironmentError as exc:
+                    if exc.errno == errno.ECONNREFUSED:
+                        self.log.info( "Connection refused")
+                        self.tasks.task_done()
+                        continue
+                    else:
+                        raise exc
+                except IOError as E:
+                    self.log.info( "IOError error:%s" %(E))
+                    self.tasks.task_done()
+                    continue
                 try:
                     response = self.conn.getresponse()
                 except httplib.BadStatusLine, E:
                     self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E))
                     self.tasks.task_done()
-                    return
+                    continue
             if response.status != 200:
-                print response.status, response.reason
+                self.log.info("http retrun code bad,%s:%s" % ( response.status, response.reason))
+                self.tasks.task_done()
+                continue
             #return response.read()
-            rep = json.loads(response.read())
+            try:
+                rep = json.loads(response.read())
+            except ValueError as E:
+                self.log.info( "Json decoding ValueError:%s" %(E))
+                self.tasks.task_done()
+                continue
             if func != None:
                 func(rep,*args, **kargs)
                 #try: func(rep)
@@ -103,6 +123,8 @@ class SqueezeConnectionWorker(Thread):
             Changed =  True
             self.connectionString = connectionStr
         if not hasattr(self,'conn'):
+            Changed =  True
+        elif self.conn == None:
             Changed =  True
         if Changed:
             #print connectionStr
@@ -189,27 +211,30 @@ class SqueezeConnectionThreadPool:
         #print "OnPlayerStatus",unicode(json.dumps(responce, indent=4))
         playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
+        
+        OldplayerName = self.squeezeConMdle.playerList[playerIndex].name.get()
+        if OldplayerName != playerName:
+            self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
+        lsbsMode = unicode(responce["result"]["mode"])
+        mappings = {"play" : "playing",
+            "pause" : "paused",
+            "off" : "Off"
+        }
+        if lsbsMode in mappings:
+            newOperationMode = mappings[lsbsMode]
+            oldOperationMode = self.squeezeConMdle.playerList[playerIndex].operationMode.get()
+            if newOperationMode != oldOperationMode:
+                self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
         if not "playlist_cur_index" in responce["result"].keys():
             self.log.error("Message contained no playlist_cur_index")
+            self.log.debug("Message=%s" % responce)
             return
         playlist_cur_index = int(responce["result"]["playlist_cur_index"])
         playlist_loop = responce["result"]["playlist_loop"]
         
         CurrentTrackTime = responce["result"]["time"]
         
-        lsbsMode = unicode(responce["result"]["mode"])
-        mappings = {"play" : "playing",
-            "pause" : "paused",
-            "off" : "Off"
-        }
-        OldplayerName = self.squeezeConMdle.playerList[playerIndex].name.get()
-        if OldplayerName != playerName:
-            self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
-        if lsbsMode in mappings:
-            newOperationMode = mappings[lsbsMode]
-            oldOperationMode = self.squeezeConMdle.playerList[playerIndex].operationMode.get()
-            if newOperationMode != oldOperationMode:
-                self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
+        
         CurrentTrackTitle = None
         for item in playlist_loop:
             playlistIndex = int(item["playlist index"])

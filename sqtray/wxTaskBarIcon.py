@@ -112,8 +112,11 @@ class TaskBarIconInteractor(object):
         self.presenter.on_settings()
 
 
-
-
+def timedelta2str(timedeltainst):
+    delta = abs(timedeltainst)
+    totalseconds = delta.seconds + delta.days * 24 * 3600
+    output = "%s:%s" % (totalseconds / 60, totalseconds % 60)
+    return output
 class TaskBarIconPresentor(object):
     def __init__(self, Model, View, interactor):
         self.Model = Model
@@ -149,7 +152,7 @@ class TaskBarIconPresentor(object):
                     CurrentTrackEnds = self.Model.playerList[index].CurrentTrackEnds.get()
                     #print "CurrentTrackEnds=%s" % (CurrentTrackEnds)
                     if CurrentTrackEnds != None:
-                        seconds = (CurrentTrackEnds - datetime.datetime.now()).total_seconds()
+                        seconds = timedelta2str(CurrentTrackEnds - datetime.datetime.now())
                         newToolTip += "\nRemaining:%s" % (seconds)
                     self.View.set_toolTip(newToolTip)
      
@@ -167,7 +170,7 @@ class TaskBarIconPresentor(object):
         return newMenu
     def on_move(self):
         #print 'on_move'
-        pass 
+        self.UpdateToolTip()
     def on_settings(self):
         for item in self.callbacks["on_settings"]:
             item()
