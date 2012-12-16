@@ -13,6 +13,8 @@ import datetime
 from sqtray.wxTaskBarIcon import TaskBarIcon, TaskBarIconInteractor,TaskBarIconPresentor
 from sqtray.wxFrmSettings import FrmSettings
 
+from sqtray.wxArtPicker import MyArtProvider
+
 def StoreConfig(FilePath,squeezeConMdle):
     cfg = wx.FileConfig(appName="ApplicationName", 
                                 vendorName="VendorName", 
@@ -54,7 +56,7 @@ class FrmCtrl:
 
     def CreatePopUp(self,param):
         ################################################################
-        print param
+        #print param
         CreatePopupMenu()
     def handleConnectionStrChange(self,value):
         if (self.Example != None):
@@ -77,6 +79,13 @@ class myapp(wx.App):
     def __init__(self):
         super(myapp, self).__init__()
         
+        
+        # Setup global art provider
+        self.ArtProvider = MyArtProvider() 
+        wx.ArtProvider.Push(self.ArtProvider)
+        
+        
+        
         self.model = squeezeConMdle()
         self.model.GuiPlayer = Observable(None)
         self.model.GuiPlayerDefault = Observable(None)
@@ -88,7 +97,10 @@ class myapp(wx.App):
                                     localFilename=".squeezetray.cfg", 
                                     style=wx.CONFIG_USE_LOCAL_FILE)
         self.squeezeConCtrl = squeezeConCtrl(self.model)
-             
+        
+        
+        
+        # Now we can set up forms using the art provider     
         self.frmCtrl = FrmCtrl(self.model )
         self.frmCtrl.setApp(self)
         self.frmCtrl.setCfg(self.cfg)
@@ -120,6 +132,9 @@ class myapp(wx.App):
         self.tbPresentor =  TaskBarIconPresentor(self.model,self.tb,self.interactor)
         self.tbPresentor.squeezeConCtrl = self.squeezeConCtrl
         self.tbPresentor.cbAddOnSettings(self.on_settings)
+        
+        
+        
     def OnTimer(self,event):
         self.tbPresentor.UpdateToolTip()
         ConnectionStatus = self.model.connected.get()
