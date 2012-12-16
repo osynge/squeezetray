@@ -81,7 +81,9 @@ class SqueezeConnectionWorker(Thread):
                     self.tasks.task_done()
                     return
             if response.status != 200:
-                print response.status, response.reason
+                self.log.info( "httplib.BadResponceStatus %s:%s" % (response.status, response.reason))
+                self.tasks.task_done()
+                return
             #return response.read()
             rep = json.loads(response.read())
             if func != None:
