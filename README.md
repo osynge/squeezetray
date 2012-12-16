@@ -64,6 +64,10 @@ Installing squeezetray
 
 
 
+
+
+
+
 FAQ
 ===
 
@@ -89,3 +93,25 @@ Callbacks on changes to the model to the Controller can then trigger further thi
 
 In this case another View is triggered to display the model as the StatusBar and Tooltip, 
 which shows details about the current track playing, and server status.
+
+
+Icons svg to png
+================
+
+for some reason svg is not yet well supportied in python for this reason all svg icons are cxonverted to png.
+
+   convert  -background transparent  -resize 16x16 ${IMPUT}.svg  ${OUTPUT}.png
+
+Or you can script it with a little bash
+
+   sizes="16 22 24 32 48 72"
+   basedirect="icons"
+   for item in `ls icons/*.svg`
+   do
+       for size in $sizes
+       do
+           name=$(echo $item | sed -e 's/.*\///' | sed -e 's/\.svg.*$//')
+           cmd="convert  -background transparent  -resize ${size}x${size} $item  ${basedirect}/${name}_${size}x${size}.png"
+           $cmd
+       done
+   done
