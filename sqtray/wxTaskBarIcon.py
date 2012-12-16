@@ -7,8 +7,9 @@ from sqtray.wxFrmSettings import FrmSettings
 import datetime
 import functools
 import wxIcons
+import logging
+
 TRAY_TOOLTIP = 'SqueezeTray'
-TRAY_ICON = 'icon.png'
 
 from sqtray.models import Observable
 
@@ -17,14 +18,14 @@ class TaskBarIcon(wx.TaskBarIcon):
     def __init__(self,model):
         super(TaskBarIcon, self).__init__()
         self.model = model
-        #self.set_icon(TRAY_ICON)
-        self.icon = wxIcons.trayDefault.getIcon()
+        #self.icon = wxIcons.trayDefault.getIcon()
+        self.icon = wx.ArtProvider.GetIcon("ART_APPLICATION_STATUS_DISCONECTED", "ART_APPLICATION_STATUS_DISCONECTED", (16,16))
         self.SetIcon(self.icon,"SqueezeTray")
-        
-        #self.squeezecmd = sc
         self.Example = None
         self.CallBacks = { 'CreatePopupMenu' : []}
-  
+        self.IconStatus = None
+        self.IconSize = None
+        self.log = logging.getLogger("TaskBarIcon")
     def CbAddCreatePopupMenu(self,funct):
         """Callback items shoudl return Menu objects"""
         if 'CreatePopupMenu' in self.CallBacks:
@@ -42,11 +43,26 @@ class TaskBarIcon(wx.TaskBarIcon):
 
 
 
-    def set_icon(self, path):
-        self.icon = wx.IconFromBitmap(wx.Bitmap(path))
+    def set_icon(self, status,size):
+        if (self.IconStatus == status) and (self.IconSize == size):
+            self.log.debug("Icon unchanged")
+            return
+        self.IconStatus = status
+        self.IconSize = size
+        self.log.debug("Icon changed '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))
+        
+        
+        #self.icon = wxIcons.trayDefault.getIcon()
+        self.icon = wx.ArtProvider.GetIcon(status, "WIBBLE",size)
+        testIcon = wx.ArtProvider.GetIcon(self.IconStatus,"WIBBLE" ,size)
+        if not testIcon.Ok():
+            self.log.debug("Icon not OK")
+            return
+        self.icon = testIcon
         CurrentToolTip = TRAY_TOOLTIP
         if hasattr(self,'ToolTipText'):
             CurrentToolTip = self.ToolTipText
+            
         self.SetIcon(self.icon, CurrentToolTip)
     def set_toolTip(self, tooltip):
         if hasattr(self,'ToolTipText'):
@@ -108,7 +124,7 @@ class TaskBarIconInteractor(object):
         return self.presenter.CreatePopupMenu()
         
     def on_settings(self, evt):
-        print "asdasdaSD"
+        #print "asdasdaSD"
         self.presenter.on_settings()
 
 
@@ -152,10 +168,12 @@ class TaskBarIconPresentor(object):
                         seconds = (CurrentTrackEnds - datetime.datetime.now()).total_seconds()
                         newToolTip += "\nRemaining:%s" % (seconds)
                     self.View.set_toolTip(newToolTip)
-     
+                    
     def OnPlayers(self):
         #print "OnPlayers(=%s)" % (Event)            
         self.UpdateToolTip()
+        #self.View.set_icon("ART_APPLICATION_STATUS_DISCONECTED",(16,16))
+        self.View.set_icon("ART_PLAYER_PLAY",(16,16))
     def CreatePopupMenu(self):
         interactor =PopUpMenuInteractor ()
         newMenu = CreatePopupMenu(self.Model,interactor)
@@ -175,6 +193,7 @@ class TaskBarIconPresentor(object):
     def playerChanged1 (self,value):
         if value != self.Model.GuiPlayer.get():
             self.Model.GuiPlayer.set(value)
+            
     def on_exit(self):
         #self.on_settings_close(event)
         #wx.CallAfter(self.Destroy)
@@ -206,6 +225,5 @@ class TaskBarIconPresentor(object):
         pass
     def on_left_dclick(self):
         #print 'Tray icon was on_left_dclick-clicked.'
-        self.set_icon('gnomedecor1.png')
-        self.OnShowPopup( event)
+        pass
 
