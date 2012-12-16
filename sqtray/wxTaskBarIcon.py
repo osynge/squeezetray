@@ -53,6 +53,9 @@ class TaskBarIcon(wx.TaskBarIcon):
         
         
         #self.icon = wxIcons.trayDefault.getIcon()
+        if status == None:
+            self.log.error("status == None")
+            return
         self.icon = wx.ArtProvider.GetIcon(status, "WIBBLE",size)
         testIcon = wx.ArtProvider.GetIcon(self.IconStatus,"WIBBLE" ,size)
         if not testIcon.Ok():
@@ -143,6 +146,7 @@ class TaskBarIconPresentor(object):
         self.callbacks = {
             "on_settings" : [],
         }
+        self.TaskBarIconName = None
     def cbAddOnSettings(self,func):
         self.callbacks['on_settings'].append(func)
     def OnTrack(self):
@@ -172,11 +176,12 @@ class TaskBarIconPresentor(object):
                         newToolTip += "\nRemaining:%s" % (seconds)
                     self.View.set_toolTip(newToolTip)
                     
+                    
     def OnPlayers(self):
         #print "OnPlayers(=%s)" % (Event)            
         self.UpdateToolTip()
         #self.View.set_icon("ART_APPLICATION_STATUS_DISCONECTED",(16,16))
-        self.View.set_icon("ART_PLAYER_PLAY",(16,16))
+        #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
     def CreatePopupMenu(self):
         interactor =PopUpMenuInteractor ()
         newMenu = CreatePopupMenu(self.Model,interactor)
@@ -196,7 +201,7 @@ class TaskBarIconPresentor(object):
     def playerChanged1 (self,value):
         if value != self.Model.GuiPlayer.get():
             self.Model.GuiPlayer.set(value)
-            
+            #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
     def on_exit(self):
         #self.on_settings_close(event)
         #wx.CallAfter(self.Destroy)
@@ -229,4 +234,6 @@ class TaskBarIconPresentor(object):
     def on_left_dclick(self):
         #print 'Tray icon was on_left_dclick-clicked.'
         pass
-
+    def setIcon(self,IconName):
+        #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
+        self.View.set_icon(IconName,(16,16))
