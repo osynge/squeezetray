@@ -14,6 +14,7 @@ from sqtray.wxTaskBarIcon import TaskBarIcon, TaskBarIconInteractor,TaskBarIconP
 from sqtray.wxFrmSettings import FrmSettings
 
 from sqtray.wxArtPicker import MyArtProvider
+import logging
 
 def StoreConfig(FilePath,squeezeConMdle):
     cfg = wx.FileConfig(appName="ApplicationName", 
@@ -27,6 +28,7 @@ def StoreConfig(FilePath,squeezeConMdle):
 
 class FrmCtrl:
     def  __init__(self,model):
+        self.log = logging.getLogger("FrmCtrl")
         self.model = model
         self.tb = TaskBarIcon(model)
         self.tb.FrmCtrl = self
@@ -45,6 +47,8 @@ class FrmCtrl:
             self.Example.cfg = self.cfg
             self.Example.app = self.app
             self.Example.ModelSet(self.model)
+            IconName = "ART_APPLICATION_STATUS_DISCONECTED"
+            self.Example.set_icon(IconName,(16,16))
             self.Example.Show()
     def closeSettings(self,wxExvent):
         if (self.Example != None):
@@ -74,22 +78,34 @@ class FrmCtrl:
         
     def handleCurrentTrackChange(self):
         wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CURRENT_TRACK_ID,None))
+        
+    def setIcon(self,IconName):
+        self.log.debug("setIcon=%s"% (IconName))
+        #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
+        testIcon = wx.ArtProvider.GetIcon(IconName,"FrmCtrl" ,(16,16))
+        if not testIcon.Ok():
+            self.log.debug("Icon not OK")
+            return
+        self.tb.SetIcon(testIcon)    
 
 class myapp(wx.App):
     def __init__(self):
         super(myapp, self).__init__()
         
+        self.log = logging.getLogger("myapp")
+        # Used to decide the connection string
+        self.iconFacts = set([])
         
         # Setup global art provider
         self.ArtProvider = MyArtProvider() 
         wx.ArtProvider.Push(self.ArtProvider)
-        
-        
+        self.ApplicationIconName = Observable(None)
+        self.ApplicationIconName.addCallback(self.OnApplicationIconNameChange)
         
         self.model = squeezeConMdle()
         self.model.GuiPlayer = Observable(None)
         self.model.GuiPlayerDefault = Observable(None)
-        
+        self.model.connected.addCallback(self.OnConection)
         self.SqueezeServerPort = Observable(9000)
         self.SqueezeServerPort.addCallback(self.OnSqueezeServerPort)
         self.cfg = wx.FileConfig(appName="ApplicationName", 
@@ -132,11 +148,28 @@ class myapp(wx.App):
         self.tbPresentor =  TaskBarIconPresentor(self.model,self.tb,self.interactor)
         self.tbPresentor.squeezeConCtrl = self.squeezeConCtrl
         self.tbPresentor.cbAddOnSettings(self.on_settings)
+        # Next tick will update the UpdateApplicationIconName
+        self.UpdateApplicationIconNameRequestFlag = True
+    
+    def UpdateApplicationIconNameRequest(self):
         
+        self.UpdateApplicationIconNameRequestFlag = True
         
+    def UpdateApplicationIconName(self):
+        if not "conected" in self.iconFacts:
+            #self.View.set_icon("ART_APPLICATION_STATUS_DISCONECTED",(16,16))
+            #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
+            self.ApplicationIconName.update("ART_APPLICATION_STATUS_DISCONECTED")
+            return
+        if "players" in self.iconFacts:
+            self.ApplicationIconName.update("ART_APPLICATION_STATUS_CONNECTED")
+            return
         
     def OnTimer(self,event):
         self.tbPresentor.UpdateToolTip()
+        if self.UpdateApplicationIconNameRequestFlag:
+            self.UpdateApplicationIconNameRequestFlag = False
+            self.UpdateApplicationIconName()
         ConnectionStatus = self.model.connected.get()
         if not ConnectionStatus:
             #print "not on line"
@@ -149,7 +182,27 @@ class myapp(wx.App):
             return
         self.squeezeConCtrl.RecConnectionOnline()
     
-    
+    def OnApplicationIconNameChange(self, mstuff):
+        NewName = self.ApplicationIconName.get()
+        if NewName == None:
+            return
+        self.tbPresentor.setIcon(NewName)
+        if self.frmCtrl.Example != None:
+            self.frmCtrl.Example.set_icon(NewName,(16,16))
+        
+    def OnConection(self,stuff):
+        isConnected = self.model.connected.get()
+        OldLenIf = len(self.iconFacts)
+        if isConnected:
+            self.iconFacts.add("conected")
+        else:
+            if "conected" in self.iconFacts:
+                self.iconFacts.remove("conected")
+        NewLenIf = len(self.iconFacts)
+        if OldLenIf != NewLenIf:
+            self.UpdateApplicationIconNameRequest()
+            self.log.debug("Updated Icon")
+            self.log.debug("self.iconFact=%s" % (self.iconFacts))
 
     def OnPlayerAvailable(self):
         # If Not connected set None
@@ -159,20 +212,41 @@ class myapp(wx.App):
             return
         # If no players Available:
         AvailableArray = self.model.Players.keys()
-        if len(AvailableArray) == 0:
+        AvailableArrayLen = len(AvailableArray)
+        OldLenIf = len(self.iconFacts)
+        if AvailableArrayLen == 0:
+            if  "players" in self.iconFacts:
+                self.iconFacts.remove("players")
+        else:
+            self.iconFacts.add("players")
+        NewLenIf = len(self.iconFacts)
+        if OldLenIf != NewLenIf:
+            self.UpdateApplicationIconNameRequest()
+            self.log.debug("Updated Icon")
+            self.log.debug("self.iconFact=%s" % (self.iconFacts))
+        
+        if AvailableArrayLen == 0:
             if None != self.model.GuiPlayer.get():
                 self.model.GuiPlayer.set(None)
+            if  "players" in self.iconFacts:
+                self.iconFacts.remove("players")
+            return
+        self.iconFacts.add("players")
+        # Try to Apply Current Player
+        
+        # If the GuiPlayer is still set to right thing
+        GuiPlayer = self.model.GuiPlayer.get()
+        if GuiPlayer in AvailableArray:
+            
             return
         # Try to Apply Default Player
+        
         DefaultPlayer = self.model.GuiPlayerDefault.get()
         if DefaultPlayer in AvailableArray:
             OldDefaultPlayer = self.model.GuiPlayer.get()
             if OldDefaultPlayer != DefaultPlayer:
                 self.model.GuiPlayer.set(DefaultPlayer)
-            return
-        # If the GuiPlayer is still set to right thing
-        GuiPlayer = self.model.GuiPlayer.get()
-        if GuiPlayer in AvailableArray:
+                
             return
         # Try to find any player
         for PlayerName in self.model.Players:
@@ -259,7 +333,9 @@ class myapp(wx.App):
         print 'Hello, world!'
 
     def on_settings(self):
+        
         self.frmCtrl.showSettings()
+        self.OnApplicationIconNameChange(None)
         
     def OnGuiPlayer(self,player):
         
