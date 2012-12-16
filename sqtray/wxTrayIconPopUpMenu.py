@@ -3,9 +3,19 @@ from sqtray.models import Observable
 
 import functools
 
+from sqtray.wxArtPicker import MyArtProvider
+
 def create_menu_item(menu, label, func):
     item = wx.MenuItem(menu, -1, label)
     menu.Bind(wx.EVT_MENU, func, id=item.GetId())
+    foo = MyArtProvider() 
+    wx.ArtProvider.Push(foo )
+    wx.ArtProvider = wx.ArtProvider
+    save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_PLAY", wx.ART_TOOLBAR, (16,16))
+    save_ico = wx.ArtProvider.GetBitmap("wxART_INFORMATION", wx.ART_TOOLBAR, (16,16))
+    
+    item.SetBitmap(save_ico)
+    print save_ico
     menu.AppendItem(item)
     return item
 
