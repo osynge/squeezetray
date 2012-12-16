@@ -18,7 +18,11 @@ class Observable:
     def set(self, data):
         self.data = data
         self._docallbacks()
-
+    def update(self, data):
+        if self.data == data:
+            return
+        self.data = data
+        self._docallbacks()
     def get(self):
         return self.data
 
