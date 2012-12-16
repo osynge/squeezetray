@@ -76,7 +76,7 @@ class MyArtProvider(wx.ArtProvider):
         # images for specific sizes, whatever...   
    
         # See end of file for the image data   
-        self.log.debug("MyArtProvider: providing %s:%s at %s\n" %(artid, client, size))   
+        self.log.debug("MyArtProvider: providing %s:%s at %s" %(artid, client, size))   
         bmp = wx.NullBitmap   
         # use this one for all 48x48 images
         NamesSize = set()
@@ -84,7 +84,7 @@ class MyArtProvider(wx.ArtProvider):
         if artid in self.defaultIconMappingActionName.keys():
             NamesArtId = self.defaultIconMappingActionName[artid]
             if "ART_APPLICATION_STATUS_DISCONECTED" == artid:
-                self.log.info("dsosos")   
+                self.log.info("ART_APPLICATION_STATUS_DISCONECTED")   
                 return wxIcons.trayDefault.GetBitmap()
                 
 
