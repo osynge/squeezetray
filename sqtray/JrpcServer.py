@@ -192,6 +192,9 @@ class SqueezeConnectionThreadPool:
     def OnPlayerIndex(self,responce):
         playerId = responce["result"]["_id"]
         playerIndex = int(responce['params'][1][2])
+        if len(self.squeezeConMdle.playerList) <= playerIndex:
+            self.log.error("Bad message.")
+            return
         OldPlayerId =  self.squeezeConMdle.playerList[playerIndex].identifier.get()
         if OldPlayerId != playerId:
             self.squeezeConMdle.playerList[playerIndex].identifier.set(playerId)
