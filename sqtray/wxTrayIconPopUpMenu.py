@@ -3,9 +3,16 @@ from sqtray.models import Observable
 
 import functools
 
-def create_menu_item(menu, label, func):
+from sqtray.wxArtPicker import MyArtProvider
+
+def create_menu_item(menu, label, art,func):
     item = wx.MenuItem(menu, -1, label)
     menu.Bind(wx.EVT_MENU, func, id=item.GetId())
+    if art != None:
+        save_ico = wx.ArtProvider.GetBitmap(art, wx.ART_TOOLBAR, (16,16))
+        #save_ico = wx.ArtProvider.GetBitmap("wxART_INFORMATION", wx.ART_TOOLBAR, (16,16))
+    
+        item.SetBitmap(save_ico)
     menu.AppendItem(item)
     return item
 
@@ -15,11 +22,11 @@ def CreatePopupMenu(model,interactor):
     toolsMENU = wx.Menu()
     ConnectionStatus = model.connected.get()
     if ConnectionStatus:
-        create_menu_item(toolsMENU, 'Play', interactor.onScPlay)
-        create_menu_item(toolsMENU, 'Pause', interactor.onScPause)
-        create_menu_item(toolsMENU, 'Next', interactor.onScNext)
-        create_menu_item(toolsMENU, 'Previous', interactor.onScPrevious)
-        create_menu_item(toolsMENU, 'Rnd', interactor.onScRandom)
+        create_menu_item(toolsMENU, 'Play',"ART_PLAYER_PLAY", interactor.onScPlay)
+        create_menu_item(toolsMENU, 'Pause', "ART_PLAYER_PAUSE",interactor.onScPause)
+        create_menu_item(toolsMENU, 'Next', "ART_PLAYER_SEEK_FORWARD",interactor.onScNext)
+        create_menu_item(toolsMENU, 'Previous', 'ART_PLAYER_SEEK_BACKWARD',interactor.onScPrevious)
+        create_menu_item(toolsMENU, 'Rnd', None,interactor.onScRandom)
         toolsMENU.AppendSeparator()
     playersLen = len(model.Players)
     #print "Players=\n%s\n%s" % (model.Players,model.playerList)
@@ -40,9 +47,9 @@ def CreatePopupMenu(model,interactor):
                 playersMENU.AppendItem(MenuItem)
 
         toolsMENU.AppendSeparator()
-    create_menu_item(toolsMENU, 'Settings', interactor.on_settings)
+    create_menu_item(toolsMENU, 'Settings',None, interactor.on_settings)
     toolsMENU.AppendSeparator()
-    create_menu_item(toolsMENU, 'Exit', interactor.on_exit)
+    create_menu_item(toolsMENU, 'Exit', None,interactor.on_exit)
     #print toolsMENU
     return toolsMENU
 
