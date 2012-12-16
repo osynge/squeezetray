@@ -2,7 +2,7 @@ import wx
 from sqtray.models import Observable
 
 import functools
-
+import logging
 from sqtray.wxArtPicker import MyArtProvider
 
 def create_menu_item(menu, label, art,func):
@@ -58,6 +58,8 @@ def CreatePopupMenu(model,interactor):
 
 class PopUpMenuInteractor(object):
     """ http://wiki.wxpython.org/ModelViewPresenter inspired """
+    def __init__(self):
+        self.log = logging.getLogger("PopUpMenuInteractor")
     def install(self, presenter, view):
         self.presenter = presenter
         self.view = view
@@ -78,6 +80,7 @@ class PopUpMenuInteractor(object):
         self.presenter.on_settings()
     def on_exit(self,event):
         self.presenter.on_exit()
+        self.log.error("exit")
 
 
 
@@ -141,7 +144,9 @@ class PopupMenuPresentor(object):
         if oldPlayer != player:
             self.player.set(player)
     def on_exit(self):
-        #self.on_settings_close(event)
-        #wx.CallAfter(self.View.Destroy)
+        self.on_settings_close(event)
+        wx.CallAfter(self.View.Destroy)
         
+        pass
+    def on_settings_close(self,event):
         pass
