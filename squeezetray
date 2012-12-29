@@ -6,7 +6,8 @@ import optparse
 import logging
 from sqtray.__version__ import version
 
-
+import wx
+from sqtray.wxArtPicker import MyArtProvider,getProgramFolder,directoryArray
 
 def checkEnviromentLinuxUbuntuWhiteList():
     log = logging.getLogger("checkEnviromentLinuxUbuntuWhiteList")
@@ -92,6 +93,14 @@ def main():
 
     checkEnviroment()
     app = myapp()
+    da = directoryArray()
+    print __file__
+    iconfolders = [getProgramFolder(),"icons"]
+    da.path = iconfolders
+    da.checkPathsExist()
+    ArtProvider = MyArtProvider(da) 
+    wx.ArtProvider.Push(ArtProvider)
+    
     app.MainLoop()
 
 if __name__ == '__main__':

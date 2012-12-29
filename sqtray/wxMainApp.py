@@ -95,10 +95,8 @@ class myapp(wx.App):
         self.log = logging.getLogger("myapp")
         # Used to decide the connection string
         self.iconFacts = set([])
-        
         # Setup global art provider
-        self.ArtProvider = MyArtProvider() 
-        wx.ArtProvider.Push(self.ArtProvider)
+        
         self.ApplicationIconName = Observable(None)
         self.ApplicationIconName.addCallback(self.OnApplicationIconNameChange)
         
@@ -151,6 +149,7 @@ class myapp(wx.App):
         # Next tick will update the UpdateApplicationIconName
         self.UpdateApplicationIconNameRequestFlag = True
     
+        
     def UpdateApplicationIconNameRequest(self):
         
         self.UpdateApplicationIconNameRequestFlag = True
@@ -191,6 +190,7 @@ class myapp(wx.App):
             self.frmCtrl.Example.set_icon(NewName,(16,16))
         
     def OnConection(self,stuff):
+        print "OnConection=%s"  % (stuff)
         isConnected = self.model.connected.get()
         OldLenIf = len(self.iconFacts)
         if isConnected:

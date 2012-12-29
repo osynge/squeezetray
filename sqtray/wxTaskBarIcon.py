@@ -47,16 +47,17 @@ class TaskBarIcon(wx.TaskBarIcon):
         if (self.IconStatus == status) and (self.IconSize == size):
             self.log.debug("Icon unchanged")
             return
+        
+        self.log.debug("Icon changed from '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))
+        self.log.debug("Icon changed to '%s:%s'" % (status,size))
         self.IconStatus = status
         self.IconSize = size
-        self.log.debug("Icon changed '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))
-        
         
         #self.icon = wxIcons.trayDefault.getIcon()
         if status == None:
             self.log.error("status == None")
             return
-        self.icon = wx.ArtProvider.GetIcon(status, "WIBBLE",size)
+        #self.icon = wx.ArtProvider.GetIcon(status, "WIBBLE",size)
         testIcon = wx.ArtProvider.GetIcon(self.IconStatus,"WIBBLE" ,size)
         if not testIcon.Ok():
             self.log.debug("Icon not OK")
@@ -65,11 +66,12 @@ class TaskBarIcon(wx.TaskBarIcon):
         CurrentToolTip = TRAY_TOOLTIP
         if hasattr(self,'ToolTipText'):
             CurrentToolTip = self.ToolTipText
-            
         self.SetIcon(self.icon, CurrentToolTip)
+        
     def set_toolTip(self, tooltip):
         if hasattr(self,'ToolTipText'):
             if self.ToolTipText == tooltip:
+                self.log.debug("Icon changed '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))        
                 return
         if hasattr(self,'icon'):
             self.SetIcon(self.icon, tooltip)
@@ -103,6 +105,7 @@ class TaskBarIconInteractor(object):
         self.view.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayers)
         self.view.Connect(-1, -1, EVT_RESULT_CURRENT_TRACK_ID, self.OnTrack)
         self.view.CbAddCreatePopupMenu(self.CreatePopupMenu)
+        
     def on_move(self, evt):
         self.presenter.on_move()
     def on_left_down(self, evt):
@@ -136,6 +139,8 @@ def timedelta2str(timedeltainst):
     totalseconds = delta.seconds + delta.days * 24 * 3600
     output = "%s:%s" % (totalseconds / 60, totalseconds % 60)
     return output
+
+
 class TaskBarIconPresentor(object):
     def __init__(self, Model, View, interactor):
         self.Model = Model
@@ -154,6 +159,7 @@ class TaskBarIconPresentor(object):
     def GetSqueezeServerPlayer(self):
         return self.currentPlayer.get()
     def UpdateToolTip(self):
+        
         player = self.GetSqueezeServerPlayer()
         if player != None:
             for index in  range(len(self.Model.playerList)):
@@ -175,13 +181,16 @@ class TaskBarIconPresentor(object):
                         seconds = timedelta2str(CurrentTrackEnds - datetime.datetime.now())
                         newToolTip += "\nRemaining:%s" % (seconds)
                     self.View.set_toolTip(newToolTip)
+                    return
+        if self.Model.connected:
+            self.View.set_toolTip("Connected")
                     
                     
     def OnPlayers(self):
         #print "OnPlayers(=%s)" % (Event)            
         self.UpdateToolTip()
         #self.View.set_icon("ART_APPLICATION_STATUS_DISCONECTED",(16,16))
-        #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
+        self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
     def CreatePopupMenu(self):
         interactor =PopUpMenuInteractor ()
         newMenu = CreatePopupMenu(self.Model,interactor)

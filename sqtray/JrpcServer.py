@@ -321,8 +321,9 @@ class SqueezeConnectionThreadPool:
         #print SongId,SongTitle,SongArtists,SongGenres
 class squeezeConCtrl:
     def __init__(self,model):  
+        
         """Controler class for takes a model as a constructor (class squeezeConMdle)"""
-
+        self.log = logging.getLogger("squeezeConCtrl")
         self.model = model
         self.view1 = SqueezeConnectionThreadPool(self.model)
         self.model.connectionStr.addCallback(self.view1.OnConnectionStrChange)
@@ -345,6 +346,7 @@ class squeezeConCtrl:
                     "method":"slim.request",
                     "params": [ '-', [ 'player', 'id', index ,"?"] ]
                 }
+                self.log.debug("msg=%s" % (msg))
                 self.view1.sendMessage(self.view1.OnPlayerIndex,msg)
             if name == None:
                 #print "would make a name request"

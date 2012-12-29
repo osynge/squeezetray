@@ -6,12 +6,45 @@ def getProgramFolder():
     moduleFile = __file__
     moduleDir = os.path.split(os.path.abspath(moduleFile))[0]
     programFolder = os.path.abspath(moduleDir)
-    return programFolder + "/.."
+
+    return programFolder
+def joindirs(directory,item):
+    return "%s/%s" % (directory,item)
+
+class directoryArray():
+    def __init__(self):
+        self.log = logging.getLogger("directoryArray")
+        self.path = []
+        self.foundpaths = []
+    def checkPathsExist(self):
+        self.foundpaths = []
+        for directory in self.path:
+            if os.path.isdir(directory):
+                self.foundpaths.append(directory)
+        if len (self.foundpaths) == 0:
+            self.log.warning("Icon paths not found")
+        return self.foundpaths 
+             
+    def ScanPaths(self,item):
+        if len (self.foundpaths) == 0:
+            self.log.warning("Icon paths not found")
+            
+        
+        for directory in self.foundpaths:
+            fullpath = joindirs(directory,item)
+            if os.path.isfile(fullpath):
+                #self.log.debug("Found")
+                return fullpath
+        return None
    
 class MyArtProvider(wx.ArtProvider):   
-    def __init__(self):
+    def __init__(self,directorys):
         self.log = logging.getLogger("MyArtProvider")
-        self.baseFolder = getProgramFolder()
+        #self.path = [getProgramFolder()]
+        self.da = directorys
+        #self.da = directoryArray()
+        #self.da.path = [getProgramFolder(),"icons"]
+        self.foundpaths = []
         wx.ArtProvider.__init__(self)   
         self.defaultIconMappingActionName = { 
             'ART_APPLICATION_STATUS_DISCONECTED' : set(["application_disconected_16x16.png",
@@ -93,7 +126,31 @@ class MyArtProvider(wx.ArtProvider):
                 "media_skip_forward_32x32.png",
                 "media_eject_32x32.png"]),
             }
+    def ScanPathsOld(self,item):
+        if len (self.foundpaths) == 0:
+            self.log.warning("Icon paths not found")
+            for directory in self.path:
+                if os.path.isdir(directory):
+                    self.foundpaths
         
+        for directory in self.foundpaths:
+            fullpath = joindirs()
+            if os.path.isfile(fullpath):
+                return fullpath
+        return None     
+    def ScanPaths(self,item):
+        
+        if len (self.foundpaths) == 0:
+            self.log.warning("Icon paths not found")
+            for directory in self.da.ScanPaths(item):
+                if os.path.isdir(directory):
+                    self.foundpaths
+        
+        for directory in self.foundpaths:
+            fullpath = joindirs()
+            if os.path.isfile(fullpath):
+                return fullpath
+        return None      
     def CreateBitmap(self, artid, client, size):   
         # You can do anything here you want, such as using the same   
         # image for any size, any client, etc., or using specific   
@@ -122,9 +179,13 @@ class MyArtProvider(wx.ArtProvider):
             self.log.warn("No image found for  %s:%s:%s" %(artid, client, size)) 
             self.log.warn(NamesArtId)
             self.log.warn()
+            return
         for item in Found:
             self.log.debug("found one")
-            filePath = "%s/icons/%s" % (self.baseFolder,item)
+            filePath = self.da.ScanPaths(item)
+            if filePath == None:
+                self.log.warn("Failed to find '%s'" %(item))
+                continue 
             if os.path.isfile(filePath):
                 self.log.debug("exists one")
                 fp = open(filePath)
