@@ -90,7 +90,6 @@ class TaskBarIcon(wx.TaskBarIcon):
                 rc = item()
                 if rc == None:
                     continue
-                self.log.debug('Nommmmmmmmmmmmmmmmmmm menu?=%s' % (rc))
                 return rc
                 #print "rc=%s" % (rc)
                 if rc != None:
@@ -140,7 +139,7 @@ class TaskBarIconInteractor(object):
     def OnTrack(self, evt):
         self.presenter.OnTrack()
     def CreatePopupMenu(self):
-        return self.presenter.CreatePopupMenu()
+        return self.presenter.SelectPopupMenu()
         
     def on_settings(self, evt):
         #print "asdasdaSD"

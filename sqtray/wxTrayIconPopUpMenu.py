@@ -30,13 +30,14 @@ def CreatePopupMenu(model,interactor):
         create_menu_item(toolsMENU, 'Previous', 'ART_PLAYER_SEEK_BACKWARD',interactor.onScPrevious)
         create_menu_item(toolsMENU, 'Rnd', None,interactor.onScRandom)
         toolsMENU.AppendSeparator()
-    #playersLen = len(model.Players)
+    playersLen = len(model.Players)
     #print "Players=\n%s\n%s" % (model.Players,model.playerList)
-    playersLen = 0
+    #playersLen = 0
     if playersLen >1:
         playersMENU = wx.Menu()
         toolsMENU.AppendMenu(-1, "Change Player", playersMENU) 
-        player = model.GuiPlayer.get()
+        #player = model.GuiPlayer.get()
+        player == None
         if player != None:
             MenuItem = wx.MenuItem(playersMENU, -1, player)
             # Bind event to self.ChangePlayer but add the parameter "player" to the call back, with the value "player"

@@ -113,7 +113,7 @@ class interactorWxUpdate():
          
         
     def on_connected(self,value):
-        print self.src.connected
+        #print self.src.connected
         #print dir(self.wxObject)
         #create the event
         evt = SomeNewEvent(attr1="on_connected")
@@ -194,7 +194,7 @@ class viewWxToolBarSrc():
             self.updateNeeded = False
         self.updateToolTip()
         connected = self.src.connected.get()
-        print "connected", self.toolTipCache.get()
+        #print "connected", self.toolTipCache.get()
         self.knowledge['connected'] = connected
         if self.knowledge['connected'] == True:
             self.iconNameCache.update("ART_APPLICATION_STATUS_CONNECTED")
@@ -271,7 +271,8 @@ class mainApp(wx.App):
             #self.ModelGuiThread.connected.update(self.ModelConPool.connected.get())
             pass
         if evt.attr1 == "on_players":
-            print self.ModelConPool.Players
+            pass
+            #print self.ModelConPool.Players
         self.setUpdateModel(evt)
             
     def configRead(self):
@@ -326,7 +327,7 @@ class mainApp(wx.App):
         interactor =PopUpMenuInteractor ()
         
         newMenu = CreatePopupMenu(self.ModelConPool,interactor)
-        print newMenu
+        #print newMenu
         self.PopupMenu  = PopupMenuPresentor(self.ModelConPool,newMenu, self.squeezeConCtrl, interactor)
         
         #self.PopupMenu.player.set(self.Model.GuiPlayer.get())

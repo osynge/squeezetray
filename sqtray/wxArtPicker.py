@@ -181,13 +181,13 @@ class MyArtProvider(wx.ArtProvider):
             self.log.warn()
             return
         for item in Found:
-            self.log.debug("found one")
+            #self.log.debug("found one")
             filePath = self.da.ScanPaths(item)
             if filePath == None:
                 self.log.warn("Failed to find '%s'" %(item))
                 continue 
             if os.path.isfile(filePath):
-                self.log.debug("exists one")
+                #self.log.debug("exists one")
                 fp = open(filePath)
                 bmp = wx.BitmapFromImage(wx.ImageFromStream(fp))
                 fp.close()

@@ -69,12 +69,12 @@ class TaskBarIconPresentor(object):
         self.UpdateToolTip()
         #self.View.set_icon("ART_APPLICATION_STATUS_DISCONECTED",(16,16))
         self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
-    def CreatePopupMenu(self):
+    def SelectPopupMenu(self):
         self.log.debug( "CreatePopupMenu")
         resultset = self.doCbPopupMenu()
-        print "resultset",len(resultset)
+        #print "resultset",len(resultset)
         for item in resultset:
-            self.log.debug( "CreatePopupMenu=%s" % (item))
+            #self.log.debug( "CreatePopupMenu=%s" % (item))
             rc = item()
             if rc == None:
                 continue
