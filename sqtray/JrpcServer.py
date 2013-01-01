@@ -146,9 +146,11 @@ class SqueezeConnectionThreadPool:
             new.SocketErrMsg.addCallback(self.OnSocketErrMsg)
             self.arrayOfSqueezeConnectionWorker.append(new)
         self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
+    
         
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
+        self.log.error("Wait for completion of all the tasks in the queue")
         self.tasks.join()
     def sendMessage(self,func,message, *args, **kargs):
         #print "connectionString =" ,  self.squeezeConMdle.connectionStr.get()
