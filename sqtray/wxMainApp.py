@@ -1,5 +1,10 @@
 import wx
-from sqtray.models import Observable, squeezeConMdle, squeezePlayerMdl
+from sqtray.models import Observable
+#, squeezeConMdle, squeezePlayerMdl
+from sqtray.modelsConnection import squeezeConMdle, squeezePlayerMdl
+from sqtray.modelsWxTaskbar import taskBarMdle
+
+
 from sqtray.JrpcServer import squeezeConCtrl
 from sqtray.wxTrayIconPopUpMenu import CreatePopupMenu,PopUpMenuInteractor, PopupMenuPresentor
 
@@ -10,7 +15,8 @@ from wxEvents import EVT_RESULT_CONNECTION_ID
 from sqtray.wxEvents import ResultEvent2
 import datetime
 
-from sqtray.wxTaskBarIcon import TaskBarIcon, TaskBarIconInteractor,TaskBarIconPresentor
+from sqtray.wxTaskBarIcon import TaskBarIcon, TaskBarIconInteractor
+from sqtray.wxTaskBarIconPresentor import TaskBarIconPresentor
 from sqtray.wxFrmSettings import FrmSettings
 
 from sqtray.wxArtPicker import MyArtProvider
@@ -60,7 +66,7 @@ class FrmCtrl:
 
     def CreatePopUp(self,param):
         ################################################################
-        #print param
+        self.log.debug("CreatePopUp=%s" % (param))
         CreatePopupMenu()
     def handleConnectionStrChange(self,value):
         if (self.Example != None):
@@ -88,170 +94,185 @@ class FrmCtrl:
             return
         self.tb.SetIcon(testIcon)    
 
-class myapp(wx.App):
+
+import  wx
+import  wx.lib.newevent
+
+SomeNewEvent, EVT_SOME_NEW_EVENT = wx.lib.newevent.NewEvent()
+SomeNewCommandEvent, EVT_SOME_NEW_COMMAND_EVENT = wx.lib.newevent.NewCommandEvent()
+           
+
+class interactorWxUpdate():
+    def install(self, src, wxObject):
+        self.src = src
+        self.wxObject = wxObject 
+        self.wxObject.Bind(EVT_SOME_NEW_EVENT, self.wxObject.EventRevived)
+        self.src.connected.addCallback(self.on_connected)
+        self.src.CbPlayersAvailableAdd(self.on_players)
+        #self.wxObject.setUpdateModel(self.updateWx)
+         
+        
+    def on_connected(self,value):
+        print self.src.connected
+        #print dir(self.wxObject)
+        #create the event
+        evt = SomeNewEvent(attr1="on_connected")
+        #post the event
+        wx.PostEvent(self.wxObject, evt)
+    
+    def on_players(self):
+        evt = SomeNewEvent(attr1="on_players")
+        #post the event
+        wx.PostEvent(self.wxObject, evt)
+
+        #newIconName = "ART_APPLICATION_STATUS_CONNECTED"
+        #self.wxObject.setIcon.update(newIconName)
+        
+
+
+class viewWxToolBarSrc():
     def __init__(self):
-        super(myapp, self).__init__()
+        self.updateNeeded = True
+        self.toolTipCache = Observable(None)
+        self.iconNameCache = Observable(None)
+        self.knowledge = {}
+        self.log = logging.getLogger("viewWxToolBarSrc")
+    def install(self, src):        
+        self.src = src
+        self.src.connected.addCallback(self.on_connected)
+        self.src.CbPlayersAvailableAdd(self.on_players)
+    
+    
+    def updateToolTipManyPlayers(self):
+        newToolTip = unicode()
+        for index in  range(len(self.src.playerList)):
+            playerName = self.src.playerList[index].name.get()
+            if playerName == None:
+                continue
+            newToolTip += unicode(playerName)
+            
+            CurrentOperationMode = self.src.playerList[index].operationMode.get()
+            if CurrentOperationMode != None:
+                newToolTip += ":%s" % (CurrentOperationMode)
+            CurrentTrackTitle = self.src.playerList[index].CurrentTrackTitle.get()
+            if CurrentTrackTitle != None:
+                newToolTip += "\nTrack:%s" % (CurrentTrackTitle)
+            CurrentTrackArtist = self.src.playerList[index].CurrentTrackArtist.get()
+            if CurrentTrackArtist != None:
+                newToolTip += "\nArtist:%s" % (CurrentTrackArtist)
+            CurrentTrackEnds = self.src.playerList[index].CurrentTrackEnds.get()
+            #print "CurrentTrackEnds=%s" % (CurrentTrackEnds)
+            if CurrentTrackEnds != None:
+                seconds = timedelta2str(CurrentTrackEnds - datetime.datetime.now())
+                newToolTip += "\nRemaining:%s" % (seconds)
+            newToolTip += '\n'
+        #print newToolTip
+        #self.log.warn("ffoo%sooff" % ( newToolTip.strip())            )
+        self.toolTipCache.update(newToolTip)
+        #self.log.warn("xxx%sxxx" % (self.toolTipCache.get() ) )
+        return self.toolTipCache.get()
+    def updateToolTip(self):
+        self.log.debug("updateToolTip")
+        newToolTip = unicode()
+        playerlistLen = len(self.src.playerList)
+        #print "playerlistLen" , playerlistLen
+        if playerlistLen > 0:
+            return self.updateToolTipManyPlayers()
+        #print "dfsfsdf" ,  self.src.playerList
+            
+        if self.src.connected:
+            self.toolTipCache.update("Connected")
+    
+        return self.toolTipCache.get()
+    
+    def update(self):
         
-        self.log = logging.getLogger("myapp")
-        # Used to decide the connection string
-        self.iconFacts = set([])
-        # Setup global art provider
+        if not self.updateNeeded:
+            pass
+            #return
+        else:
+            self.updateNeeded = False
+        self.updateToolTip()
+        connected = self.src.connected.get()
+        print "connected", self.toolTipCache.get()
+        self.knowledge['connected'] = connected
+        if self.knowledge['connected'] == True:
+            self.iconNameCache.update("ART_APPLICATION_STATUS_CONNECTED")
+            
+    def on_connected(self,value):
+        self.updateNeeded = True
         
-        self.ApplicationIconName = Observable(None)
-        self.ApplicationIconName.addCallback(self.OnApplicationIconNameChange)
         
-        self.model = squeezeConMdle()
-        self.model.GuiPlayer = Observable(None)
-        self.model.GuiPlayerDefault = Observable(None)
-        self.model.connected.addCallback(self.OnConection)
-        self.SqueezeServerPort = Observable(9000)
-        self.SqueezeServerPort.addCallback(self.OnSqueezeServerPort)
+        if value != True:
+            self.iconNameCache.update("ART_APPLICATION_STATUS_DISCONECTED")
+        
+    def on_players(self):
+        self.updateNeeded = True
+        
+    
+    
+    def gettoolTip(self):
+        self.update()
+        return self.toolTipCache.get()
+            
+        
+    
+    
+class mainApp(wx.App):
+    def __init__(self):
+        super(mainApp, self).__init__()
+        self.log = logging.getLogger("mainApp")
+        # Used to decide the connection string  
+        self.ModelConPool = squeezeConMdle()
+        self.ModelGuiThread = taskBarMdle()
+        
+        #self.tb = TaskBarPresntor(self.ModelGuiThread)
         self.cfg = wx.FileConfig(appName="ApplicationName", 
                                     vendorName="VendorName", 
                                     localFilename=".squeezetray.cfg", 
                                     style=wx.CONFIG_USE_LOCAL_FILE)
-        self.squeezeConCtrl = squeezeConCtrl(self.model)
-        
-        
-        
         # Now we can set up forms using the art provider     
-        self.frmCtrl = FrmCtrl(self.model )
-        self.frmCtrl.setApp(self)
-        self.frmCtrl.setCfg(self.cfg)
-        self.tb = self.frmCtrl.tb
+        self.tb = TaskBarIcon(self.ModelGuiThread)
+        self.tb.Bind(wx.EVT_CLOSE, self.Exit)
         
-        #print "tb=%s" %self.tb
-        self.tb.cfg = self.cfg
-        self.model.GuiPlayer.addCallback(self.frmCtrl.handleConnectionStrChange)
-        
-        self.model.GuiPlayer.addCallback(self.OnGuiPlayer)
-        self.squeezeConCtrl.CbConnectionAdd(self.frmCtrl.handleConnectionChange)
-        
-        self.model.CbPlayersAvailableAdd(self.frmCtrl.handlePlayersChange,None)
-
-        self.model.CbPlayersAvailableAdd(self.OnPlayerAvailable)
-        
-        self.model.CbChurrentTrackAdd(self.frmCtrl.handleCurrentTrackChange)
-        self.model.connectionStr.addCallback(self.frmCtrl.handlePlayersChange)
-        self.model.SocketErrNo.addCallback(self.frmCtrl.handlePlayersChange)
-        self.configRead()
         TIMER_ID = wx.NewId()  # pick a number
+        
+        self.CUSTOM_ID = wx.NewId()
+        
         self.timer = wx.Timer(self, TIMER_ID)  # message will be sent to the panel
-        self.timer.Start(9000)  # x100 milliseconds
+        
+        
+        
+        
+        self.timer.Start(900)  # x100 milliseconds
         wx.EVT_TIMER(self, TIMER_ID, self.OnTimer)  # call the on_timer function
+        self.taskbarInteractor = TaskBarIconInteractor()
+        self.tbPresentor =  TaskBarIconPresentor(self.ModelGuiThread,self.tb,self.taskbarInteractor)
+        self.tbPresentor.cbAddReqMdlUpdate(self.setUpdateModel)
+        self.tbPresentor.cbAddRequestPopUpMenu(self.CreatePopUp)
+        
+        
+        self.interactorWxUpdate = interactorWxUpdate()
+        self.interactorWxUpdate.install(self.ModelConPool,self)
+        
+        # Now we hook up the view
+        self.squeezeConCtrl = squeezeConCtrl(self.ModelConPool)
+        self.squeezeConCtrl.ConectionStringSet("mini:9000")
+        self.count = 0
+        self.viewWxToolBarSrc = viewWxToolBarSrc()
+        self.viewWxToolBarSrc.install(self.ModelConPool)
+    def onTaskBarPopUpMenu(self,evt):
+        self.log.debug("onTaskBarPopUpMenu=%s",(None))
+        self.CreatePopUp()
 
-
-
-        self.interactor = TaskBarIconInteractor()
-        self.tbPresentor =  TaskBarIconPresentor(self.model,self.tb,self.interactor)
-        self.tbPresentor.squeezeConCtrl = self.squeezeConCtrl
-        self.tbPresentor.cbAddOnSettings(self.on_settings)
-        # Next tick will update the UpdateApplicationIconName
-        self.UpdateApplicationIconNameRequestFlag = True
-    
-        
-    def UpdateApplicationIconNameRequest(self):
-        
-        self.UpdateApplicationIconNameRequestFlag = True
-        
-    def UpdateApplicationIconName(self):
-        if not "conected" in self.iconFacts:
-            #self.View.set_icon("ART_APPLICATION_STATUS_DISCONECTED",(16,16))
-            #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
-            self.ApplicationIconName.update("ART_APPLICATION_STATUS_DISCONECTED")
-            return
-        if "players" in self.iconFacts:
-            self.ApplicationIconName.update("ART_APPLICATION_STATUS_CONNECTED")
-            return
-        
-    def OnTimer(self,event):
-        self.tbPresentor.UpdateToolTip()
-        if self.UpdateApplicationIconNameRequestFlag:
-            self.UpdateApplicationIconNameRequestFlag = False
-            self.UpdateApplicationIconName()
-        ConnectionStatus = self.model.connected.get()
-        if not ConnectionStatus:
-            #print "not on line"
-            self.squeezeConCtrl.RecConnectionOnline()
-            return
-        player = self.model.GuiPlayer.get()
-        #print "on_timer.player",player
-        if player != None:
-            self.squeezeConCtrl.PlayerStatus(player)
-            return
-        self.squeezeConCtrl.RecConnectionOnline()
-    
-    def OnApplicationIconNameChange(self, mstuff):
-        NewName = self.ApplicationIconName.get()
-        if NewName == None:
-            return
-        self.tbPresentor.setIcon(NewName)
-        if self.frmCtrl.Example != None:
-            self.frmCtrl.Example.set_icon(NewName,(16,16))
-        
-    def OnConection(self,stuff):
-        print "OnConection=%s"  % (stuff)
-        isConnected = self.model.connected.get()
-        OldLenIf = len(self.iconFacts)
-        if isConnected:
-            self.iconFacts.add("conected")
-        else:
-            if "conected" in self.iconFacts:
-                self.iconFacts.remove("conected")
-        NewLenIf = len(self.iconFacts)
-        if OldLenIf != NewLenIf:
-            self.UpdateApplicationIconNameRequest()
-            self.log.debug("Updated Icon")
-            self.log.debug("self.iconFact=%s" % (self.iconFacts))
-
-    def OnPlayerAvailable(self):
-        # If Not connected set None
-        if not self.model.connected:
-            if None != self.model.GuiPlayer.get():
-                self.model.GuiPlayer.set(None)
-            return
-        # If no players Available:
-        AvailableArray = self.model.Players.keys()
-        AvailableArrayLen = len(AvailableArray)
-        OldLenIf = len(self.iconFacts)
-        if AvailableArrayLen == 0:
-            if  "players" in self.iconFacts:
-                self.iconFacts.remove("players")
-        else:
-            self.iconFacts.add("players")
-        NewLenIf = len(self.iconFacts)
-        if OldLenIf != NewLenIf:
-            self.UpdateApplicationIconNameRequest()
-            self.log.debug("Updated Icon")
-            self.log.debug("self.iconFact=%s" % (self.iconFacts))
-        
-        if AvailableArrayLen == 0:
-            if None != self.model.GuiPlayer.get():
-                self.model.GuiPlayer.set(None)
-            if  "players" in self.iconFacts:
-                self.iconFacts.remove("players")
-            return
-        self.iconFacts.add("players")
-        # Try to Apply Current Player
-        
-        # If the GuiPlayer is still set to right thing
-        GuiPlayer = self.model.GuiPlayer.get()
-        if GuiPlayer in AvailableArray:
-            
-            return
-        # Try to Apply Default Player
-        
-        DefaultPlayer = self.model.GuiPlayerDefault.get()
-        if DefaultPlayer in AvailableArray:
-            OldDefaultPlayer = self.model.GuiPlayer.get()
-            if OldDefaultPlayer != DefaultPlayer:
-                self.model.GuiPlayer.set(DefaultPlayer)
-                
-            return
-        # Try to find any player
-        for PlayerName in self.model.Players:
-            self.model.GuiPlayer.set(unicode(PlayerName))
-            return
+    def EventRevived(self,evt):
+        self.log.debug("EventRevived=%s",(evt.attr1 ))
+        if evt.attr1 == "on_connected":
+            #self.ModelGuiThread.connected.update(self.ModelConPool.connected.get())
+            pass
+        if evt.attr1 == "on_players":
+            print self.ModelConPool.Players
+        self.setUpdateModel(evt)
             
     def configRead(self):
         # Set Host
@@ -282,63 +303,46 @@ class myapp(wx.App):
             SqueezeServerPlayer = self.cfg.Read('SqueezeServerPlayer')
         self.SetSqueezeServerPlayer(SqueezeServerPlayer)
         self.model.GuiPlayerDefault.set(SqueezeServerPlayer)
-        self.squeezeConCtrl.RecConnectionOnline()
+        self.squeezeConCtrl.RecConnectionOnline()    
         
-    def configSave(self):
-        #print 'saving'
-        self.cfg.Write("squeezeServerHost", self.model.host.get())
-        self.cfg.WriteInt("squeezeServerPort", self.model.port.get())
-        self.cfg.Write("SqueezeServerPlayer", self.model.GuiPlayerDefault.get())
-        self.cfg.Flush()
-
-    def SetSqueezeServerHost(self,host):
-        OldHost = self.model.host.get()
-        if OldHost != host:
-            self.model.host.set(host)
-            #print "set" ,self.model.host.get()
-            self.squeezeConCtrl.RecConnectionOnline()
-            
+    def OnTimer(self,event):
+        #self.log.debug("on timer")
+        #self.log.debug("on timer= %s" % (self.viewWxToolBarSrc.gettoolTip()))
+        #self.timer.
+        #print dir(self.timer)
+        #self.interactorWxUpdate.on_connected()
+        if self.count > 100:
+            self.Exit()
+        self.count += 1
+    def on_event(self,event):
+        self.log.debug("on_event")
         
-    def GetSqueezeServerHost(self):
-        if hasattr(self,'SqueezeServerHost'):
-            return self.SqueezeServerHost
-        return 'localhost'
+    def Exit(self):
+        self.squeezeConCtrl.view1.wait_completion()
+        self.tb.Destroy()
+    def CreatePopUp(self):
+        self.log.debug("CreatePopUp")
         
-    def OnSqueezeServerPort(self,value):
-        self.squeezeConCtrl.ServerPortSet(self.SqueezeServerPort.get())
-        self.squeezeConCtrl.RecConnectionOnline()
-
-    def GetSqueezeServerPort(self):
-        if hasattr(self,'SqueezeServerHost'):
-            return self.SqueezeServerPort.get()
-        return 9000
-    def SetSqueezeServerPlayer(self,player):
-        self.SqueezeServerPlayer = player
-        #print "player=%s" % player
-        self.squeezeConCtrl.RecPlayerStatus(player)
+        interactor =PopUpMenuInteractor ()
         
-    def GetSqueezeServerPlayer(self):        
-        if hasattr(self,'SqueezeServerPlayer'):
-            return self.SqueezeServerPlayer
-        if self.model.playersCount.get() > 0:
-            return unicode(self.model.playerList[0].name.get())
-        return None
-    
+        newMenu = CreatePopupMenu(self.ModelConPool,interactor)
+        print newMenu
+        self.PopupMenu  = PopupMenuPresentor(self.ModelConPool,newMenu, self.squeezeConCtrl, interactor)
         
-
+        #self.PopupMenu.player.set(self.Model.GuiPlayer.get())
+        #self.PopupMenu.AddCallbackSettings(self.on_settings)
+        #self.PopupMenu.player.addCallback(self.playerChanged1)
+        return newMenu
+    def setUpdateModel(self,param):
+        connected = self.ModelConPool.connected.get()
+        if not connected:
+            self.ModelGuiThread.currentIconName.update("ART_APPLICATION_STATUS_DISCONECTED")
+            return
+        #if connected:
+        #    self.ModelGuiThread.currentIconName.update("ART_APPLICATION_STATUS_CONNECTED")
+        #    return
+        toolTip = self.viewWxToolBarSrc.gettoolTip()
+        #self.ModelGuiThread.set_toolTip(toolTip)
+        self.tbPresentor._OnToolTipChange(toolTip)
+        self.log.debug("setUpdateModel=%s" % (connected))
         
-        #print self.ScreenToClient(wx.GetMousePosition())
-
-    def on_hello(self, event):
-        print 'Hello, world!'
-
-    def on_settings(self):
-        
-        self.frmCtrl.showSettings()
-        self.OnApplicationIconNameChange(None)
-        
-    def OnGuiPlayer(self,player):
-        
-        self.tbPresentor.currentPlayer.set(self.model.GuiPlayer.get())
-        
-    

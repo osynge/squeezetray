@@ -21,15 +21,18 @@ def create_menu_item(menu, label, art,func):
 def CreatePopupMenu(model,interactor):
     toolsMENU = wx.Menu()
     ConnectionStatus = model.connected.get()
+    #ConnectionStatus = False
     if ConnectionStatus:
+        
         create_menu_item(toolsMENU, 'Play',"ART_PLAYER_PLAY", interactor.onScPlay)
         create_menu_item(toolsMENU, 'Pause', "ART_PLAYER_PAUSE",interactor.onScPause)
         create_menu_item(toolsMENU, 'Next', "ART_PLAYER_SEEK_FORWARD",interactor.onScNext)
         create_menu_item(toolsMENU, 'Previous', 'ART_PLAYER_SEEK_BACKWARD',interactor.onScPrevious)
         create_menu_item(toolsMENU, 'Rnd', None,interactor.onScRandom)
         toolsMENU.AppendSeparator()
-    playersLen = len(model.Players)
+    #playersLen = len(model.Players)
     #print "Players=\n%s\n%s" % (model.Players,model.playerList)
+    playersLen = 0
     if playersLen >1:
         playersMENU = wx.Menu()
         toolsMENU.AppendMenu(-1, "Change Player", playersMENU) 
