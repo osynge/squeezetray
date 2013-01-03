@@ -10,8 +10,6 @@ def create_menu_item(menu, label, art,func):
     menu.Bind(wx.EVT_MENU, func, id=item.GetId())
     if art != None:
         save_ico = wx.ArtProvider.GetBitmap(art, wx.ART_TOOLBAR, (16,16))
-        #save_ico = wx.ArtProvider.GetBitmap("wxART_INFORMATION", wx.ART_TOOLBAR, (16,16))
-    
         item.SetBitmap(save_ico)
     menu.AppendItem(item)
     return item
@@ -37,7 +35,7 @@ def CreatePopupMenu(model,interactor):
         playersMENU = wx.Menu()
         toolsMENU.AppendMenu(-1, "Change Player", playersMENU) 
         #player = model.GuiPlayer.get()
-        player == None
+        player = None
         if player != None:
             MenuItem = wx.MenuItem(playersMENU, -1, player)
             # Bind event to self.ChangePlayer but add the parameter "player" to the call back, with the value "player"
@@ -53,8 +51,7 @@ def CreatePopupMenu(model,interactor):
         toolsMENU.AppendSeparator()
     create_menu_item(toolsMENU, 'Settings',None, interactor.on_settings)
     toolsMENU.AppendSeparator()
-    create_menu_item(toolsMENU, 'Exit', None,interactor.on_exit)
-    #print toolsMENU
+    create_menu_item(toolsMENU, 'Exit', wx.ART_QUIT,interactor.on_exit)
     return toolsMENU
 
 
@@ -94,6 +91,21 @@ class PopupMenuPresentor(object):
         interactor.install(self,self.View)
         self.player = Observable(None)
         self._cb_settings = []
+        
+        self.callbacks = {
+            "on_exit" : {},
+            
+        }
+        
+    def doCbExit(self):
+        results = {}
+        for item in self.callbacks["on_exit"]:
+            results[item] = item()
+        return results
+    
+    def cbAddOnExit(self,func):
+        self.callbacks['on_exit'][func] = 1   
+        
     def AddCallbackSettings(self,func):
         self._cb_settings.append(func)
     def GetSqueezeServerPlayer(self):
@@ -145,7 +157,5 @@ class PopupMenuPresentor(object):
         if oldPlayer != player:
             self.player.set(player)
     def on_exit(self):
-        #self.on_settings_close(event)
-        #wx.CallAfter(self.View.Destroy)
+        self.doCbExit()
         
-        pass
