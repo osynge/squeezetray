@@ -214,7 +214,11 @@ class viewWxToolBarSrc():
     def gettoolTip(self):
         self.update()
         return self.toolTipCache.get()
-            
+    
+    
+    def getIconName(self):
+        self.update()
+        return self.iconNameCache.get()
         
     
     
@@ -322,28 +326,33 @@ class mainApp(wx.App):
         self.squeezeConCtrl.view1.wait_completion()
         self.tb.Destroy()
     def CreatePopUp(self):
-        self.log.debug("CreatePopUp")
+        self.log.debug("CreatePopUpp")
         
-        interactor =PopUpMenuInteractor ()
-        
+        interactor = PopUpMenuInteractor ()
         newMenu = CreatePopupMenu(self.ModelConPool,interactor)
         #print newMenu
         self.PopupMenu  = PopupMenuPresentor(self.ModelConPool,newMenu, self.squeezeConCtrl, interactor)
-        
+        self.PopupMenu.cbAddOnExit(self.Exit)
         #self.PopupMenu.player.set(self.Model.GuiPlayer.get())
         #self.PopupMenu.AddCallbackSettings(self.on_settings)
         #self.PopupMenu.player.addCallback(self.playerChanged1)
         return newMenu
     def setUpdateModel(self,param):
         connected = self.ModelConPool.connected.get()
-        if not connected:
+        if connected == False:
             self.ModelGuiThread.currentIconName.update("ART_APPLICATION_STATUS_DISCONECTED")
             return
+        if connected == True:
+            self.ModelGuiThread.currentIconName.update("ART_APPLICATION_STATUS_CONNECTED")
         #if connected:
         #    self.ModelGuiThread.currentIconName.update("ART_APPLICATION_STATUS_CONNECTED")
         #    return
         toolTip = self.viewWxToolBarSrc.gettoolTip()
         #self.ModelGuiThread.set_toolTip(toolTip)
         self.tbPresentor._OnToolTipChange(toolTip)
+        currentIcon = self.viewWxToolBarSrc.getIconName()
+        self.log.debug("setUpdateModel")
+        
+        
         self.log.debug("setUpdateModel=%s" % (connected))
         

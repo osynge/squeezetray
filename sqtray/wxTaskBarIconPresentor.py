@@ -34,7 +34,13 @@ class TaskBarIconPresentor(object):
         results = {}
         for item in self.callbacks["on_popupMenu"]:
             results[item] = item()
-        return results    
+        return results
+    def doCbExit(self):
+        results = {}
+        for item in self.callbacks["on_exit"]:
+            results[item] = item()
+        return results  
+ 
     def _OnIconChange(self,IconName):
         self.View.set_icon(IconName,(16,16))
         #self.doCbModelUpdate()
@@ -54,6 +60,9 @@ class TaskBarIconPresentor(object):
         self.callbacks['on_settings'].append(func)
     def cbAddOnToolTipUpdate(self,func):
         self.callbacks['on_settings'].append(func)
+        
+    def cbAddOnExit(self,func):
+        self.callbacks['on_exit'].append(func)
     def OnTrack(self):
         self.UpdateToolTip()
     def GetSqueezeServerPlayer(self):
@@ -112,8 +121,8 @@ class TaskBarIconPresentor(object):
     def on_exit(self):
         #self.on_settings_close(event)
         #wx.CallAfter(self.Destroy)
-        self.View.Exit()
-
+        #self.View.Exit()
+        self.doCbExit()
 
     def on_left_up(self,):
         self.log.debug( 'on_left_up=%s' % self.GetSqueezeServerPlayer())
