@@ -179,9 +179,8 @@ class MyArtProvider(wx.ArtProvider):
         Found = NamesSize.intersection(NamesArtId)
         numberFound = len(Found)
         if numberFound == 0:
-            self.log.warn("No image found for  %s:%s:%s" %(artid, client, size)) 
-            #self.log.warn(NamesArtId)
-            #self.log.warn("end")
+            self.log.debug("No image found for  %s:%s:%s" %(artid, client, size))
+            return  bmp
         bmp = None
         for item in Found:
             #self.log.debug("found one")
