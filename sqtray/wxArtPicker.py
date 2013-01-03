@@ -157,7 +157,10 @@ class MyArtProvider(wx.ArtProvider):
         # images for specific sizes, whatever...   
    
         # See end of file for the image data   
-        self.log.debug("MyArtProvider: providing %s:%s at %s" %(artid, client, size))   
+        self.log.debug("MyArtProvider: providing %s:%s at %s" %(artid, client, size))  
+        if ((not isinstance(artid, str)) and (not isinstance(artid, unicode))):
+            return
+        print type(artid)  
         bmp = wx.NullBitmap   
         # use this one for all 48x48 images
         NamesSize = set()
@@ -177,9 +180,9 @@ class MyArtProvider(wx.ArtProvider):
         numberFound = len(Found)
         if numberFound == 0:
             self.log.warn("No image found for  %s:%s:%s" %(artid, client, size)) 
-            self.log.warn(NamesArtId)
-            self.log.warn()
-            return
+            #self.log.warn(NamesArtId)
+            #self.log.warn("end")
+        bmp = None
         for item in Found:
             #self.log.debug("found one")
             filePath = self.da.ScanPaths(item)
@@ -198,8 +201,8 @@ class MyArtProvider(wx.ArtProvider):
         # but be more specific for these   
          
          
-   
-        if bmp.Ok():   
+        
+        if bmp == None:   
             self.log.debug("MyArtProvider: providing %s:%s at %s" %(artid, client, size))   
         return bmp   
    
