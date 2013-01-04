@@ -94,6 +94,7 @@ class PopupMenuPresentor(object):
         
         self.callbacks = {
             "on_exit" : {},
+            "on_settings" : {},
             
         }
         
@@ -102,12 +103,20 @@ class PopupMenuPresentor(object):
         for item in self.callbacks["on_exit"]:
             results[item] = item()
         return results
+    def doCbSettings(self):
+        results = {}
+        for item in self.callbacks["on_settings"]:
+            results[item] = item()
+        return results
     
     def cbAddOnExit(self,func):
         self.callbacks['on_exit'][func] = 1   
         
-    def AddCallbackSettings(self,func):
-        self._cb_settings.append(func)
+    def cbAddOnSettings(self,func):
+        self.callbacks['on_settings'][func] = 1
+        
+        
+        
     def GetSqueezeServerPlayer(self):
         return self.player.get()
     def onScPause(self):
@@ -150,8 +159,7 @@ class PopupMenuPresentor(object):
 
 
     def on_settings(self):
-        for item in self._cb_settings:
-            item()
+        self.doCbSettings()
     def ChangePlayer(self,player):
         oldPlayer = self.player.get()
         if oldPlayer != player:

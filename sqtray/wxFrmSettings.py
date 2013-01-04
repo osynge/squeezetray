@@ -85,7 +85,8 @@ class FrmSettings(wx.Frame):
             
             self.SetStatusText("Server not connected.")
             return
-        CurrentPlayer = self.model.GuiPlayer.get()
+        #CurrentPlayer = self.model.GuiPlayer.get()
+        CurrentPlayer = None
         if CurrentPlayer != None:
             host = self.model.host.get()
             port = self.model.port.get()
@@ -140,7 +141,8 @@ class FrmSettings(wx.Frame):
             self.cbPlayer.Clear()
             self.cbPlayer.SetSelection(-1)
         else:
-            CurrentPlayer = self.model.GuiPlayerDefault.get()
+            #CurrentPlayer = self.model.GuiPlayerDefault.get()
+            CurrentPlayer = None
             #print "CurrentPlayer",CurrentPlayer
             playerIndex = 0
             if CurrentPlayer != None:

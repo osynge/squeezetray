@@ -15,7 +15,7 @@ from wxEvents import EVT_RESULT_CONNECTION_ID
 from sqtray.wxEvents import ResultEvent2
 import datetime
 
-from sqtray.wxTaskBarIcon import TaskBarIcon, TaskBarIconInteractor
+from sqtray.wxTaskBarIcon import TaskBarIcon, TaskBarIconInteractor, timedelta2str
 from sqtray.wxTaskBarIconPresentor import TaskBarIconPresentor
 from sqtray.wxFrmSettings import FrmSettings
 
@@ -333,6 +333,8 @@ class mainApp(wx.App):
         #print newMenu
         self.PopupMenu  = PopupMenuPresentor(self.ModelConPool,newMenu, self.squeezeConCtrl, interactor)
         self.PopupMenu.cbAddOnExit(self.Exit)
+        self.PopupMenu.cbAddOnSettings(self.SettingsOpen)
+        
         #self.PopupMenu.player.set(self.Model.GuiPlayer.get())
         #self.PopupMenu.AddCallbackSettings(self.on_settings)
         #self.PopupMenu.player.addCallback(self.playerChanged1)
@@ -355,4 +357,11 @@ class mainApp(wx.App):
         
         
         self.log.debug("setUpdateModel=%s" % (connected))
-        
+    def SettingsOpen(self):
+        self.Example = FrmSettings(None, title='Settings')
+        self.Example.Bind(wx.EVT_CLOSE, self.SettingClose)
+        self.Example.ModelSet(self.ModelConPool)
+        self.Example.Show()
+    def SettingClose(self,evnt):
+        self.Example.Destroy()
+        self.Example = None
