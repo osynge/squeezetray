@@ -93,18 +93,7 @@ class TaskBarIconPresentor(object):
         
         
         return None
-            
-        
-        interactor =PopUpMenuInteractor ()
-        
-        newMenu = CreatePopupMenu(self.Model,interactor)
-        
-        self.PopupMenu  = PopupMenuPresentor(self.Model,newMenu, self.squeezeConCtrl, interactor)
-        #self.Model.GuiPlayer.addCallback(self.PopupMenu.player.set)
-        #self.PopupMenu.player.set(self.Model.GuiPlayer.get())
-        #self.PopupMenu.AddCallbackSettings(self.on_settings)
-        #self.PopupMenu.player.addCallback(self.playerChanged1)
-        return newMenu
+           
     def on_move(self):
         #print 'on_move'
         pass
