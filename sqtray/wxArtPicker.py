@@ -159,8 +159,7 @@ class MyArtProvider(wx.ArtProvider):
         # See end of file for the image data   
         self.log.debug("MyArtProvider: providing %s:%s at %s" %(artid, client, size))  
         if ((not isinstance(artid, str)) and (not isinstance(artid, unicode))):
-            return
-        print type(artid)  
+            return 
         bmp = wx.NullBitmap   
         # use this one for all 48x48 images
         NamesSize = set()
