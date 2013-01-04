@@ -32,67 +32,6 @@ def StoreConfig(FilePath,squeezeConMdle):
     cfg.WriteInt("squeezeServerPort", squeezeConMdle.port.get())
     cfg.Flush()
 
-class FrmCtrl:
-    def  __init__(self,model):
-        self.log = logging.getLogger("FrmCtrl")
-        self.model = model
-        self.tb = TaskBarIcon(model)
-        self.tb.FrmCtrl = self
-        self.tb.Bind(wx.EVT_CLOSE, self.Exit)
-        self.Example = None
-    def setApp(self,app):
-        self.app = app
-        self.tb.app = app
-    def setCfg(self,cfg):
-        self.cfg = cfg
-    def showSettings(self):
-        if (self.Example == None):
-            self.Example = FrmSettings(None, title='Settings')
-            self.Example.Bind(wx.EVT_CLOSE, self.closeSettings)
-            self.Example.FrmCtrl = self
-            self.Example.cfg = self.cfg
-            self.Example.app = self.app
-            self.Example.ModelSet(self.model)
-            IconName = "ART_APPLICATION_STATUS_DISCONECTED"
-            self.Example.set_icon(IconName,(16,16))
-            self.Example.Show()
-    def closeSettings(self,wxExvent):
-        if (self.Example != None):
-            self.Example.Destroy()
-            self.Example = None    
-    def Exit(self):
-        self.closeSettings(None)
-        self.tb.Destroy()
-
-    def CreatePopUp(self,param):
-        ################################################################
-        self.log.debug("CreatePopUp=%s" % (param))
-        CreatePopupMenu()
-    def handleConnectionStrChange(self,value):
-        if (self.Example != None):
-            wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_CONNECTION_ID,value))
-            
-    def handleConnectionChange(self,value):
-        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
-        if (self.Example != None):
-            wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_CONNECTED_ID,value))
-    
-    def handlePlayersChange(self,value):
-        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_PLAYERS_ID,None))
-        if (self.Example != None):
-            wx.PostEvent(self.Example, ResultEvent2(EVT_RESULT_PLAYERS_ID,None))
-        
-    def handleCurrentTrackChange(self):
-        wx.PostEvent(self.tb, ResultEvent2(EVT_RESULT_CURRENT_TRACK_ID,None))
-        
-    def setIcon(self,IconName):
-        self.log.debug("setIcon=%s"% (IconName))
-        #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
-        testIcon = wx.ArtProvider.GetIcon(IconName,"FrmCtrl" ,(16,16))
-        if not testIcon.Ok():
-            self.log.debug("Icon not OK")
-            return
-        self.tb.SetIcon(testIcon)    
 
 
 import  wx
@@ -109,13 +48,9 @@ class interactorWxUpdate():
         self.wxObject.Bind(EVT_SOME_NEW_EVENT, self.wxObject.EventRevived)
         self.src.connected.addCallback(self.on_connected)
         self.src.CbPlayersAvailableAdd(self.on_players)
-        #self.wxObject.setUpdateModel(self.updateWx)
-         
+        
         
     def on_connected(self,value):
-        #print self.src.connected
-        #print dir(self.wxObject)
-        #create the event
         evt = SomeNewEvent(attr1="on_connected")
         #post the event
         wx.PostEvent(self.wxObject, evt)
@@ -125,8 +60,6 @@ class interactorWxUpdate():
         #post the event
         wx.PostEvent(self.wxObject, evt)
 
-        #newIconName = "ART_APPLICATION_STATUS_CONNECTED"
-        #self.wxObject.setIcon.update(newIconName)
         
 
 
@@ -140,8 +73,9 @@ class viewWxToolBarSrc():
     def install(self, src):        
         self.src = src
         self.src.connected.addCallback(self.on_connected)
+        #self.src.Players.addCallback(self.on_connected)
         self.src.CbPlayersAvailableAdd(self.on_players)
-    
+        self.src.playersCount.addCallback(self.on_connected)
     
     def updateToolTipManyPlayers(self):
         newToolTip = unicode()
@@ -207,10 +141,25 @@ class viewWxToolBarSrc():
             self.iconNameCache.update("ART_APPLICATION_STATUS_DISCONECTED")
         
     def on_players(self):
+        print "on_players"
         self.updateNeeded = True
-        
-    
-    
+        #self.availablePlayers
+        foundPlayers = set()
+        for index in  range(len(self.src.playerList)):            
+            playerName = self.src.playerList[index].name.get()
+            self.src.playerList[index].name.addCallback(self.on_player_name)
+            self.src.playerList[index].CurrentTrackTitle.addCallback(self.on_player_track)
+            self.src.playerList[index].CurrentTrackArtist.addCallback(self.on_player_artist)
+            
+            
+    def on_player_name(self,value):
+        self.updateNeeded = True
+    def on_player_track(self,value):
+        print 'on_player_track'
+        self.updateNeeded = True
+    def on_player_artist(self,value):
+        print 'on_player_artist'
+        self.updateNeeded = True
     def gettoolTip(self):
         self.update()
         return self.toolTipCache.get()
@@ -252,6 +201,7 @@ class mainApp(wx.App):
         wx.EVT_TIMER(self, TIMER_ID, self.OnTimer)  # call the on_timer function
         self.taskbarInteractor = TaskBarIconInteractor()
         self.tbPresentor =  TaskBarIconPresentor(self.ModelGuiThread,self.tb,self.taskbarInteractor)
+        
         self.tbPresentor.cbAddReqMdlUpdate(self.setUpdateModel)
         self.tbPresentor.cbAddRequestPopUpMenu(self.CreatePopUp)
         
@@ -316,9 +266,11 @@ class mainApp(wx.App):
         #self.timer.
         #print dir(self.timer)
         #self.interactorWxUpdate.on_connected()
-        if self.count > 100:
-            self.Exit()
-        self.count += 1
+        self.squeezeConCtrl.PlayerStatus(2)
+        self.squeezeConCtrl.PlayerStatus(1)
+        self.squeezeConCtrl.PlayerStatus(0)
+        self.viewWxToolBarSrc.update()
+        self.setUpdateModel(None)
     def on_event(self,event):
         self.log.debug("on_event")
         
@@ -339,6 +291,7 @@ class mainApp(wx.App):
         #self.PopupMenu.AddCallbackSettings(self.on_settings)
         #self.PopupMenu.player.addCallback(self.playerChanged1)
         return newMenu
+        
     def setUpdateModel(self,param):
         connected = self.ModelConPool.connected.get()
         if connected == False:
