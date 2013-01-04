@@ -27,7 +27,7 @@ class squeezePlayerMdl:
 class squeezeConMdle:
     def __init__(self):
         self.host = Observable("localhost")
-        self.port = Observable("9000")
+        self.port = Observable(9000)
         # connectionStr : a simple to observe break of connection settings obj
         self.connectionStr = Observable("localhost:9000")
         self.connected = Observable(False)
