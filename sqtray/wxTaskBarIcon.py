@@ -163,6 +163,6 @@ class TaskBarIconUpdateInteractor(object):
 def timedelta2str(timedeltainst):
     delta = abs(timedeltainst)
     totalseconds = delta.seconds + delta.days * 24 * 3600
-    output = "%s:%s" % (totalseconds / 60, totalseconds % 60)
+    output = "%s:%02d" % (totalseconds / 60, totalseconds % 60)
     return output
 
