@@ -54,8 +54,9 @@ class SqueezeConnectionWorker(Thread):
                 self.tasks.task_done()
                 continue
             except httplib.CannotSendRequest, E:
-                self.conn = None
-                self.log.error("Cannot Send Request, resetting connection.")
+                self.conn = httplib.HTTPConnection(self.connectionString)
+                self.log.error("Cannot Send Request, resetting connection.=%s" % (params))
+                self.log.error(self.connectionString)
                 self.tasks.task_done()
                 continue
             errorNoOld = self.SocketErrNo.get()
@@ -222,23 +223,28 @@ class SqueezeConnectionThreadPool:
         lsbsMode = unicode(responce["result"]["mode"])
         mappings = {"play" : "playing",
             "pause" : "paused",
-            "off" : "Off"
+            "off" : "Off",
+            "stop" : "stop"
         }
         if lsbsMode in mappings:
             newOperationMode = mappings[lsbsMode]
             oldOperationMode = self.squeezeConMdle.playerList[playerIndex].operationMode.get()
             if newOperationMode != oldOperationMode:
                 self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
+        else:
+            self.log.error("Unknown player mode=%s" % (lsbsMode))
+        playlist_cur_index = None
         if not "playlist_cur_index" in responce["result"].keys():
-            self.log.error("Message contained no playlist_cur_index")
+            self.log.debug("Message contained no playlist_cur_index")
             self.log.debug("Message=%s" % responce)
-            return
-        playlist_cur_index = int(responce["result"]["playlist_cur_index"])
-        playlist_loop = responce["result"]["playlist_loop"]
-        
-        CurrentTrackTime = responce["result"]["time"]
-        
-        
+        else:
+            playlist_cur_index = int(responce["result"]["playlist_cur_index"])
+        playlist_loop = []
+        if "playlist_loop" in responce["result"]:
+            playlist_loop = responce["result"]["playlist_loop"]
+        CurrentTrackTime = None
+        if "time" in responce["result"].keys():
+            CurrentTrackTime = responce["result"]["time"]
         CurrentTrackTitle = None
         for item in playlist_loop:
             playlistIndex = int(item["playlist index"])
@@ -477,6 +483,20 @@ class squeezeConCtrl:
                     ["play"]
                 ]
         }))
+    def Stop(self,player):
+        if not self.model.connected.get():
+            return None
+        if not player in self.model.Players:
+            return None
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
+        reponce = self.view1.sendMessage(None,({ 
+            "id" : playerIndex,
+            "method":"slim.request",
+            "params":[ playerId, 
+                    ["stop"]
+                ]
+        }))
     def Index(self,player,Count):
         if not self.model.connected.get():
             return None
@@ -514,11 +534,14 @@ class squeezeConCtrl:
     def PlayerStatus(self,player):
         
         if not self.model.connected.get():
+            self.log.debug("PlayerStatus")
             return None
-        if not player in self.model.Players:
+        playerlistLen = len(self.model.playerList)
+        if not player in range(playerlistLen):
+            self.log.debug("PlayerStatus-------------%s" % (self.model.Players))
             return None
-        playerIndex = self.model.Players[player].index.get()
-        playerId = self.model.Players[player].identifier.get()
+        playerIndex = self.model.playerList[player].index.get()
+        playerId = self.model.playerList[player].identifier.get()
         reponce = self.view1.sendMessage(self.view1.OnPlayerStatus,({ 
             "id":playerIndex,
             "method":"slim.request",
@@ -526,4 +549,4 @@ class squeezeConCtrl:
                     ["status",'-','2','tags']
                 ]
             }))
-        #print "PlayerStatus:",datetime.datetime.now()
+        

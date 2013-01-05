@@ -6,7 +6,7 @@ from sqtray.modelsWxTaskbar import taskBarMdle
 
 
 from sqtray.JrpcServer import squeezeConCtrl
-from sqtray.wxTrayIconPopUpMenu import CreatePopupMenu,PopUpMenuInteractor, PopupMenuPresentor
+from sqtray.wxTrayIconPopUpMenu import CreatePopupMenu,PopUpMenuInteractor, PopupMenuPresentor, TrayMenuInteractor, TrayMenuPresentor
 
 from wxEvents import EVT_RESULT_CONNECTED_ID
 from wxEvents import EVT_RESULT_PLAYERS_ID
@@ -84,7 +84,6 @@ class viewWxToolBarSrc():
             if playerName == None:
                 continue
             newToolTip += unicode(playerName)
-            
             CurrentOperationMode = self.src.playerList[index].operationMode.get()
             if CurrentOperationMode != None:
                 newToolTip += ":%s" % (CurrentOperationMode)
@@ -96,6 +95,7 @@ class viewWxToolBarSrc():
                 newToolTip += "\nArtist:%s" % (CurrentTrackArtist)
             CurrentTrackEnds = self.src.playerList[index].CurrentTrackEnds.get()
             #print "CurrentTrackEnds=%s" % (CurrentTrackEnds)
+            
             if CurrentTrackEnds != None:
                 seconds = timedelta2str(CurrentTrackEnds - datetime.datetime.now())
                 newToolTip += "\nRemaining:%s" % (seconds)
@@ -109,11 +109,9 @@ class viewWxToolBarSrc():
         self.log.debug("updateToolTip")
         newToolTip = unicode()
         playerlistLen = len(self.src.playerList)
-        #print "playerlistLen" , playerlistLen
         if playerlistLen > 0:
             return self.updateToolTipManyPlayers()
-        #print "dfsfsdf" ,  self.src.playerList
-            
+           
         if self.src.connected:
             self.toolTipCache.update("Connected")
     
@@ -147,6 +145,7 @@ class viewWxToolBarSrc():
         foundPlayers = set()
         for index in  range(len(self.src.playerList)):            
             playerName = self.src.playerList[index].name.get()
+            
             self.src.playerList[index].name.addCallback(self.on_player_name)
             self.src.playerList[index].CurrentTrackTitle.addCallback(self.on_player_track)
             self.src.playerList[index].CurrentTrackArtist.addCallback(self.on_player_artist)
@@ -215,6 +214,21 @@ class mainApp(wx.App):
         self.count = 0
         self.viewWxToolBarSrc = viewWxToolBarSrc()
         self.viewWxToolBarSrc.install(self.ModelConPool)
+        
+        #Now we set up the Tray Pup Up menu
+        self.tbPopUpMenuInteractor = TrayMenuInteractor()
+        self.tbPopUpMenuPresentor = TrayMenuPresentor(self.ModelConPool,self.tbPopUpMenuInteractor)
+        self.tbPopUpMenuInteractor.cbAddOnExit(self.Exit)
+        self.tbPopUpMenuInteractor.cbAddOnSettings(self.SettingsOpen)
+        
+        self.tbPopUpMenuInteractor.cbAddOnPause(self.squeezeConCtrl.Pause)
+        self.tbPopUpMenuInteractor.cbAddOnSeekIndex(self.squeezeConCtrl.Index)
+        
+        self.tbPopUpMenuInteractor.cbAddOnRandomSongs(self.squeezeConCtrl.PlayRandomSong)
+        self.tbPopUpMenuInteractor.cbAddOnPlay(self.squeezeConCtrl.Play)
+        self.tbPopUpMenuInteractor.cbAddOnStop(self.squeezeConCtrl.Stop)
+        
+        
     def onTaskBarPopUpMenu(self,evt):
         self.log.debug("onTaskBarPopUpMenu=%s",(None))
         self.CreatePopUp()
@@ -266,10 +280,18 @@ class mainApp(wx.App):
         #self.timer.
         #print dir(self.timer)
         #self.interactorWxUpdate.on_connected()
-        self.squeezeConCtrl.PlayerStatus(2)
-        self.squeezeConCtrl.PlayerStatus(1)
-        self.squeezeConCtrl.PlayerStatus(0)
-        self.viewWxToolBarSrc.update()
+        self.count+= 1
+        self.squeezeConCtrl.OnPlayersCount(None)
+        if self.count > 1:
+            self.squeezeConCtrl.RecPlayerStatus(2)
+            self.squeezeConCtrl.RecPlayerStatus(1)
+            self.squeezeConCtrl.RecPlayerStatus(0)
+            self.squeezeConCtrl.PlayerStatus(2)
+            self.squeezeConCtrl.PlayerStatus(1)
+            self.squeezeConCtrl.PlayerStatus(0)
+            self.viewWxToolBarSrc.update()
+        
+        self.log.debug("on timer=cccccccccccc %s" % (self.ModelConPool.playerList))
         self.setUpdateModel(None)
     def on_event(self,event):
         self.log.debug("on_event")
@@ -278,18 +300,7 @@ class mainApp(wx.App):
         self.squeezeConCtrl.view1.wait_completion()
         self.tb.Destroy()
     def CreatePopUp(self):
-        self.log.debug("CreatePopUpp")
-        
-        interactor = PopUpMenuInteractor ()
-        newMenu = CreatePopupMenu(self.ModelConPool,interactor)
-        #print newMenu
-        self.PopupMenu  = PopupMenuPresentor(self.ModelConPool,newMenu, self.squeezeConCtrl, interactor)
-        self.PopupMenu.cbAddOnExit(self.Exit)
-        self.PopupMenu.cbAddOnSettings(self.SettingsOpen)
-        
-        #self.PopupMenu.player.set(self.Model.GuiPlayer.get())
-        #self.PopupMenu.AddCallbackSettings(self.on_settings)
-        #self.PopupMenu.player.addCallback(self.playerChanged1)
+        newMenu = self.tbPopUpMenuPresentor.getMenu()
         return newMenu
         
     def setUpdateModel(self,param):
@@ -318,3 +329,30 @@ class mainApp(wx.App):
     def SettingClose(self,evnt):
         self.Example.Destroy()
         self.Example = None
+    
+    
+    def doCbOnPlay(self,player):
+        
+        self.squeezeConCtrl.Play(player)
+        
+    def doCbOnPause(self,player):
+        results = {}
+        for item in self.callbacks["on_pause"]:
+            results[item] = item()
+        return results
+    
+    def doCbOnSeekForward(self,player):
+        results = {}
+        for item in self.callbacks["on_seek_forward"]:
+            results[item] = item()
+        return results
+        
+    def doCbOnSeekBackwards(self,player):
+        results = {}
+        for item in self.callbacks["on_seek_backwards"]:
+            results[item] = item()
+        return results
+
+    def doCbOnRandomSongs(self,player):
+        self.squeezeConCtrl.PlayRandomSong(player)
+        
