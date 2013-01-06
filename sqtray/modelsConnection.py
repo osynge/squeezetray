@@ -24,8 +24,42 @@ class squeezePlayerMdl:
         if not previously == discovered:
             self.discovered.set(discovered)
 
+
+class squeezeSong:
+    def __init__(self):
+        self.id = Observable(None)
+        self.updated = Observable(None)
+        self.title = Observable(None)
+        self.genres = Observable(None)
+        self.genre_ids = Observable(None)
+        self.album = Observable(None)
+        self.artist = Observable(None)
+        self.artist_ids = Observable(None)
+        self.album_id = Observable(None)
+        self.duration = Observable(None)
+        self.tracknum = Observable(None)
+        self.year = Observable(None)
+        self.comment = Observable(None)
+        self.type = Observable(None)
+        self.tagversion = Observable(None)
+        self.bitrate = Observable(None)
+        self.samplesize = Observable(None)
+        
+        self.filesize = Observable(None)
+        self.coverart = Observable(None)
+        self.modificationTime = Observable(None)
+        self.compilation = Observable(None)
+        self.samplerate = Observable(None)
+        self.url = Observable(None)
+        
+        
+        
+
+
+
 class squeezeConMdle:
     def __init__(self):
+        
         self.host = Observable("localhost")
         self.port = Observable(9000)
         # connectionStr : a simple to observe break of connection settings obj
@@ -49,7 +83,8 @@ class squeezeConMdle:
         self.connected.addCallback(self.OnConnectedChange)
         self.playersCount.addCallback(self.OnPlayersCountChange)
     
-    
+        
+        self.SongCache = ObservableDict()
     
     def OnHostChange(self,value):
         newHost = self.host.get()

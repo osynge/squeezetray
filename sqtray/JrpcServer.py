@@ -2,7 +2,7 @@ import socket
 import httplib, urllib
 import sys, traceback
 from threading import *
-
+from modelsConnection import squeezeSong
 import logging
 from Queue import Queue
 from threading import Thread
@@ -286,7 +286,7 @@ class SqueezeConnectionThreadPool:
     def OnTrackInfo(self,responce):
         now = datetime.datetime.now()
         #print "OnPlayerStatus:",datetime.datetime.now()
-        #print  "OnPlayerStatus",responce
+        print  "OnTrackInfo",responce
         #print "OnTrackInfo",unicode(json.dumps(responce, indent=4))
         
         def cleanList(inputStr):
@@ -297,36 +297,71 @@ class SqueezeConnectionThreadPool:
                 if len(cleanItem) > 0:
                     outputList.append(cleanItem)
             return outputList
-        SongId = None 
-        SongTitle = None
-        SongArtists = []
-        SongGenres = []
-        duration = None
-        SongSampleWidth = None
-        SongDuration = None
-        SongTrackNo = None
-        SongYear = None
-
+        
+        
+        identifier = responce["result"]["songinfo_loop"][0][u'id']
+        if identifier == 0:
+            self.log.error("Invalid song ID")
+            return
+        newSongInfo = None
+        if identifier in self.squeezeConMdle.SongCache.keys():
+            newSongInfo = self.squeezeConMdle.SongCache[identifier]
+        else:
+            newSongInfo = squeezeSong()
         for metadata in  responce["result"]["songinfo_loop"]:
             #print metadata
             for key in metadata:
+                #print key
                 if key == u'id':
-                    SongId = metadata[key]
+                    newSongInfo.id.update( int(metadata[key]))
                 if key == u'title':
-                    SongTitle = metadata[key]
+                    newSongInfo.title.update(cleanList(metadata[key]))
                 if key == u'genres':
-                    SongGenres = cleanList(metadata[key])
+                    newSongInfo.genres.update(cleanList(metadata[key]))
                 if key == u'artist':
-                    SongArtists = cleanList(metadata[key])
+                    newSongInfo.artist.update(cleanList(metadata[key]))
+                if key == u'artist_ids':
+                    newSongInfo.artist_ids.update(cleanList(metadata[key]))
+                    
                 if key == u'samplesize':
-                    SongSampleWidth = cleanList(metadata[key])
+                    newSongInfo.samplesize.update(cleanList(metadata[key]))
                 if key == u'duration':
-                    SongDuration = cleanList(metadata[key])
+                    newSongInfo.duration.update(cleanList(metadata[key]))
                 if key == u'tracknum':
-                    SongDuration = cleanList(metadata[key])
+                    newSongInfo.tracknum.update(cleanList(metadata[key]))
                 if key == u'year':
-                    SongYear = cleanList(metadata[key])
-        #print SongId,SongTitle,SongArtists,SongGenres
+                    newSongInfo.year.update(cleanList(metadata[key]))      
+                if key == u'album':
+                    newSongInfo.album.update(cleanList(metadata[key]))
+                if key == u'album_id':
+                    newSongInfo.album_id.update(cleanList(metadata[key]))
+                if key == u'duration':
+                    newSongInfo.duration.update(cleanList(metadata[key]))   
+                if key == u'type':
+                    newSongInfo.type.update(cleanList(metadata[key]))
+                if key == u'tagversion':
+                    newSongInfo.tagversion.update(cleanList(metadata[key]))
+                if key == u'bitrate':
+                    newSongInfo.bitrate.update(cleanList(metadata[key]))
+                if key == u'filesize':
+                    newSongInfo.filesize.update(cleanList(metadata[key]))    
+                if key == u'coverart':
+                    newSongInfo.coverart.update(cleanList(metadata[key]))
+                if key == u'modificationTime':
+                    newSongInfo.modificationTime.update(cleanList(metadata[key]))
+                if key == u'compilation':
+                    newSongInfo.compilation.update(cleanList(metadata[key]))
+                if key == u'samplerate':
+                    newSongInfo.samplerate.update(cleanList(metadata[key])) 
+                if key == u'url':
+                    newSongInfo.url.update(cleanList(metadata[key]))
+        newSongInfo.updated.update(datetime.datetime.now())
+        if not identifier in self.squeezeConMdle.SongCache.keys():
+            self.squeezeConMdle.SongCache[identifier] = newSongInfo
+        
+        
+        
+        
 class squeezeConCtrl:
     def __init__(self,model):  
         
@@ -407,10 +442,11 @@ class squeezeConCtrl:
             trackId = int(trackId)
             if trackId <= 0:
                 continue
-            #print "trackId=%s" % (trackId)
             self.view1.sendMessage(self.view1.OnTrackInfo,{ 
-                    "method":"slim.request",
-                    "params": ["-",['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPASIediqtymkovrfijnCcYXRTIuwxN"] ]     })
+                        "method":"slim.request",
+                        "params": ["-",
+                            ['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]     
+                    })
         
     def CbPlayersListAdd(self, func, *args, **kargs):
         """Add a task to the queue"""
