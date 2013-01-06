@@ -20,6 +20,8 @@ from sqtray.wxTaskBarIconPresentor import TaskBarIconPresentor
 from sqtray.wxFrmSettings import FrmSettings
 
 from sqtray.wxArtPicker import MyArtProvider
+
+from sqtray.wxConfig import ConfigPresentor
 import logging
 
 def StoreConfig(FilePath,squeezeConMdle):
@@ -48,18 +50,26 @@ class interactorWxUpdate():
         self.wxObject.Bind(EVT_SOME_NEW_EVENT, self.wxObject.EventRevived)
         self.src.connected.addCallback(self.on_connected)
         self.src.CbPlayersAvailableAdd(self.on_players)
-        
+        self.messagesUnblock()
         
     def on_connected(self,value):
+        if self.block:
+            return
         evt = SomeNewEvent(attr1="on_connected")
         #post the event
         wx.PostEvent(self.wxObject, evt)
     
     def on_players(self):
+        if self.block:
+            return
         evt = SomeNewEvent(attr1="on_players")
         #post the event
         wx.PostEvent(self.wxObject, evt)
-
+    def messagesBlock(self):
+        self.block = True
+    def messagesUnblock(self):
+        self.block = False
+    
         
 
 
@@ -229,11 +239,22 @@ class mainApp(wx.App):
         self.tbPopUpMenuInteractor.cbAddOnStop(self.squeezeConCtrl.Stop)
         
         
+        #NowLoad Config
+        self.configPresentor = ConfigPresentor(self.ModelConPool)
+        self.configPresentor.load()
+        self.messagesUnblock()
+    def messagesBlock(self):
+        self.block = True
+    def messagesUnblock(self):
+        self.block = False    
     def onTaskBarPopUpMenu(self,evt):
         self.log.debug("onTaskBarPopUpMenu=%s",(None))
         self.CreatePopUp()
 
     def EventRevived(self,evt):
+        if self.block:
+            return    
+        
         self.log.debug("EventRevived=%s",(evt.attr1 ))
         if evt.attr1 == "on_connected":
             #self.ModelGuiThread.connected.update(self.ModelConPool.connected.get())
@@ -243,38 +264,10 @@ class mainApp(wx.App):
             #print self.ModelConPool.Players
         self.setUpdateModel(evt)
             
-    def configRead(self):
-        # Set Host
-        squeezeServerHost = 'localhost'
-        if self.cfg.Exists('squeezeServerHost'):
-            squeezeServerHost = self.cfg.Read('squeezeServerHost')
-        OldSqueezeServerHost = self.model.host.get()
-        if squeezeServerHost != OldSqueezeServerHost:
-            self.model.host.set(squeezeServerHost)
-        self.SetSqueezeServerHost(squeezeServerHost)
-        # Set Port
-        squeezeServerPort = 9000
-        if self.cfg.Exists('squeezeServerPort'):
-            try:
-                squeezeServerPortTmp = int(self.cfg.ReadInt('squeezeServerPort'))
-            except ValueError:
-                squeezeServerPort = 9000
-        OldSqueezeServerPort = self.SqueezeServerPort.get()
-        if squeezeServerPort != OldSqueezeServerPort:
-            self.SqueezeServerPort.set(squeezeServerPort)
-        OldSqueezeServerPort = self.model.port.get()
-        if squeezeServerPort != OldSqueezeServerPort:
-            self.model.port.set(squeezeServerPort)
-        
-        # Set Player
-        SqueezeServerPlayer = None
-        if self.cfg.Exists('SqueezeServerPlayer'):
-            SqueezeServerPlayer = self.cfg.Read('SqueezeServerPlayer')
-        self.SetSqueezeServerPlayer(SqueezeServerPlayer)
-        self.model.GuiPlayerDefault.set(SqueezeServerPlayer)
-        self.squeezeConCtrl.RecConnectionOnline()    
-        
+    
     def OnTimer(self,event):
+        if self.block:
+            return
         #self.log.debug("on timer")
         #self.log.debug("on timer= %s" % (self.viewWxToolBarSrc.gettoolTip()))
         #self.timer.
@@ -297,6 +290,7 @@ class mainApp(wx.App):
         self.log.debug("on_event")
         
     def Exit(self):
+        self.messagesBlock()
         self.squeezeConCtrl.view1.wait_completion()
         self.tb.Destroy()
     def CreatePopUp(self):
@@ -327,6 +321,7 @@ class mainApp(wx.App):
         self.Example.ModelSet(self.ModelConPool)
         self.Example.Show()
     def SettingClose(self,evnt):
+        
         self.Example.Destroy()
         self.Example = None
     

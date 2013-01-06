@@ -123,6 +123,7 @@ class FrmSettings(wx.Frame):
         port = self.model.port.get()
         self.scPort.SetValue(port)
         self.UpdateCbPlayer()
+        
     def OnPlayersEvt(self,event):
         self.OnPlayers()
         self.UpdateStatusbar()
@@ -153,9 +154,10 @@ class FrmSettings(wx.Frame):
             self.cbPlayer.SetSelection(playerIndex)
     def OnSave(self, event):
         self.OnApply(event)
-        self.app.configSave()
+        #self.app.configSave()
+        self.log.error('should call call back here')
         
-
+#
     def OnApply(self, event):
         newHost = self.tcHost.GetValue()
         oldHost = self.model.host.get()
@@ -167,20 +169,10 @@ class FrmSettings(wx.Frame):
         oldPort = self.model.port.get()
         if newPort != oldPort:
             self.model.port.set(newPort)
-        newDefaultPlayer = unicode(self.cbPlayer.GetValue())
-        #print "newDefaultPlayer",newDefaultPlayer
-        oldDefaultPlayer = self.model.GuiPlayerDefault.get()
-        #print "oldDefaultPlayer",oldDefaultPlayer
-        if oldDefaultPlayer != newDefaultPlayer:
-            self.model.GuiPlayerDefault.set(newDefaultPlayer)
-        self.UpdateCbPlayer()
-        oldPlayer =  self.model.GuiPlayer.get()
-        if oldPlayer != newDefaultPlayer:
-            #print "oldPlayer",oldPlayer 
-            self.model.GuiPlayer.set(newDefaultPlayer)
-        #print 'dddd',self.model.host.get(),self.model.port.get(),self.model.GuiPlayer.get()
+        
     def OnCancel(self, event):
-        self.FrmCtrl.closeSettings(event)
+        #self.FrmCtrl.closeSettings(event)
+        self.log.error('should call call back here')
         #self.app.tb.on_settings_close(event)
         #close = wx.PyEvent()
         #wx.EVT_CLOSE
