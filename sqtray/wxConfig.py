@@ -33,6 +33,8 @@ class ConfigView():
         if self.cfg.Exists('squeezeServerPort'):
             try:
                 squeezeServerPortTmp = int(self.cfg.ReadInt('squeezeServerPort'))
+                if squeezeServerPortTmp > 0:
+                    squeezeServerPort = squeezeServerPortTmp
             except ValueError:
                 squeezeServerPort = 9000
                     
@@ -49,10 +51,13 @@ class ConfigView():
         #self.SetSqueezeServerPlayer(SqueezeServerPlayer)
         #self.model.GuiPlayerDefault.set(SqueezeServerPlayer)
         #self.squeezeConCtrl.RecConnectionOnline()
+        self.log.debug("%s:%s" % (self.model.host.get(),self.model.port.get()))
         return
     
-    
-    
+    def configSave(self):
+        self.cfg.Write("squeezeServerHost", self.model.host.get())
+        self.cfg.WriteInt("squeezeServerPort", self.model.port.get())
+        result = self.cfg.Flush()        
 class ConfigPresentor():
     def __init__(self,model):
         
