@@ -27,7 +27,8 @@ class directoryArray():
              
     def ScanPaths(self,item):
         if len (self.foundpaths) == 0:
-            self.log.warning("Icon paths not found")
+            
+            self.log.warning("No valid icon paths found")
             
         
         for directory in self.foundpaths:
@@ -188,7 +189,6 @@ class MyArtProvider(wx.ArtProvider):
         if numberFound == 0:
             self.log.debug("No image found for  %s:%s:%s" %(artid, client, size))
             return  bmp
-        bmp = None
         for item in Found:
             #self.log.debug("found one")
             filePath = self.da.ScanPaths(item)
