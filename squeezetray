@@ -95,7 +95,7 @@ def main():
     app = mainApp()
     da = directoryArray()
     #print __file__
-    iconfolders = [getProgramFolder(),"icons"]
+    iconfolders = [getProgramFolder(),"icons","/usr/share/pixmaps/SqueezeWxTray"]
     da.path = iconfolders
     da.checkPathsExist()
     ArtProvider = MyArtProvider(da) 
