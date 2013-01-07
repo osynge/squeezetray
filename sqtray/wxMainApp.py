@@ -355,6 +355,7 @@ class mainApp(wx.App):
         self.log.debug("on_event")
         
     def Exit(self):
+        self.SettingClose(None)
         self.messagesBlock()
         self.squeezeConCtrl.view1.wait_completion()
         self.tb.Destroy()
@@ -375,7 +376,7 @@ class mainApp(wx.App):
     
         
     def SettingClose(self,evnt):
-        self.SettingsPresentor.SettingClose()
+        self.SettingsPresentor.SettingClose(None)
     
     def doCbOnPlay(self,player):
         
