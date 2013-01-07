@@ -94,7 +94,7 @@ def main():
     checkEnviroment()
     app = mainApp()
     da = directoryArray()
-    print __file__
+    #print __file__
     iconfolders = [getProgramFolder(),"icons"]
     da.path = iconfolders
     da.checkPathsExist()

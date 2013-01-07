@@ -220,6 +220,17 @@ class mainApp(wx.App):
         self.ModelGuiThread = taskBarMdle()
         self.ModelFrmSettings = mdlFrmSettings()
         
+        
+        self.ConCtrlInteractor = ConCtrlInteractor()
+        self.ConCtrlInteractor.install(self.ModelFrmSettings,self.ModelConPool)
+        
+        #Now Load Config
+        
+        self.configPresentor = ConfigPresentor(self.ModelFrmSettings)
+        self.configPresentor.load()
+        
+        self.ConCtrlInteractor.OnApply(None)
+        
         # Now set model interactions
         self.Con2SettingsInteractor = Connection2SettingsInteractor()
         self.Con2SettingsInteractor.install(self.ModelConPool,self.ModelFrmSettings)
@@ -280,15 +291,11 @@ class mainApp(wx.App):
         #Now load the settings presentor
         
         self.SettingsPresentor  = frmSettingsPresentor(self.ModelFrmSettings)
-        self.ConCtrlInteractor = ConCtrlInteractor()
-        self.ConCtrlInteractor.install(self.ModelFrmSettings,self.ModelConPool)
         self.SettingsPresentor.cbAddOnApply(self.ConCtrlInteractor.OnApply)
         self.SettingsPresentor.cbAddOnSave(self.OnSave)
-        
-        #Now Load Config
-        
-        self.configPresentor = ConfigPresentor(self.ModelFrmSettings)
-        self.configPresentor.load()
+        # Now apply the Settings
+        #self.ConCtrlInteractor.OnApply(None)
+        print self.ModelFrmSettings.host.get()
         self.messagesUnblock()
         
         
@@ -332,13 +339,12 @@ class mainApp(wx.App):
         self.count+= 1
         #self.squeezeConCtrl.RecConnectionOnline()
         self.squeezeConCtrl.OnPlayersCount(None)
+        if self.count > 2:
+            self.count = 0
+        
         if self.count > 0:
-            self.squeezeConCtrl.RecPlayerStatus(2)
-            self.squeezeConCtrl.RecPlayerStatus(1)
-            self.squeezeConCtrl.RecPlayerStatus(0)
-            self.squeezeConCtrl.PlayerStatus(2)
-            self.squeezeConCtrl.PlayerStatus(1)
-            self.squeezeConCtrl.PlayerStatus(0)
+            self.squeezeConCtrl.RecPlayerStatus(self.count)
+            self.squeezeConCtrl.PlayerStatus(self.count)
             self.viewWxToolBarSrc.update()
         else:
             self.log.debug("RecConnectionOnline")
