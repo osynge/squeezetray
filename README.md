@@ -104,7 +104,7 @@ for some reason svg is not yet well supportied in python for this reason all svg
 
 Or you can script it with a little bash
 
-   sizes="16 22 24 32 48 72"
+   sizes="16 22 24 32 48 72 128"
    basedirect="icons"
    for item in `ls icons/*.svg`
    do

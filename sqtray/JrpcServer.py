@@ -2,12 +2,12 @@ import socket
 import httplib, urllib
 import sys, traceback
 from threading import *
-
+from modelsConnection import squeezeSong
 import logging
 from Queue import Queue
 from threading import Thread
 import datetime
-
+import time
 from models import Observable
 import exceptions
 if float(sys.version[:3]) >= 2.6:
@@ -54,8 +54,9 @@ class SqueezeConnectionWorker(Thread):
                 self.tasks.task_done()
                 continue
             except httplib.CannotSendRequest, E:
-                self.conn = None
-                self.log.error("Cannot Send Request, resetting connection.")
+                self.conn = httplib.HTTPConnection(self.connectionString)
+                self.log.error("Cannot Send Request, resetting connection.=%s" % (params))
+                self.log.error(self.connectionString)
                 self.tasks.task_done()
                 continue
             errorNoOld = self.SocketErrNo.get()
@@ -128,7 +129,7 @@ class SqueezeConnectionWorker(Thread):
         if Changed:
             #print connectionStr
             self.conn = httplib.HTTPConnection(connectionStr)
-            
+        self.conn == None   
         
 class SqueezeConnectionThreadPool:
     """Pool of threads consuming tasks from a queue"""
@@ -146,9 +147,11 @@ class SqueezeConnectionThreadPool:
             new.SocketErrMsg.addCallback(self.OnSocketErrMsg)
             self.arrayOfSqueezeConnectionWorker.append(new)
         self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
+    
         
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
+        self.log.error("Wait for completion of all the tasks in the queue")
         self.tasks.join()
     def sendMessage(self,func,message, *args, **kargs):
         #print "connectionString =" ,  self.squeezeConMdle.connectionStr.get()
@@ -180,14 +183,12 @@ class SqueezeConnectionThreadPool:
         noPlayers = int(responce["result"]["_count"])
         self.noPlayers = noPlayers
         #print "self.noPlayers=%s" % ( noPlayers )
-        self.squeezeConMdle.connected.set(True)
+        self.squeezeConMdle.connected.update(True)
         oldValue = self.squeezeConMdle.connected.get()
         if oldValue == noPlayers:
             return
-        self.squeezeConMdle.playersCount.set(noPlayers)
-        oldValue = self.squeezeConMdle.connected.get()
-        if oldValue != True:
-            self.squeezeConMdle.connected.set(True)
+        self.squeezeConMdle.playersCount.update(noPlayers)
+        self.squeezeConMdle.connected.update(True)
 
     def OnPlayerIndex(self,responce):
         playerId = responce["result"]["_id"]
@@ -213,30 +214,37 @@ class SqueezeConnectionThreadPool:
         #print "OnPlayerStatus",unicode(json.dumps(responce, indent=4))
         playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
-        
+        if not( playerIndex < len(self.squeezeConMdle.playerList)):
+            self.log.error("Player not found")
+            return
         OldplayerName = self.squeezeConMdle.playerList[playerIndex].name.get()
         if OldplayerName != playerName:
             self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
         lsbsMode = unicode(responce["result"]["mode"])
         mappings = {"play" : "playing",
             "pause" : "paused",
-            "off" : "Off"
+            "off" : "Off",
+            "stop" : "stop"
         }
         if lsbsMode in mappings:
             newOperationMode = mappings[lsbsMode]
             oldOperationMode = self.squeezeConMdle.playerList[playerIndex].operationMode.get()
             if newOperationMode != oldOperationMode:
                 self.squeezeConMdle.playerList[playerIndex].operationMode.set(mappings[lsbsMode])
+        else:
+            self.log.error("Unknown player mode=%s" % (lsbsMode))
+        playlist_cur_index = None
         if not "playlist_cur_index" in responce["result"].keys():
-            self.log.error("Message contained no playlist_cur_index")
+            self.log.debug("Message contained no playlist_cur_index")
             self.log.debug("Message=%s" % responce)
-            return
-        playlist_cur_index = int(responce["result"]["playlist_cur_index"])
-        playlist_loop = responce["result"]["playlist_loop"]
-        
-        CurrentTrackTime = responce["result"]["time"]
-        
-        
+        else:
+            playlist_cur_index = int(responce["result"]["playlist_cur_index"])
+        playlist_loop = []
+        if "playlist_loop" in responce["result"]:
+            playlist_loop = responce["result"]["playlist_loop"]
+        CurrentTrackTime = None
+        if "time" in responce["result"].keys():
+            CurrentTrackTime = responce["result"]["time"]
         CurrentTrackTitle = None
         for item in playlist_loop:
             playlistIndex = int(item["playlist index"])
@@ -278,7 +286,7 @@ class SqueezeConnectionThreadPool:
     def OnTrackInfo(self,responce):
         now = datetime.datetime.now()
         #print "OnPlayerStatus:",datetime.datetime.now()
-        #print  "OnPlayerStatus",responce
+        #print  "OnTrackInfo",responce
         #print "OnTrackInfo",unicode(json.dumps(responce, indent=4))
         
         def cleanList(inputStr):
@@ -289,40 +297,76 @@ class SqueezeConnectionThreadPool:
                 if len(cleanItem) > 0:
                     outputList.append(cleanItem)
             return outputList
-        SongId = None 
-        SongTitle = None
-        SongArtists = []
-        SongGenres = []
-        duration = None
-        SongSampleWidth = None
-        SongDuration = None
-        SongTrackNo = None
-        SongYear = None
-
+        
+        
+        identifier = responce["result"]["songinfo_loop"][0][u'id']
+        if identifier == 0:
+            self.log.error("Invalid song ID")
+            return
+        newSongInfo = None
+        if identifier in self.squeezeConMdle.SongCache.keys():
+            newSongInfo = self.squeezeConMdle.SongCache[identifier]
+        else:
+            newSongInfo = squeezeSong()
         for metadata in  responce["result"]["songinfo_loop"]:
             #print metadata
             for key in metadata:
+                #print key
                 if key == u'id':
-                    SongId = metadata[key]
+                    newSongInfo.id.update( int(metadata[key]))
                 if key == u'title':
-                    SongTitle = metadata[key]
+                    newSongInfo.title.update(cleanList(metadata[key]))
                 if key == u'genres':
-                    SongGenres = cleanList(metadata[key])
+                    newSongInfo.genres.update(cleanList(metadata[key]))
                 if key == u'artist':
-                    SongArtists = cleanList(metadata[key])
+                    newSongInfo.artist.update(cleanList(metadata[key]))
+                if key == u'artist_ids':
+                    newSongInfo.artist_ids.update(cleanList(metadata[key]))
+                    
                 if key == u'samplesize':
-                    SongSampleWidth = cleanList(metadata[key])
+                    newSongInfo.samplesize.update(cleanList(metadata[key]))
                 if key == u'duration':
-                    SongDuration = cleanList(metadata[key])
+                    newSongInfo.duration.update(cleanList(metadata[key]))
                 if key == u'tracknum':
-                    SongDuration = cleanList(metadata[key])
+                    newSongInfo.tracknum.update(cleanList(metadata[key]))
                 if key == u'year':
-                    SongYear = cleanList(metadata[key])
-        #print SongId,SongTitle,SongArtists,SongGenres
+                    newSongInfo.year.update(cleanList(metadata[key]))      
+                if key == u'album':
+                    newSongInfo.album.update(cleanList(metadata[key]))
+                if key == u'album_id':
+                    newSongInfo.album_id.update(cleanList(metadata[key]))
+                if key == u'duration':
+                    newSongInfo.duration.update(cleanList(metadata[key]))   
+                if key == u'type':
+                    newSongInfo.type.update(cleanList(metadata[key]))
+                if key == u'tagversion':
+                    newSongInfo.tagversion.update(cleanList(metadata[key]))
+                if key == u'bitrate':
+                    newSongInfo.bitrate.update(cleanList(metadata[key]))
+                if key == u'filesize':
+                    newSongInfo.filesize.update(cleanList(metadata[key]))    
+                if key == u'coverart':
+                    newSongInfo.coverart.update(cleanList(metadata[key]))
+                if key == u'modificationTime':
+                    newSongInfo.modificationTime.update(cleanList(metadata[key]))
+                if key == u'compilation':
+                    newSongInfo.compilation.update(cleanList(metadata[key]))
+                if key == u'samplerate':
+                    newSongInfo.samplerate.update(cleanList(metadata[key])) 
+                if key == u'url':
+                    newSongInfo.url.update(cleanList(metadata[key]))
+        newSongInfo.updated.update(datetime.datetime.now())
+        if not identifier in self.squeezeConMdle.SongCache.keys():
+            self.squeezeConMdle.SongCache[identifier] = newSongInfo
+        
+        
+        
+        
 class squeezeConCtrl:
     def __init__(self,model):  
+        
         """Controler class for takes a model as a constructor (class squeezeConMdle)"""
-
+        self.log = logging.getLogger("squeezeConCtrl")
         self.model = model
         self.view1 = SqueezeConnectionThreadPool(self.model)
         self.model.connectionStr.addCallback(self.view1.OnConnectionStrChange)
@@ -336,25 +380,33 @@ class squeezeConCtrl:
     
     def OnPlayersCount(self,value):
         #print "OnPlayersCount", value
+        comands = []
         for index in range(len(self.model.playerList)):
             identifier = self.model.playerList[index].identifier.get()
             name = self.model.playerList[index].name.get()
+            
             if identifier == None:
                 #print "would make a name request"
                 msg = { 
                     "method":"slim.request",
                     "params": [ '-', [ 'player', 'id', index ,"?"] ]
                 }
-                self.view1.sendMessage(self.view1.OnPlayerIndex,msg)
+                self.log.debug("msg=%s" % (msg))
+                comands.append([self.view1.OnPlayerIndex,msg])
+                
+                #self.view1.sendMessage([self.view1.OnPlayerIndex,msg])
             if name == None:
                 #print "would make a name request"
                 msg = { 
                     "method":"slim.request",
                     "params": [ '-', [ 'player', 'name', index ,"?"] ]
                 }
-                self.view1.sendMessage(self.view1.OnPlayerName,msg)
-            
-    def  RecConnectionOnline(self):
+                comands.append([self.view1.OnPlayerName,msg])
+                #self.view1.sendMessage([self.view1.OnPlayerName,msg])
+        for item in comands:
+            time.sleep(1)
+            self.view1.sendMessage(item[0],item[1])
+    def RecConnectionOnline(self):
         #print "sdfdsfsF"
         #self.view1.RecConnectionOnline()
         self.view1.sendMessage(self.view1.OnPlayerCount,{ 
@@ -390,6 +442,7 @@ class squeezeConCtrl:
 
     def OnTrackChange(self):
         #print "OnTrackChange"
+        
         for player in self.model.Players:
             trackId = self.model.Players[player].CurrentTrackId.get()
             if trackId == None:
@@ -397,10 +450,11 @@ class squeezeConCtrl:
             trackId = int(trackId)
             if trackId <= 0:
                 continue
-            #print "trackId=%s" % (trackId)
             self.view1.sendMessage(self.view1.OnTrackInfo,{ 
-                    "method":"slim.request",
-                    "params": ["-",['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPASIediqtymkovrfijnCcYXRTIuwxN"] ]     })
+                        "method":"slim.request",
+                        "params": ["-",
+                            ['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]     
+                    })
         
     def CbPlayersListAdd(self, func, *args, **kargs):
         """Add a task to the queue"""
@@ -440,11 +494,9 @@ class squeezeConCtrl:
                     ["status","-","4","tags:playlist_id"]
                 ]
         })
-    def RecTrackInfo(self, track):
-        print "RecTrackInfo=%s" % (track)
+    
     def Pause(self,player):
         if not self.model.connected.get():
-            print "connectionStr=",self.model.connectionStr.get()
             return None
         if not player in self.model.Players:
             return None
@@ -471,6 +523,20 @@ class squeezeConCtrl:
             "method":"slim.request",
             "params":[ playerId, 
                     ["play"]
+                ]
+        }))
+    def Stop(self,player):
+        if not self.model.connected.get():
+            return None
+        if not player in self.model.Players:
+            return None
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
+        reponce = self.view1.sendMessage(None,({ 
+            "id" : playerIndex,
+            "method":"slim.request",
+            "params":[ playerId, 
+                    ["stop"]
                 ]
         }))
     def Index(self,player,Count):
@@ -510,11 +576,14 @@ class squeezeConCtrl:
     def PlayerStatus(self,player):
         
         if not self.model.connected.get():
+            self.log.debug("PlayerStatus")
             return None
-        if not player in self.model.Players:
+        playerlistLen = len(self.model.playerList)
+        if not player in range(playerlistLen):
+            self.log.debug("PlayerStatus-------------%s" % (self.model.Players))
             return None
-        playerIndex = self.model.Players[player].index.get()
-        playerId = self.model.Players[player].identifier.get()
+        playerIndex = self.model.playerList[player].index.get()
+        playerId = self.model.playerList[player].identifier.get()
         reponce = self.view1.sendMessage(self.view1.OnPlayerStatus,({ 
             "id":playerIndex,
             "method":"slim.request",
@@ -522,4 +591,4 @@ class squeezeConCtrl:
                     ["status",'-','2','tags']
                 ]
             }))
-        #print "PlayerStatus:",datetime.datetime.now()
+        
