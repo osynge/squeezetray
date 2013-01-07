@@ -16,6 +16,8 @@ class FrmSettings(wx.Frame):
         self.log = logging.getLogger("FrmSettings")
         self.callbacks = {
             "on_apply" : {},
+            "on_save" : {},
+            "on_cancel" : {},
         }
         self.parent = parent
         self.title = title
@@ -94,6 +96,18 @@ class FrmSettings(wx.Frame):
     def cbDoOnApply(self):
         for item in self.callbacks["on_apply"]:
             item(self)
+    def cbAddOnSave(self,func):
+        self.callbacks['on_save'][func] = 1
+        
+    def cbDoOnSave(self):
+        for item in self.callbacks["on_save"]:
+            item(self)    
+    def cbAddOnCancel(self,func):
+        self.callbacks['on_cancel'][func] = 1
+        
+    def cbDoOnCancel(self):
+        for item in self.callbacks["on_cancel"]:
+            item(self)    
 
     def OnConnected(self,event):
         self.updateFromModel()
@@ -119,11 +133,10 @@ class FrmSettings(wx.Frame):
     def OnSave(self, event):
         self.OnApply(event)
         #self.app.configSave()
-        self.log.error('should call call back here')
-        
+        #self.log.error('should call call back here')
+        self.cbDoOnSave()
 #
     def OnApply(self, event):
-        self.log.error('should call call back here')
         newHost = self.tcHost.GetValue()
         self.model.host.update(newHost)
             #print 'donehostchanged',newHost
@@ -137,7 +150,7 @@ class FrmSettings(wx.Frame):
         #self.app.tb.on_settings_close(event)
         #close = wx.PyEvent()
         #wx.EVT_CLOSE
-                
+        self.cbDoOnCancel () 
  #################################################
  
 class FrmSettingsOld(wx.Frame):

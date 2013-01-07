@@ -321,8 +321,8 @@ class mainApp(wx.App):
         self.setUpdateModel(evt)
             
     def OnSave(self,presentor):
-        self.ConCtrlInteractor.OnApply()
-        
+        self.ConCtrlInteractor.OnApply(presentor)
+        self.configPresentor.save()
     def OnTimer(self,event):
         if self.block:
             return

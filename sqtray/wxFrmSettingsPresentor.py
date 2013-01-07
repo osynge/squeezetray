@@ -51,6 +51,7 @@ class frmSettingsPresentor:
             "on_modelUpdate" : {},
             "on_save" : {},
             "on_apply" : {},
+            "on_cancel" : {},
         }
         
         
@@ -67,6 +68,9 @@ class frmSettingsPresentor:
         self.Example.Bind(wx.EVT_CLOSE, self.SettingClose)
         self.Example.updateFromModel()
         self.Example.cbAddOnApply(self.OnApply)
+        self.Example.cbAddOnSave(self.OnSave)
+        self.Example.cbAddOnCancel(self.OnCancel)
+        
         self.interactor.install(self.GuiModel,self.Example)
         self.Example.Show()
         
