@@ -286,7 +286,7 @@ class SqueezeConnectionThreadPool:
     def OnTrackInfo(self,responce):
         now = datetime.datetime.now()
         #print "OnPlayerStatus:",datetime.datetime.now()
-        print  "OnTrackInfo",responce
+        #print  "OnTrackInfo",responce
         #print "OnTrackInfo",unicode(json.dumps(responce, indent=4))
         
         def cleanList(inputStr):
@@ -494,11 +494,9 @@ class squeezeConCtrl:
                     ["status","-","4","tags:playlist_id"]
                 ]
         })
-    def RecTrackInfo(self, track):
-        print "RecTrackInfo=%s" % (track)
+    
     def Pause(self,player):
         if not self.model.connected.get():
-            print "connectionStr=",self.model.connectionStr.get()
             return None
         if not player in self.model.Players:
             return None

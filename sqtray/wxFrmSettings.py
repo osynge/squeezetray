@@ -113,7 +113,6 @@ class FrmSettings(wx.Frame):
         self.updateFromModel()
         
     def updateFromModel(self):
-        print 'ddd',self.model.host.get()
         if self.model  == None:
             return
         self.GuiModel.statusText.update(self.model.statusText.get())
@@ -121,9 +120,7 @@ class FrmSettings(wx.Frame):
         self.GuiModel.port.update(self.model.port.get())
         
     def onStatusText(self,value):
-        print 'ee',self.model.statusText.get()
         self.SetStatusText(self.model.statusText.get())
-        #self.Example.SetIcon(icon)
         
     def onHost(self,value):
         self.tcHost.SetValue(self.GuiModel.host.get())

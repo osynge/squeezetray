@@ -152,7 +152,7 @@ class viewWxToolBarSrc():
             self.iconNameCache.update("ART_APPLICATION_STATUS_DISCONECTED")
         
     def on_players(self):
-        print "on_players"
+        self.log.debug("on_players")
         self.updateNeeded = True
         #self.availablePlayers
         foundPlayers = set()
@@ -167,10 +167,10 @@ class viewWxToolBarSrc():
     def on_player_name(self,value):
         self.updateNeeded = True
     def on_player_track(self,value):
-        print 'on_player_track'
+        self.log.debug('on_player_track')
         self.updateNeeded = True
     def on_player_artist(self,value):
-        print 'on_player_artist'
+        self.log.debug( 'on_player_artist')
         self.updateNeeded = True
     def gettoolTip(self):
         self.update()
@@ -193,7 +193,6 @@ class  Connection2SettingsInteractor():
         self.connection.SocketErrNo.addCallback(self.OnConnectionError)
 
     def OnHostChange(self,value):
-        print 'ddddddddddddddddddddddddddddddddddddddddddd',self.connection.host.get()
         self.settings.host.update(self.connection.host.get())
     def OnPortChange(self,value):
         self.settings.port.update(self.connection.port.get())
@@ -295,7 +294,7 @@ class mainApp(wx.App):
         self.SettingsPresentor.cbAddOnSave(self.OnSave)
         # Now apply the Settings
         #self.ConCtrlInteractor.OnApply(None)
-        print self.ModelFrmSettings.host.get()
+        #print self.ModelFrmSettings.host.get()
         self.messagesUnblock()
         
         
