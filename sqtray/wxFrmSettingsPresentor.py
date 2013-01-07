@@ -57,7 +57,7 @@ class frmSettingsPresentor:
         
         self.GuiModel = model
         self.settingsOpen = False
-        
+        self.Example = None
     
         
     def SettingsOpen(self):
