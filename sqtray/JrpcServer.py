@@ -7,7 +7,7 @@ import logging
 from Queue import Queue
 from threading import Thread
 import datetime
-
+import time
 from models import Observable
 import exceptions
 if float(sys.version[:3]) >= 2.6:
@@ -380,6 +380,7 @@ class squeezeConCtrl:
     
     def OnPlayersCount(self,value):
         #print "OnPlayersCount", value
+        comands = []
         for index in range(len(self.model.playerList)):
             identifier = self.model.playerList[index].identifier.get()
             name = self.model.playerList[index].name.get()
@@ -391,15 +392,20 @@ class squeezeConCtrl:
                     "params": [ '-', [ 'player', 'id', index ,"?"] ]
                 }
                 self.log.debug("msg=%s" % (msg))
-                self.view1.sendMessage(self.view1.OnPlayerIndex,msg)
+                comands.append([self.view1.OnPlayerIndex,msg])
+                
+                #self.view1.sendMessage([self.view1.OnPlayerIndex,msg])
             if name == None:
                 #print "would make a name request"
                 msg = { 
                     "method":"slim.request",
                     "params": [ '-', [ 'player', 'name', index ,"?"] ]
                 }
-                self.view1.sendMessage(self.view1.OnPlayerName,msg)
-            
+                comands.append([self.view1.OnPlayerName,msg])
+                #self.view1.sendMessage([self.view1.OnPlayerName,msg])
+        for item in comands:
+            time.sleep(1)
+            self.view1.sendMessage(item[0],item[1])
     def RecConnectionOnline(self):
         #print "sdfdsfsF"
         #self.view1.RecConnectionOnline()
@@ -436,6 +442,7 @@ class squeezeConCtrl:
 
     def OnTrackChange(self):
         #print "OnTrackChange"
+        
         for player in self.model.Players:
             trackId = self.model.Players[player].CurrentTrackId.get()
             if trackId == None:
