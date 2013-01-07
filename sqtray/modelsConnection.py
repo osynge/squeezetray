@@ -44,7 +44,6 @@ class squeezeSong:
         self.tagversion = Observable(None)
         self.bitrate = Observable(None)
         self.samplesize = Observable(None)
-        
         self.filesize = Observable(None)
         self.coverart = Observable(None)
         self.modificationTime = Observable(None)
@@ -90,20 +89,20 @@ class squeezeConMdle:
         newHost = self.host.get()
         newPort = self.port.get()
         newConnectionStr = "%s:%s" % (self.host.get(),self.port.get())
-        if newConnectionStr != self.connectionStr.get():
-            self.connectionStr.set(newConnectionStr)
+        self.connectionStr.update(newConnectionStr)
+        
     def OnPortChange(self,value):
         newHost = self.host.get()
         newPort = self.port.get()
         newConnectionStr = "%s:%s" % (self.host.get(),self.port.get())
-        if newConnectionStr != self.connectionStr.get():
-            self.connectionStr.set(newConnectionStr)
+        self.connectionStr.update(newConnectionStr)
 
             
     def OnConnectedChange(self,value):
         if not self.connected.get():
             if 0 != self.playersCount.get():
                 self.playersCount.set(0)
+                
     def OnPlayersCountChange(self,value):
         self.playerList = []
         for index in range(value):

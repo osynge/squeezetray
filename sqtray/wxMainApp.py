@@ -17,13 +17,16 @@ import datetime
 
 from sqtray.wxTaskBarIcon import TaskBarIcon, TaskBarIconInteractor, timedelta2str
 from sqtray.wxTaskBarIconPresentor import TaskBarIconPresentor
-from sqtray.wxFrmSettings import FrmSettings
 
 from sqtray.wxArtPicker import MyArtProvider
 
 from sqtray.wxConfig import ConfigPresentor
+
+
+from sqtray.wxFrmSettingsPresentor import frmSettingsPresentor
 import logging
 
+from modelsWxFrmSettings import mdlFrmSettings
 def StoreConfig(FilePath,squeezeConMdle):
     cfg = wx.FileConfig(appName="ApplicationName", 
                                 vendorName="VendorName", 
@@ -179,7 +182,35 @@ class viewWxToolBarSrc():
         return self.iconNameCache.get()
         
     
+class  Connection2SettingsInteractor():
+    def install(self, connection, settings):
+        self.connection = connection
+        self.settings = settings
+        self.connection.host.addCallback(self.OnHostChange)
+        self.OnHostChange(None)
+        self.connection.port.addCallback(self.OnPortChange)
+        self.OnPortChange(None)
+        self.connection.SocketErrNo.addCallback(self.OnConnectionError)
+
+    def OnHostChange(self,value):
+        print 'ddddddddddddddddddddddddddddddddddddddddddd',self.connection.host.get()
+        self.settings.host.update(self.connection.host.get())
+    def OnPortChange(self,value):
+        self.settings.port.update(self.connection.port.get())
+    def OnConnectionError(self,value):
+        #self.settings.connectionMsg.update("SocketErrNo=%s" % (self.connection.SocketErrNo.get()))
+        pass
+class ConCtrlInteractor():
+
+    def install(self,ModelFrmSettings,ModelConPool):
+        self.ModelFrmSettings = ModelFrmSettings
+        self.ModelConPool = ModelConPool
+        
+    def OnApply(self,presentor):
+        self.ModelConPool.host.update(self.ModelFrmSettings.host.get())
+        self.ModelConPool.port.update(self.ModelFrmSettings.port.get())
     
+           
 class mainApp(wx.App):
     def __init__(self):
         super(mainApp, self).__init__()
@@ -187,6 +218,13 @@ class mainApp(wx.App):
         # Used to decide the connection string  
         self.ModelConPool = squeezeConMdle()
         self.ModelGuiThread = taskBarMdle()
+        self.ModelFrmSettings = mdlFrmSettings()
+        
+        # Now set model interactions
+        self.Con2SettingsInteractor = Connection2SettingsInteractor()
+        self.Con2SettingsInteractor.install(self.ModelConPool,self.ModelFrmSettings)
+        
+        
         
         #self.tb = TaskBarPresntor(self.ModelGuiThread)
         self.cfg = wx.FileConfig(appName="ApplicationName", 
@@ -206,7 +244,7 @@ class mainApp(wx.App):
         
         
         
-        self.timer.Start(900)  # x100 milliseconds
+        self.timer.Start(9000)  # x100 milliseconds
         wx.EVT_TIMER(self, TIMER_ID, self.OnTimer)  # call the on_timer function
         self.taskbarInteractor = TaskBarIconInteractor()
         self.tbPresentor =  TaskBarIconPresentor(self.ModelGuiThread,self.tb,self.taskbarInteractor)
@@ -220,7 +258,7 @@ class mainApp(wx.App):
         
         # Now we hook up the view
         self.squeezeConCtrl = squeezeConCtrl(self.ModelConPool)
-        self.squeezeConCtrl.ConectionStringSet("mini:9000")
+        #self.squeezeConCtrl.ConectionStringSet("mini:9000")
         self.count = 0
         self.viewWxToolBarSrc = viewWxToolBarSrc()
         self.viewWxToolBarSrc.install(self.ModelConPool)
@@ -239,10 +277,21 @@ class mainApp(wx.App):
         self.tbPopUpMenuInteractor.cbAddOnStop(self.squeezeConCtrl.Stop)
         
         
-        #NowLoad Config
-        self.configPresentor = ConfigPresentor(self.ModelConPool)
+        #Now load the settings presentor
+        
+        self.SettingsPresentor  = frmSettingsPresentor(self.ModelFrmSettings)
+        self.ConCtrlInteractor = ConCtrlInteractor()
+        self.ConCtrlInteractor.install(self.ModelFrmSettings,self.ModelConPool)
+        self.SettingsPresentor.cbAddOnApply(self.ConCtrlInteractor.OnApply)
+        self.SettingsPresentor.cbAddOnSave(self.OnSave)
+        
+        #Now Load Config
+        
+        self.configPresentor = ConfigPresentor(self.ModelFrmSettings)
         self.configPresentor.load()
         self.messagesUnblock()
+        
+        
     def messagesBlock(self):
         self.block = True
     def messagesUnblock(self):
@@ -264,18 +313,26 @@ class mainApp(wx.App):
             #print self.ModelConPool.Players
         self.setUpdateModel(evt)
             
-    
+    def OnSave(self,presentor):
+        self.ConCtrlInteractor.OnApply()
+        
     def OnTimer(self,event):
         if self.block:
             return
+        
+        connected = self.ModelConPool.connected.get()
+        if False == connected: 
+            self.squeezeConCtrl.RecConnectionOnline()
+            return
         #self.log.debug("on timer")
-        #self.log.debug("on timer= %s" % (self.viewWxToolBarSrc.gettoolTip()))
+        self.log.debug("on timer= %s" % (self.ModelConPool.port.get()))
         #self.timer.
         #print dir(self.timer)
         #self.interactorWxUpdate.on_connected()
         self.count+= 1
+        #self.squeezeConCtrl.RecConnectionOnline()
         self.squeezeConCtrl.OnPlayersCount(None)
-        if self.count > 1:
+        if self.count > 0:
             self.squeezeConCtrl.RecPlayerStatus(2)
             self.squeezeConCtrl.RecPlayerStatus(1)
             self.squeezeConCtrl.RecPlayerStatus(0)
@@ -283,6 +340,9 @@ class mainApp(wx.App):
             self.squeezeConCtrl.PlayerStatus(1)
             self.squeezeConCtrl.PlayerStatus(0)
             self.viewWxToolBarSrc.update()
+        else:
+            self.log.debug("RecConnectionOnline")
+        
         
         self.log.debug("on timer=cccccccccccc %s" % (self.ModelConPool.playerList))
         self.setUpdateModel(None)
@@ -298,33 +358,19 @@ class mainApp(wx.App):
         return newMenu
         
     def setUpdateModel(self,param):
-        connected = self.ModelConPool.connected.get()
-        if connected == False:
-            self.ModelGuiThread.currentIconName.update("ART_APPLICATION_STATUS_DISCONECTED")
-            return
-        if connected == True:
-            self.ModelGuiThread.currentIconName.update("ART_APPLICATION_STATUS_CONNECTED")
-        #if connected:
-        #    self.ModelGuiThread.currentIconName.update("ART_APPLICATION_STATUS_CONNECTED")
-        #    return
+        
         toolTip = self.viewWxToolBarSrc.gettoolTip()
-        #self.ModelGuiThread.set_toolTip(toolTip)
         self.tbPresentor._OnToolTipChange(toolTip)
         currentIcon = self.viewWxToolBarSrc.getIconName()
-        self.log.debug("setUpdateModel")
-        
-        
-        self.log.debug("setUpdateModel=%s" % (connected))
+        #self.log.debug("setUpdateModel")
+        self.ModelGuiThread.currentIconName.update(currentIcon)
+        #self.log.debug("setUpdateModel=%s" % (currentIcon))
     def SettingsOpen(self):
-        self.Example = FrmSettings(None, title='Settings')
-        self.Example.Bind(wx.EVT_CLOSE, self.SettingClose)
-        self.Example.ModelSet(self.ModelConPool)
-        self.Example.Show()
-    def SettingClose(self,evnt):
-        
-        self.Example.Destroy()
-        self.Example = None
+        self.SettingsPresentor.SettingsOpen()
     
+        
+    def SettingClose(self,evnt):
+        self.SettingsPresentor.SettingClose()
     
     def doCbOnPlay(self,player):
         

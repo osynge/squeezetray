@@ -129,7 +129,7 @@ class SqueezeConnectionWorker(Thread):
         if Changed:
             #print connectionStr
             self.conn = httplib.HTTPConnection(connectionStr)
-            
+        self.conn == None   
         
 class SqueezeConnectionThreadPool:
     """Pool of threads consuming tasks from a queue"""
@@ -183,14 +183,12 @@ class SqueezeConnectionThreadPool:
         noPlayers = int(responce["result"]["_count"])
         self.noPlayers = noPlayers
         #print "self.noPlayers=%s" % ( noPlayers )
-        self.squeezeConMdle.connected.set(True)
+        self.squeezeConMdle.connected.update(True)
         oldValue = self.squeezeConMdle.connected.get()
         if oldValue == noPlayers:
             return
-        self.squeezeConMdle.playersCount.set(noPlayers)
-        oldValue = self.squeezeConMdle.connected.get()
-        if oldValue != True:
-            self.squeezeConMdle.connected.set(True)
+        self.squeezeConMdle.playersCount.update(noPlayers)
+        self.squeezeConMdle.connected.update(True)
 
     def OnPlayerIndex(self,responce):
         playerId = responce["result"]["_id"]
@@ -216,7 +214,9 @@ class SqueezeConnectionThreadPool:
         #print "OnPlayerStatus",unicode(json.dumps(responce, indent=4))
         playerName = unicode(responce["result"]["player_name"])
         playerIndex = int(responce['id'])
-        
+        if not( playerIndex < len(self.squeezeConMdle.playerList)):
+            self.log.error("Player not found")
+            return
         OldplayerName = self.squeezeConMdle.playerList[playerIndex].name.get()
         if OldplayerName != playerName:
             self.squeezeConMdle.playerList[playerIndex].name.set(playerName)
@@ -383,6 +383,7 @@ class squeezeConCtrl:
         for index in range(len(self.model.playerList)):
             identifier = self.model.playerList[index].identifier.get()
             name = self.model.playerList[index].name.get()
+            
             if identifier == None:
                 #print "would make a name request"
                 msg = { 
@@ -399,7 +400,7 @@ class squeezeConCtrl:
                 }
                 self.view1.sendMessage(self.view1.OnPlayerName,msg)
             
-    def  RecConnectionOnline(self):
+    def RecConnectionOnline(self):
         #print "sdfdsfsF"
         #self.view1.RecConnectionOnline()
         self.view1.sendMessage(self.view1.OnPlayerCount,{ 
