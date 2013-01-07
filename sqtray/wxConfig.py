@@ -2,19 +2,23 @@
 import wx
 
 
+import logging
 
     
 class ConfigView():
     def __init__(self,model):
         self.model = model
+        self.log = logging.getLogger("ConfigView")
         self.cfg = wx.FileConfig(appName="ApplicationName", 
                                     vendorName="VendorName", 
                                     localFilename=".squeezetray.cfg", 
                                     style=wx.CONFIG_USE_LOCAL_FILE)
     def configRead(self):
+        self.log.debug("configRead")
         # Set Host
         squeezeServerHost = 'localhost'
         if self.cfg.Exists('squeezeServerHost'):
+            #self.log.info("found")
             squeezeServerHost = self.cfg.Read('squeezeServerHost')
         
         
