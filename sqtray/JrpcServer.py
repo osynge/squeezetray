@@ -4,7 +4,7 @@ import sys, traceback
 from threading import *
 from modelsConnection import squeezeSong
 import logging
-from Queue import Queue
+from Queue import Queue, Empty
 from threading import Thread
 import datetime
 import time
@@ -20,27 +20,40 @@ else:
 
 import errno
 
+
 class SqueezeConnectionWorker(Thread):
     """Thread executing tasks from a given tasks queue"""
     def __init__(self, tasks):
         Thread.__init__(self)
         self.tasks = tasks
+        self.callbacks = { 'task_done' : {}}
         self.daemon = True
         self.start()
         self.connectionString = None
         self.SocketErrNo = Observable(0)
         self.SocketErrMsg = Observable("")
         self.log = logging.getLogger("JrpcServer.SqueezeConnectionWorker")
-        
+    def cbAddTaskDone(self,funct):
+        self.callbacks['task_done'][funct] = 1
+    def taskDone(self):
+        for func in self.callbacks['task_done']:
+            func(self.request)    
+        self.tasks.task_done()
+        return
     def run(self):
         while True:
-            func,params, args, kargs = self.tasks.get()
+            self.request = self.tasks.get()
+            
+            func = self.request['function']
+            params = self.request['params']
+            args = self.request['args']
+            kargs = self.request['kargs']
             if not hasattr(self,'conn'):
                 #print "connectionString", self.connectionString 
-                self.tasks.task_done()
+                self.taskDone()
                 continue
             if self.connectionString == None:
-                self.tasks.task_done()
+                self.taskDone()
                 continue
             if self.conn == None:
                 self.conn = httplib.HTTPConnection(self.connectionString)
@@ -51,13 +64,13 @@ class SqueezeConnectionWorker(Thread):
                     errorNumber = int(E.errno)
                 self.SocketErrNo.set(errorNumber)
                 self.SocketErrMsg.set(unicode(E.strerror))
-                self.tasks.task_done()
+                self.taskDone()
                 continue
             except httplib.CannotSendRequest, E:
                 self.conn = httplib.HTTPConnection(self.connectionString)
                 self.log.error("Cannot Send Request, resetting connection.=%s" % (params))
                 self.log.error(self.connectionString)
-                self.tasks.task_done()
+                self.taskDone()
                 continue
             errorNoOld = self.SocketErrNo.get()
             self.SocketErrNo.set(0)
@@ -65,13 +78,13 @@ class SqueezeConnectionWorker(Thread):
             try:
                 response = self.conn.getresponse()
             except exceptions.AttributeError, E:
-                self.tasks.task_done()
+                self.taskDone()
                 continue
             except socket.error, E:
                 errorNumber = int(E.errno)
                 self.SocketErrNo.set(errorNumber)
                 self.SocketErrMsg.set(unicode(E.strerror))
-                self.tasks.task_done()
+                self.taskDone()
                 continue
             except httplib.BadStatusLine:
                 self.conn = httplib.HTTPConnection(self.connectionString)
@@ -80,37 +93,38 @@ class SqueezeConnectionWorker(Thread):
                 except EnvironmentError as exc:
                     if exc.errno == errno.ECONNREFUSED:
                         self.log.info( "Connection refused")
-                        self.tasks.task_done()
+                        self.taskDone()
                         continue
                     else:
                         raise exc
                 except IOError as E:
                     self.log.info( "IOError error:%s" %(E))
-                    self.tasks.task_done()
+                    self.taskDone()
                     continue
                 try:
                     response = self.conn.getresponse()
                 except httplib.BadStatusLine, E:
                     self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E))
-                    self.tasks.task_done()
+                    self.taskDone()
                     continue
             if response.status != 200:
                 self.log.info( "httplib.BadResponceStatus %s:%s" % (response.status, response.reason))
-                self.tasks.task_done()
+                self.taskDone()
                 return
             try:
                 rep = json.loads(response.read())
             except ValueError as E:
                 self.log.info( "Json decoding ValueError:%s" %(E))
-                self.tasks.task_done()
+                self.taskDone()
                 continue
             if func != None:
+                self.request['responce'] = rep
                 func(rep,*args, **kargs)
                 #try: func(rep)
                 #except Exception, e: 
                 #    print e
                 #    #traceback.print_tb(e, limit=1, file=sys.stdout)
-            self.tasks.task_done()
+            self.taskDone()
             
             
     def ConnectionSet(self,connectionStr):
@@ -129,9 +143,12 @@ class SqueezeConnectionWorker(Thread):
         if Changed:
             #print connectionStr
             self.conn = httplib.HTTPConnection(connectionStr)
-        self.conn == None   
+        self.conn == None
+
+
+
         
-class SqueezeConnectionThreadPool:
+class sConTPool:
     """Pool of threads consuming tasks from a queue"""
     
     def __init__(self, squeezeConMdle,num_threads = 10):
@@ -139,24 +156,68 @@ class SqueezeConnectionThreadPool:
         self.squeezeConMdle = squeezeConMdle
         connectionString = self.squeezeConMdle.connectionStr.get()
         self.tasks = Queue(num_threads)
+        self.preTasks = Queue()
         self.arrayOfSqueezeConnectionWorker = []
+        self.triggoredMsg = {}
         for _ in range(num_threads): 
             new = SqueezeConnectionWorker(self.tasks)
             new.ConnectionSet(connectionString)
             new.SocketErrNo.addCallback(self.OnSocketErrNo)
             new.SocketErrMsg.addCallback(self.OnSocketErrMsg)
+            new.cbAddTaskDone(self.handleTaskDone)
             self.arrayOfSqueezeConnectionWorker.append(new)
         self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
     
+    def handleTaskDone(self,request):
+        msgHash = request['params']
+        if msgHash in self.triggoredMsg.keys():
+            del(self.triggoredMsg[msgHash])
+        
         
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
         self.log.error("Wait for completion of all the tasks in the queue")
         self.tasks.join()
     def sendMessage(self,func,message, *args, **kargs):
-        #print "connectionString =" ,  self.squeezeConMdle.connectionStr.get()
+        self.ClearQueue()
         params = json.dumps(message, sort_keys=True, indent=4)
-        self.tasks.put((func,params, args, kargs))
+        request = {
+            'function' : func,
+            'params' : params,
+            'args' : args,
+            'kargs' : kargs,
+        }
+        self.tasks.put(request)
+        
+    def ClearQueue(self):
+        while True:
+            try:
+                request = self.preTasks.get_nowait()
+            except Empty:
+                break
+            msgHash = request['params']
+            if msgHash in self.triggoredMsg.keys():
+                del(self.triggoredMsg[msgHash])
+            self.tasks.put(request)
+            self.preTasks.task_done()
+            
+    def queueMessage(self,func,message, *args, **kargs):
+        messageDict = {}
+        params = json.dumps(message, sort_keys=True, indent=4)
+        if params in self.triggoredMsg.keys():
+            self.log.error('dedupe is working=%s' % (params))
+            return
+        request = {
+            'function' : func,
+            'params' : params,
+            'args' : args,
+            'kargs' : kargs,
+        }
+        self.triggoredMsg[params] = request
+        self.preTasks.put(request)
+        
+        
+        
     
     def OnSocketErrNo(self,value):
         #print "OnSocketErrNo='%s'" % (value)
@@ -178,8 +239,10 @@ class SqueezeConnectionThreadPool:
         oldValue = self.squeezeConMdle.connected.get()
         self.squeezeConMdle.connected.set(False)
         
+class SqueezeConnectionThreadPool(sConTPool):
         
     def OnPlayerCount(self,responce):
+        #sConTPool.__init__(self)
         noPlayers = int(responce["result"]["_count"])
         self.noPlayers = noPlayers
         #print "self.noPlayers=%s" % ( noPlayers )
@@ -404,8 +467,7 @@ class squeezeConCtrl:
                 comands.append([self.view1.OnPlayerName,msg])
                 #self.view1.sendMessage([self.view1.OnPlayerName,msg])
         for item in comands:
-            time.sleep(1)
-            self.view1.sendMessage(item[0],item[1])
+            self.view1.queueMessage(item[0],item[1])
     def RecConnectionOnline(self):
         #print "sdfdsfsF"
         #self.view1.RecConnectionOnline()
@@ -450,7 +512,7 @@ class squeezeConCtrl:
             trackId = int(trackId)
             if trackId <= 0:
                 continue
-            self.view1.sendMessage(self.view1.OnTrackInfo,{ 
+            self.view1.queueMessage(self.view1.OnTrackInfo,{ 
                         "method":"slim.request",
                         "params": ["-",
                             ['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]     
