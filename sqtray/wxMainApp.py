@@ -118,6 +118,7 @@ class viewWxToolBarSrc():
         self.toolTipCache.update(newToolTip)
         #self.log.warn("xxx%sxxx" % (self.toolTipCache.get() ) )
         return self.toolTipCache.get()
+        
     def updateToolTip(self):
         self.log.debug("updateToolTip")
         newToolTip = unicode()
