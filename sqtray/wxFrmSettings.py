@@ -143,7 +143,6 @@ class FrmSettings(wx.Frame):
         self.cbDoOnApply()
     def OnCancel(self, event):
         #self.FrmCtrl.closeSettings(event)
-        self.log.error('should call call back here')
         #self.app.tb.on_settings_close(event)
         #close = wx.PyEvent()
         #wx.EVT_CLOSE
