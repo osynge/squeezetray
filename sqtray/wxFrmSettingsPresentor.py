@@ -2,7 +2,7 @@ import wx
 from sqtray.wxFrmSettings import FrmSettings
 
 from modelsWxFrmSettings import mdlFrmSettings
-
+from jrpcServerThreadPool import SqueezeConnectionWorker
 import  wx
 import  wx.lib.newevent
 SomeNewEvent, EVT_SOME_NEW_EVENT = wx.lib.newevent.NewEvent()
