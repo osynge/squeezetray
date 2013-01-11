@@ -7,19 +7,14 @@ import  wx
 import  wx.lib.newevent
 SomeNewEvent, EVT_SOME_NEW_EVENT = wx.lib.newevent.NewEvent()
 SomeNewCommandEvent, EVT_SOME_NEW_COMMAND_EVENT = wx.lib.newevent.NewCommandEvent()
-           
+
+
 class frmSettingsModelWatcher():
     def install(self, src, wxObject):
         
         self.messagesBlock()
         self.model = src
         self.wxObject = wxObject 
-        
-        
-        
-        
-        
-        
         self.model.currentIconName.addCallback(self.onIconChange)
         self.model.tooltip.addCallback(self.onIconChange)
         self.model.host.addCallback(self.onIconChange)
@@ -53,12 +48,9 @@ class frmSettingsPresentor:
             "on_apply" : {},
             "on_cancel" : {},
         }
-        
-        
         self.GuiModel = model
         self.settingsOpen = False
-        
-    
+        self.Example = None
         
     def SettingsOpen(self):
         if self.settingsOpen == True:
