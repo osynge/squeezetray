@@ -2,7 +2,7 @@ import socket
 import httplib, urllib
 import sys, traceback
 from threading import *
-from modelsConnection import squeezeSong
+from modelsConnection import squeezeSong,  squeezePlayerMdl, squeezeConMdle
 import logging
 from Queue import Queue, Empty
 from threading import Thread
@@ -119,7 +119,7 @@ class SqueezeConnectionWorker(Thread):
                 continue
             if func != None:
                 self.request['responce'] = rep
-                func(rep,*args, **kargs)
+                #func(rep,*args, **kargs)
                 #try: func(rep)
                 #except Exception, e: 
                 #    print e
@@ -158,28 +158,33 @@ class sConTPool:
         self.tasks = Queue(num_threads)
         self.preTasks = Queue()
         self.arrayOfSqueezeConnectionWorker = []
-        self.triggoredMsg = {}
+        self.taskCache = {}
+        self.postTasks = Queue()
         for _ in range(num_threads): 
             new = SqueezeConnectionWorker(self.tasks)
             new.ConnectionSet(connectionString)
             new.SocketErrNo.addCallback(self.OnSocketErrNo)
             new.SocketErrMsg.addCallback(self.OnSocketErrMsg)
-            new.cbAddTaskDone(self.handleTaskDone)
+            new.cbAddTaskDone(self.handleTaskDoneByThread)
             self.arrayOfSqueezeConnectionWorker.append(new)
         self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
     
-    def handleTaskDone(self,request):
+    def handleTaskDoneByThread(self,request):
         msgHash = request['params']
-        if msgHash in self.triggoredMsg.keys():
-            del(self.triggoredMsg[msgHash])
-        
+        if msgHash in self.taskCache.keys():
+            del(self.taskCache[msgHash])
+        if not 'responce' in request.keys():
+            return
+        self.postTasks.put(msgHash)
         
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
         self.log.error("Wait for completion of all the tasks in the queue")
         self.tasks.join()
-    def sendMessage(self,func,message, *args, **kargs):
-        self.ClearQueue()
+        
+    def SendMessage(self,func,message, *args, **kargs):
+        #Sends a message now without Queuing 
+        #for a aproved thread
         params = json.dumps(message, sort_keys=True, indent=4)
         request = {
             'function' : func,
@@ -188,23 +193,49 @@ class sConTPool:
             'kargs' : kargs,
         }
         self.tasks.put(request)
+        self.QueueProcessPreTask()
         
-    def ClearQueue(self):
+    def QueueProcessPreTask(self):
+        # For calling to place messages on 
         while True:
             try:
                 request = self.preTasks.get_nowait()
             except Empty:
                 break
             msgHash = request['params']
-            if msgHash in self.triggoredMsg.keys():
-                del(self.triggoredMsg[msgHash])
+            if msgHash in self.taskCache.keys():
+                self.taskCache[msgHash]["state"] = 'Qued'
             self.tasks.put(request)
             self.preTasks.task_done()
+    def QueueProcessResponces(self):
+        # To be processed by external thead
+        while True:
+            try:
+                request = self.postTasks.get_nowait()
+            except Empty:
+                break
+            msgHash = request['params']
+            if msgHash in self.taskCache.keys():
+                func = self.taskCache[msgHash]['function']
+                params = self.taskCache[msgHash]['params']
+                args = self.taskCache[msgHash]['args']
+                kargs = self.taskCache[msgHash]['kargs']
+                rep = self.taskCache[msgHash]['responce']
+                
+                
+                func(rep,params,*args, **kargs)
+                #try: func(rep)
+                #except Exception, e: 
+                #    print e
+                #    #traceback.print_tb(e, limit=1, file=sys.stdout)
+                
+                del(self.taskCache[msgHash])
+            self.postTasks.task_done()
             
-    def queueMessage(self,func,message, *args, **kargs):
+    def QueueProcessAddMessage(self,func,message, *args, **kargs):
         messageDict = {}
         params = json.dumps(message, sort_keys=True, indent=4)
-        if params in self.triggoredMsg.keys():
+        if params in self.taskCache.keys():
             self.log.error('dedupe is working=%s' % (params))
             return
         request = {
@@ -213,7 +244,7 @@ class sConTPool:
             'args' : args,
             'kargs' : kargs,
         }
-        self.triggoredMsg[params] = request
+        self.taskCache[params] = request
         self.preTasks.put(request)
         
         
@@ -238,8 +269,13 @@ class sConTPool:
             self.arrayOfSqueezeConnectionWorker[player].ConnectionSet(oldvalue)
         oldValue = self.squeezeConMdle.connected.get()
         self.squeezeConMdle.connected.set(False)
+
         
-class SqueezeConnectionThreadPool(sConTPool):
+class SqueezeConnectionModelUpdator():
+
+    def Install(self, model):
+        self.squeezeConMdle = model
+        
         
     def OnPlayerCount(self,responce):
         #sConTPool.__init__(self)
@@ -656,11 +692,15 @@ class squeezeConCtrl:
         
 
 
+
+
+
 class squeezeConPresentor:
     def __init__(self,model):
-        self.Externalmodel = model
+        self.externalModel = model
         self.callbacks = {'requestUpdateModel'}
-        
+        self.internalModel = squeezeConMdle()
+        #self.ConCtrlView = squeezeConCtrl(self.internalModel)
         
     def cbAddRequestUpdateModel(self,functionRequestUpdateModel):
         # Note this calback may be called by any internal thread
@@ -675,6 +715,7 @@ class squeezeConPresentor:
     def requestUpdateModel(self):
         # This will empty the queue of messages to process
         pass
+    
     
           
         
