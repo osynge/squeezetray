@@ -22,7 +22,7 @@ from sqtray.wxArtPicker import MyArtProvider
 
 from sqtray.wxConfig import ConfigPresentor
 
-
+from sqtray.jrpcServerPresentor import squeezeConPresentor
 from sqtray.wxFrmSettingsPresentor import frmSettingsPresentor
 import logging
 
@@ -266,13 +266,15 @@ class mainApp(wx.App):
         
         self.interactorWxUpdate = interactorWxUpdate()
         self.interactorWxUpdate.install(self.ModelConPool,self)
-        
+       
         # Now we hook up the view
         self.squeezeConCtrl = squeezeConCtrl(self.ModelConPool)
         #self.squeezeConCtrl.ConectionStringSet("mini:9000")
         self.count = 0
         self.viewWxToolBarSrc = viewWxToolBarSrc()
         self.viewWxToolBarSrc.install(self.ModelConPool)
+        
+        
         
         #Now we set up the Tray Pup Up menu
         self.tbPopUpMenuInteractor = TrayMenuInteractor()
@@ -287,6 +289,9 @@ class mainApp(wx.App):
         self.tbPopUpMenuInteractor.cbAddOnPlay(self.squeezeConCtrl.Play)
         self.tbPopUpMenuInteractor.cbAddOnStop(self.squeezeConCtrl.Stop)
         
+        # Now we set up the jrpc server
+        self.jrpc = squeezeConPresentor(self.ModelConPool)
+        
         
         #Now load the settings presentor
         
@@ -297,6 +302,7 @@ class mainApp(wx.App):
         #self.ConCtrlInteractor.OnApply(None)
         #print self.ModelFrmSettings.host.get()
         self.messagesUnblock()
+        
         
         
     def messagesBlock(self):
