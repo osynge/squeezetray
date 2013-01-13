@@ -5,6 +5,7 @@ from datetime import timedelta
 from models import Observable
 import sys
 from jrpcServerView import SqueezeConnectionModelUpdator
+from modelsConnection import squeezeSong,  squeezePlayerMdl, squeezeConMdle
 
 if float(sys.version[:3]) >= 2.6:
     import json
@@ -81,12 +82,18 @@ class pollOnline(poller):
 class pollPlayerName(poller):
     def __init__(self,model,view):
         poller.__init__(self,model,view)
-        self.Pollfrequancy.update(1)
+        self.model.connected.addCallback(self.onConnected)
+    
+    def onConnected(self,event):
+        self.log.error('sheduling update')
+        now = datetime.datetime.now()
+        self.PollNext.update(now)
+    
     def GetNextDue(self):
         
         online = self.model.connected.get()
         if online != True:
-            self.Pollfrequancy.update(1)
+            self.Pollfrequancy.update(60)
             return []
         
         secondDelay = 0
@@ -95,14 +102,12 @@ class pollPlayerName(poller):
         for index in range(len(self.model.playerList)):
             identifier = self.model.playerList[index].identifier.get()
             name = self.model.playerList[index].name.get()
-            
             if identifier == None:
                 #print "would make a name request"
                 msg = { 
                     "method":"slim.request",
                     "params": [ '-', [ 'player', 'id', index ,"?"] ]
                 }
-                self.log.debug("msg=%s" % (msg))
                 secondDelay += secondInterval
                 commands.append([secondDelay,msg])
                 
@@ -116,8 +121,13 @@ class pollPlayerName(poller):
                 secondDelay += secondInterval
                 commands.append([secondDelay,msg])
         if len(commands) > 0:
+            
             self.Pollfrequancy.update(4)
-            return self.wrapOutput( commands)
+            output = self.wrapOutput( commands)
+            self.log.debug("msg=%s" % (output))
+                
+            
+            return output
         secondDelay = 60
         secondInterval = 60
         for index in range(len(self.model.playerList)):
@@ -125,7 +135,7 @@ class pollPlayerName(poller):
                 "method":"slim.request",
                 "params": [ '-', [ 'player', 'id', index ,"?"] ]
             }
-            self.log.debug("msg=%s" % (msg))
+            
             secondDelay += secondInterval
             commands.append([secondDelay,msg])
             #print "would make a name request"
@@ -136,7 +146,9 @@ class pollPlayerName(poller):
             secondDelay += secondInterval
             commands.append([secondDelay,msg])
         self.Pollfrequancy.update(60)
-        return self.wrapOutput( commands)
+        output = self.wrapOutput( commands)
+        self.log.debug("msg=%s" % (output))
+        return output
     def handleResponce(self,responce,ding,dong,foo):
         playerIndex = int(responce['params'][1][2])
         if "_name" in responce["result"].keys():
@@ -146,8 +158,121 @@ class pollPlayerName(poller):
             playerId = responce["result"]["_id"] 
             self.model.playerList[playerIndex].identifier.set(playerId)
 
-
-
+class pollPlayerStatus(poller):
+    def __init__(self,model,view):
+        poller.__init__(self,model,view)
+    def GetNextDue(self):
+        online = self.model.connected.get()
+        if online != True:
+            self.Pollfrequancy.update(6)
+            return []
+        secondDelay = 0
+        secondInterval = 1
+        commands = []
+        for index in range(len(self.model.playerList)):
+            identifier = self.model.playerList[index].identifier.get() 
+            if identifier == None:
+                continue
+            msg = {"id":index,
+                    "method":"slim.request",
+                    "params":[identifier , 
+                            ["status","-","4","tags:playlist_id"]
+                        ]
+                }
+            secondDelay += secondInterval
+            commands.append([secondDelay,msg])
+        if len(commands) > 0:
+            self.Pollfrequancy.update(1)
+        output = self.wrapOutput( commands)
+        self.log.debug("msg=%s" % (output))
+        return output
+    def handleResponce(self,responce,ding,dong,foo):
+        print json.dumps(responce, sort_keys=True, indent=4)
+        playerId = responce['params'][0]
+        playerMode = responce['result']['mode']
+        playerConnected = responce['result']["player_connected"]
+        playerPower = responce['result']["power"]
+        
+        
+        now = datetime.datetime.now()
+        #print "OnPlayerStatus:",datetime.datetime.now()
+        #print  "OnPlayerStatus",responce
+        #print "OnPlayerStatus",unicode(json.dumps(responce, indent=4))
+        playerName = unicode(responce["result"]["player_name"])
+        playerIndex = int(responce['id'])
+        if not( playerIndex < len(self.model.playerList)):
+            self.log.error("Player not found")
+            return
+        self.model.playerList[playerIndex].name.update(playerName)
+        lsbsMode = unicode(responce["result"]["mode"])
+        mappings = {"play" : "playing",
+            "pause" : "paused",
+            "off" : "Off",
+            "stop" : "stop"
+        }
+        if lsbsMode in mappings:
+            newOperationMode = mappings[lsbsMode]
+            self.model.playerList[playerIndex].operationMode.update(mappings[lsbsMode])
+        else:
+            self.log.error("Unknown player mode=%s" % (lsbsMode))
+        playlist_cur_index = None
+        if not "playlist_cur_index" in responce["result"].keys():
+            self.log.debug("Message contained no playlist_cur_index")
+            self.log.debug("Message=%s" % responce)
+            self.model.playerList[playerIndex].CurrentTrackTitle.update(None)
+            self.model.playerList[playerIndex].CurrentTrackId.update(None)
+            self.model.playerList[playerIndex].CurrentTrackArtist.update(None)
+            self.model.playerList[playerIndex].CurrentTrackEnds.update(None)
+        else:
+            playlist_cur_index = int(responce["result"]["playlist_cur_index"])
+        playlist_loop = []
+        if "playlist_loop" in responce["result"]:
+            playlist_loop = responce["result"]["playlist_loop"]
+        CurrentTrackTime = None
+        if "time" in responce["result"].keys():
+            CurrentTrackTime = responce["result"]["time"]
+        CurrentTrackTitle = None
+        for item in playlist_loop:
+            playlistIndex = int(item["playlist index"])
+            CurrentTrackId = int(item["id"])
+            CurrentTrackTitle = None
+            if "title" in item.keys():
+                CurrentTrackTitle = unicode(item["title"])
+            CurrentTrackArtist = None
+            if "artist" in item.keys():
+                CurrentTrackArtist = unicode(item["artist"])            
+            if playlistIndex == playlist_cur_index:
+                self.model.playerList[playerIndex].CurrentTrackTitle.update(CurrentTrackTitle)
+                
+                self.model.playerList[playerIndex].CurrentTrackArtist.update(CurrentTrackArtist)
+                CurrentTrackDuration = None
+                try:
+                    CurrentTrackDuration = responce["result"]["duration"]
+                except KeyError:
+                    pass
+                if (CurrentTrackDuration != None) and (self.model.playerList[playerIndex].operationMode.get() == "playing"):
+                    CurrentTrackRemaining = CurrentTrackDuration - CurrentTrackTime
+                    CurrentTrackEnds = datetime.datetime.now() + datetime.timedelta(seconds=CurrentTrackRemaining)
+                    OldCurrentTrackEnds = self.model.playerList[playerIndex].CurrentTrackEnds.get()
+                    if OldCurrentTrackEnds == None:
+                        self.model.playerList[playerIndex].CurrentTrackEnds.set(CurrentTrackEnds)
+                    else:
+                        timediff = abs(CurrentTrackEnds - OldCurrentTrackEnds)
+                        if timediff.seconds > 0:
+                            self.model.playerList[playerIndex].CurrentTrackEnds.update(CurrentTrackEnds)
+                else:
+                    self.model.playerList[playerIndex].CurrentTrackEnds.update(None)
+                # Now Change the ID last so people shoudl call back on this.
+                self.model.playerList[playerIndex].CurrentTrackId.update(CurrentTrackId)
+            #Now we process each song
+            if not CurrentTrackId in self.model.SongCache.keys():
+                
+                newSong = squeezeSong()
+                newSong.id.update(CurrentTrackId)
+                newSong.title.update(CurrentTrackTitle)
+                newSong.artist.update(CurrentTrackArtist)
+                self.model.SongCache[CurrentTrackId] = newSong
+        print (self.model.SongCache.keys())
 class pollholder:
     def __init__(self, model,view,updator):
         self.log = logging.getLogger("pollholder")
@@ -160,13 +285,13 @@ class pollholder:
         self.polls.append(item)
         item = pollPlayerName(self.model,self.updator)
         self.polls.append(item)
-        
+        item = pollPlayerStatus(self.model,self.updator)
+        self.polls.append(item)
     def check(self):
-        self.log.debug('checking')
         for item in self.polls:
             isdue = item.isDue()
             if isdue != True:
-                self.log.debug('not due')
+                #self.log.debug('not due')
                 continue
             duelist = item.GetNextDue()
             for ting in duelist:
@@ -193,40 +318,6 @@ class squeezeConCtrl:
         self.model.CbChurrentTrackAdd(self.OnTrackChange)
     
     
-    def OnPlayersCount(self,value):
-        #print "OnPlayersCount", value
-        comands = []
-        for index in range(len(self.model.playerList)):
-            identifier = self.model.playerList[index].identifier.get()
-            name = self.model.playerList[index].name.get()
-            
-            if identifier == None:
-                #print "would make a name request"
-                msg = { 
-                    "method":"slim.request",
-                    "params": [ '-', [ 'player', 'id', index ,"?"] ]
-                }
-                self.log.debug("msg=%s" % (msg))
-                comands.append([self.view1.OnPlayerIndex,msg])
-                
-                #self.view1.sendMessage([self.view1.OnPlayerIndex,msg])
-            if name == None:
-                #print "would make a name request"
-                msg = { 
-                    "method":"slim.request",
-                    "params": [ '-', [ 'player', 'name', index ,"?"] ]
-                }
-                comands.append([self.view1.OnPlayerName,msg])
-                #self.view1.sendMessage([self.view1.OnPlayerName,msg])
-        for item in comands:
-            self.view1.queueMessage(item[0],item[1])
-    def RecConnectionOnline(self):
-        #print "sdfdsfsF"
-        #self.view1.RecConnectionOnline()
-        self.view1.sendMessage(self.view1.OnPlayerCount,{ 
-            "method":"slim.request",
-            "params": [ '-', [ 'player', 'count', '?' ] ]
-        })
     
     def ConectionStringSet(self,Conecxtionstring):
         oldConecxtionstring = self.model.connectionStr.get()
@@ -443,8 +534,7 @@ class schedular:
                 self.threadpool.QueueProcessAddMessage(metadata['poller'].handleResponce,
                     metadata['msg'],[],{}
                     )
-            else:
-                self.log.debug('under cooked')
+            
         
         return results
 class jrpcServerTaskQueuePresentor():
