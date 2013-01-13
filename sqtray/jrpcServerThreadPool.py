@@ -192,14 +192,18 @@ class sConTPool:
     def SendMessage(self,func,message, *args, **kargs):
         #Sends a message now without Queuing 
         #for a aproved thread
-        
         request = {
             'function' : func,
             'params' : message,
             'args' : args,
             'kargs' : kargs,
         }
+        msgHash = request['params'].__hash__()
+        if msgHash in self.taskCacheRunning.keys():
+            self.log.error("Overwriting task")
+        self.taskCacheRunning[msgHash] = request
         self.tasks.put(request)
+        
         self.QueueProcessPreTask()
         
     def QueueProcessPreTask(self):
@@ -214,7 +218,6 @@ class sConTPool:
             msgHash = request['params'].__hash__()
             if msgHash in self.taskCacheRunning.keys():
                 self.log.error("Overwriting task")
-                self.taskCacheRunning[msgHash] = request
             self.taskCacheRunning[msgHash] = request
             if msgHash in self.preTaskCache.keys():
                 del self.preTaskCache[msgHash]
@@ -289,7 +292,6 @@ class sConTPool:
         self.log.debug('OnConnectionStrChange=%s' % (oldvalue))
         for player in range(len(self.arrayOfSqueezeConnectionWorker)):
             self.arrayOfSqueezeConnectionWorker[player].ConnectionSet(oldvalue)
-        oldValue = self.squeezeConMdle.connected.geat()
         self.squeezeConMdle.connected.set(False)
 
 def testcbDone(one):
