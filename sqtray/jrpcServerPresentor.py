@@ -12,7 +12,6 @@ from models import Observable
 import exceptions
 from jrpcServerThreadPool  import sConTPool
 
-from jrpcServerView import SqueezeConnectionModelUpdator
         
 if float(sys.version[:3]) >= 2.6:
     import json
@@ -34,7 +33,6 @@ class squeezeConPresentor:
         #self.internalModel.host.update('mini')
         #self.connectionCopyer = ConCtrlInteractor()
         #self.connectionCopyer.install(self.model,self.internalModel)
-        #self.internalUpdator = SqueezeConnectionModelUpdator()
         #self.internalUpdator.Install(self.internalModel)
         self.connectionPool = connectionPool
         self.threadpoolPresentor = jrpcServerTaskQueuePresentor(self.model,

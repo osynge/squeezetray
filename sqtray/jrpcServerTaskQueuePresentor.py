@@ -4,7 +4,6 @@ from datetime import timedelta
 
 from models import Observable
 import sys
-from jrpcServerView import SqueezeConnectionModelUpdator
 from modelsConnection import squeezeSong,  squeezePlayerMdl, squeezeConMdle
 
 if float(sys.version[:3]) >= 2.6:
@@ -17,12 +16,12 @@ else:
 
 
 class poller:
-    def __init__(self,model,view):
+    def __init__(self,model):
         self.log = logging.getLogger("poller")
         self.model = model
-        self.Pollfrequancy = Observable(60)
+        self.Pollfrequancy = Observable(1)
         self.PollNext = Observable(datetime.datetime.now())
-        self.view = view
+        
     def isDue(self):
         lastPolled = self.PollNext.get()
         now = datetime.datetime.now()
@@ -54,8 +53,8 @@ class poller:
         return output
 
 class pollOnline(poller):
-    def __init__(self,model,view):
-        poller.__init__(self,model,view)
+    def __init__(self,model):
+        poller.__init__(self,model)
         self.Pollfrequancy.update(1)
         self.log = logging.getLogger('poller.pollOnline')
     
@@ -66,8 +65,10 @@ class pollOnline(poller):
             "params": [ '-', [ 'player', 'count', '?' ] ]
         }
         if online == True:
+            self.Pollfrequancy.update(60)
             return self.wrapOutput([(500,msg)])
         else:
+            self.Pollfrequancy.update(1)
             return self.wrapOutput([(-10,msg)])
 
     def handleResponce(self,responce,ding,dong,foo):
@@ -81,8 +82,8 @@ class pollOnline(poller):
 
 
 class pollPlayerName(poller):
-    def __init__(self,model,view):
-        poller.__init__(self,model,view)
+    def __init__(self,model):
+        poller.__init__(self,model)
         self.model.connected.addCallback(self.onConnected)
         self.log = logging.getLogger('poller.pollPlayerName')
     def onConnected(self,event):
@@ -122,10 +123,8 @@ class pollPlayerName(poller):
                 secondDelay += secondInterval
                 commands.append([secondDelay,msg])
         if len(commands) > 0:
-            
             self.Pollfrequancy.update(4)
             output = self.wrapOutput( commands)
-            
             return output
         secondDelay = 60
         secondInterval = 60
@@ -158,8 +157,8 @@ class pollPlayerName(poller):
             self.model.playerList[playerIndex].identifier.set(playerId)
 
 class pollPlayerStatus(poller):
-    def __init__(self,model,view):
-        poller.__init__(self,model,view)
+    def __init__(self,model):
+        poller.__init__(self,model)
         self.log = logging.getLogger('poller.pollPlayerStatus')
     def GetNextDue(self):
         online = self.model.connected.get()
@@ -277,8 +276,8 @@ class pollPlayerStatus(poller):
 
 
 class pollSongStatus(poller):
-    def __init__(self,model,view):
-        poller.__init__(self,model,view)
+    def __init__(self,model):
+        poller.__init__(self,model)
         self.log = logging.getLogger('poller.pollSongStatus')
     def GetNextDue(self):
         online = self.model.connected.get()
@@ -289,7 +288,7 @@ class pollSongStatus(poller):
             self.Pollfrequancy.update(6)
             return []
         
-        secondDelay = 0
+        secondDelay = 2
         secondInterval = 1
         commands = []
         
@@ -390,20 +389,19 @@ class pollSongStatus(poller):
         
         
 class pollholder:
-    def __init__(self, model,view,updator):
+    def __init__(self, model,view):
         self.log = logging.getLogger("pollholder")
     
         self.model = model
         self.view = view
-        self.updator = updator
         self.polls = []
-        item = pollOnline(self.model,self.updator )
+        item = pollOnline(self.model )
         self.polls.append(item)
-        item = pollPlayerName(self.model,self.updator)
+        item = pollPlayerName(self.model)
         self.polls.append(item)
-        item = pollPlayerStatus(self.model,self.updator)
+        item = pollPlayerStatus(self.model)
         self.polls.append(item)
-        item = pollSongStatus(self.model,self.updator)
+        item = pollSongStatus(self.model)
         self.polls.append(item)
     def check(self):
         for item in self.polls:
@@ -662,9 +660,7 @@ class jrpcServerTaskQueuePresentor():
         self.model = model
         self.threadpool = threadpool
         self.scheduler = schedular(self.threadpool)
-        self.modelUpdator = SqueezeConnectionModelUpdator()
-        self.modelUpdator.Install(self.model)
-        self.pollholder = pollholder(self.model,self.scheduler,self.modelUpdator)
+        self.pollholder = pollholder(self.model,self.scheduler)
         
     
     def QueueProcess(self):
