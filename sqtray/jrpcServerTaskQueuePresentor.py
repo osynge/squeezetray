@@ -311,7 +311,7 @@ class pollSongStatus(poller):
         self.log.debug("msg=%s" % (output))
         return output
     def handleResponce(self,responce,ding,dong,foo):
-        print "OnSongInfo",unicode(json.dumps(responce, indent=4))
+        #print "OnSongInfo",unicode(json.dumps(responce, indent=4))
         now = datetime.datetime.now()
         #print "OnPlayerStatus:",datetime.datetime.now()
         #print  "OnTrackInfo",responce
