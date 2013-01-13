@@ -64,3 +64,74 @@ class squeezeConPresentor:
         msg = json.dumps(msg, sort_keys=True, indent=4)
         reponce = self.connectionPool.SendMessage(None,msg)
         
+    def Play(self,player):
+        if not self.model.connected.get():
+            return None
+        if not player in self.model.Players:
+            return None
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
+        msg = { 
+            "id" : playerIndex,
+            "method":"slim.request",
+            "params":[ playerId, 
+                    ["play"]
+                ]
+        }
+        msg = json.dumps(msg, sort_keys=True, indent=4)
+        reponce = self.connectionPool.SendMessage(None,msg)
+
+    def Stop(self,player):
+        if not self.model.connected.get():
+            return None
+        if not player in self.model.Players:
+            return None
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
+        msg = { 
+            "id" : playerIndex,
+            "method":"slim.request",
+            "params":[ playerId, 
+                    ["stop"]
+                ]
+        }
+        msg = json.dumps(msg, sort_keys=True, indent=4)
+        reponce = self.connectionPool.SendMessage(None,msg)
+
+    def Index(self,player,Count):
+        if not self.model.connected.get():
+            return None
+        prefix = ""
+        if Count > 0:
+            prefix = "+"
+        if not player in self.model.Players:
+            return None
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
+        msg = { 
+            "id":playerIndex,
+            "method":"slim.request",
+            "params":[ playerId, 
+                    ["playlist","index",prefix + unicode(Count)]
+                ]
+        }
+        msg = json.dumps(msg, sort_keys=True, indent=4)
+        reponce = self.connectionPool.SendMessage(None,msg)
+
+    def PlayRandomSong(self,player):
+        if not self.model.connected.get():
+            return None
+        if not player in self.model.Players:
+            return None
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
+        msg = { 
+            "id":playerIndex,
+            "method":"slim.request",
+            "params":[ playerId, 
+                    ["randomplay",'tracks']
+                ]
+            }
+        msg = json.dumps(msg, sort_keys=True, indent=4)
+        reponce = self.connectionPool.SendMessage(None,msg)
+
