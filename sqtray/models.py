@@ -56,3 +56,5 @@ class ObservableDict( UserDict.DictMixin):
         self._docallbacks(item)
     def keys(self):
         return self._dict.keys()
+    def count(self):
+        return len(self._dict.keys())
