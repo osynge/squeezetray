@@ -273,23 +273,23 @@ class mainApp(wx.App):
         
         
         
+        # Now we set up the jrpc server
+        self.connectionPool = sConTPool(self.ModelConPool)
+        self.jrpc = squeezeConPresentor(self.ModelConPool,self.connectionPool)
+        self.connectionPool.cbAddOnMessagesToProcess(self.OnNewMessages)
+        
         #Now we set up the Tray Pup Up menu
         self.tbPopUpMenuInteractor = TrayMenuInteractor()
         self.tbPopUpMenuPresentor = TrayMenuPresentor(self.ModelConPool,self.tbPopUpMenuInteractor)
         self.tbPopUpMenuInteractor.cbAddOnExit(self.Exit)
         self.tbPopUpMenuInteractor.cbAddOnSettings(self.SettingsOpen)
         
-        self.tbPopUpMenuInteractor.cbAddOnPause(self.squeezeConCtrl.Pause)
+        self.tbPopUpMenuInteractor.cbAddOnPause(self.jrpc.Pause)
         self.tbPopUpMenuInteractor.cbAddOnSeekIndex(self.squeezeConCtrl.Index)
         
         self.tbPopUpMenuInteractor.cbAddOnRandomSongs(self.squeezeConCtrl.PlayRandomSong)
         self.tbPopUpMenuInteractor.cbAddOnPlay(self.squeezeConCtrl.Play)
         self.tbPopUpMenuInteractor.cbAddOnStop(self.squeezeConCtrl.Stop)
-        
-        # Now we set up the jrpc server
-        self.connectionPool = sConTPool(self.ModelConPool)
-        self.jrpc = squeezeConPresentor(self.ModelConPool,self.connectionPool)
-        self.connectionPool.cbAddOnMessagesToProcess(self.OnNewMessages)
         
         
         #Now load the settings presentor
@@ -336,33 +336,8 @@ class mainApp(wx.App):
         self.ConCtrlInteractor.OnApply(presentor)
         self.configPresentor.save()
     def OnTimer(self,event):
-        
-        if self.block:
-            return
         self.jrpc.requestUpdateModel()
-        connected = self.ModelConPool.connected.get()
-        if False == connected: 
-            self.squeezeConCtrl.RecConnectionOnline()
-            return
-        #self.log.debug("on timer")
-        self.log.debug("on timer= %s" % (self.ModelConPool.port.get()))
-        #self.timer.
-        #print dir(self.timer)
-        #self.interactorWxUpdate.on_connected()
-        self.count+= 1
-        #self.squeezeConCtrl.RecConnectionOnline()
-        self.squeezeConCtrl.OnPlayersCount(None)
-        if self.count > 2:
-            self.count = 0
-        
-        if self.count > 0:
-            self.squeezeConCtrl.RecPlayerStatus(self.count)
-            self.squeezeConCtrl.PlayerStatus(self.count)
-            self.viewWxToolBarSrc.update()
-        
-        
-        self.log.debug("on timer=%s" % (self.ModelConPool.playerList))
-        self.setUpdateModel(None)
+        return
     def on_event(self,event):
         self.log.debug("on_event")
         
