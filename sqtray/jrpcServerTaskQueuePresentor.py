@@ -57,6 +57,7 @@ class pollOnline(poller):
     def __init__(self,model,view):
         poller.__init__(self,model,view)
         self.Pollfrequancy.update(1)
+        self.log = logging.getLogger('poller.pollOnline')
     
     def GetNextDue(self):
         online = self.model.connected.get()
@@ -83,9 +84,9 @@ class pollPlayerName(poller):
     def __init__(self,model,view):
         poller.__init__(self,model,view)
         self.model.connected.addCallback(self.onConnected)
-    
+        self.log = logging.getLogger('poller.pollPlayerName')
     def onConnected(self,event):
-        self.log.error('sheduling update')
+        self.log.debug('sheduling update')
         now = datetime.datetime.now()
         self.PollNext.update(now)
     
@@ -124,8 +125,6 @@ class pollPlayerName(poller):
             
             self.Pollfrequancy.update(4)
             output = self.wrapOutput( commands)
-            self.log.debug("msg=%s" % (output))
-                
             
             return output
         secondDelay = 60
@@ -147,7 +146,7 @@ class pollPlayerName(poller):
             commands.append([secondDelay,msg])
         self.Pollfrequancy.update(60)
         output = self.wrapOutput( commands)
-        self.log.debug("msg=%s" % (output))
+        #self.log.debug("msg=%s" % (output))
         return output
     def handleResponce(self,responce,ding,dong,foo):
         playerIndex = int(responce['params'][1][2])
@@ -161,6 +160,7 @@ class pollPlayerName(poller):
 class pollPlayerStatus(poller):
     def __init__(self,model,view):
         poller.__init__(self,model,view)
+        self.log = logging.getLogger('poller.pollPlayerStatus')
     def GetNextDue(self):
         online = self.model.connected.get()
         if online != True:
@@ -184,7 +184,7 @@ class pollPlayerStatus(poller):
         if len(commands) > 0:
             self.Pollfrequancy.update(1)
         output = self.wrapOutput( commands)
-        self.log.debug("msg=%s" % (output))
+        #self.log.debug("msg=%s" % (output))
         return output
     def handleResponce(self,responce,ding,dong,foo):
         #print json.dumps(responce, sort_keys=True, indent=4)
@@ -272,13 +272,14 @@ class pollPlayerStatus(poller):
                 newSong.title.update(CurrentTrackTitle)
                 newSong.artist.update(CurrentTrackArtist)
                 self.model.SongCache[CurrentTrackId] = newSong
-        print (self.model.SongCache.keys())
+        #print (self.model.SongCache.keys())
 
 
 
 class pollSongStatus(poller):
     def __init__(self,model,view):
         poller.__init__(self,model,view)
+        self.log = logging.getLogger('poller.pollSongStatus')
     def GetNextDue(self):
         online = self.model.connected.get()
         if online != True:
