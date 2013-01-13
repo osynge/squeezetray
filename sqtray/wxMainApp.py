@@ -313,15 +313,8 @@ class mainApp(wx.App):
         self.CreatePopUp()
 
     def EventRevived(self,evt):
-        if self.block:
-            return    
-        
         self.log.debug("EventRevived=%s",(evt.attr1 ))
-        if evt.attr1 == "on_connected":
-            #self.ModelGuiThread.connected.update(self.ModelConPool.connected.get())
-            pass
-        if evt.attr1 == "on_players":
-            pass
+        
         if evt.attr1 == "on_msg":
             self.jrpc.requestUpdateModel()
         
