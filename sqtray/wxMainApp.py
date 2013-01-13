@@ -4,8 +4,6 @@ from sqtray.models import Observable
 from sqtray.modelsConnection import squeezeConMdle, squeezePlayerMdl
 from sqtray.modelsWxTaskbar import taskBarMdle
 
-
-from sqtray.JrpcServer import squeezeConCtrl
 from sqtray.wxTrayIconPopUpMenu import CreatePopupMenu,PopUpMenuInteractor, PopupMenuPresentor, TrayMenuInteractor, TrayMenuPresentor
 
 from wxEvents import EVT_RESULT_CONNECTED_ID
@@ -264,9 +262,6 @@ class mainApp(wx.App):
         self.interactorWxUpdate = interactorWxUpdate()
         self.interactorWxUpdate.install(self.ModelConPool,self)
        
-        # Now we hook up the view
-        self.squeezeConCtrl = squeezeConCtrl(self.ModelConPool)
-        #self.squeezeConCtrl.ConectionStringSet("mini:9000")
         self.count = 0
         self.viewWxToolBarSrc = viewWxToolBarSrc()
         self.viewWxToolBarSrc.install(self.ModelConPool)
@@ -285,11 +280,11 @@ class mainApp(wx.App):
         self.tbPopUpMenuInteractor.cbAddOnSettings(self.SettingsOpen)
         
         self.tbPopUpMenuInteractor.cbAddOnPause(self.jrpc.Pause)
-        self.tbPopUpMenuInteractor.cbAddOnSeekIndex(self.squeezeConCtrl.Index)
+        self.tbPopUpMenuInteractor.cbAddOnSeekIndex(self.jrpc.Index)
         
-        self.tbPopUpMenuInteractor.cbAddOnRandomSongs(self.squeezeConCtrl.PlayRandomSong)
-        self.tbPopUpMenuInteractor.cbAddOnPlay(self.squeezeConCtrl.Play)
-        self.tbPopUpMenuInteractor.cbAddOnStop(self.squeezeConCtrl.Stop)
+        self.tbPopUpMenuInteractor.cbAddOnRandomSongs(self.jrpc.PlayRandomSong)
+        self.tbPopUpMenuInteractor.cbAddOnPlay(self.jrpc.Play)
+        self.tbPopUpMenuInteractor.cbAddOnStop(self.jrpc.Stop)
         
         
         #Now load the settings presentor
@@ -301,6 +296,7 @@ class mainApp(wx.App):
         #self.ConCtrlInteractor.OnApply(None)
         #print self.ModelFrmSettings.host.get()
         self.messagesUnblock()
+        self.jrpc.requestUpdateModel()
         
     def OnNewMessages (self,details):
         self.log.debug('OnNewMessages')
@@ -345,7 +341,6 @@ class mainApp(wx.App):
         self.SettingClose(None)
         self.messagesBlock()
         self.connectionPool.wait_completion()
-        self.squeezeConCtrl.view1.wait_completion()
         self.tb.Destroy()
     def CreatePopUp(self):
         newMenu = self.tbPopUpMenuPresentor.getMenu()
@@ -368,7 +363,7 @@ class mainApp(wx.App):
     
     def doCbOnPlay(self,player):
         
-        self.squeezeConCtrl.Play(player)
+        self.jrpc.Play(player)
         
     def doCbOnPause(self,player):
         results = {}
@@ -389,5 +384,5 @@ class mainApp(wx.App):
         return results
 
     def doCbOnRandomSongs(self,player):
-        self.squeezeConCtrl.PlayRandomSong(player)
+        self.jrpc.PlayRandomSong(player)
         
