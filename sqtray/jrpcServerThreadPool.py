@@ -2,6 +2,22 @@ import socket
 import httplib, urllib
 import sys, traceback
 from threading import *
+import logging
+from Queue import Queue, Empty
+import exceptions
+
+from sqtray.models import Observable
+
+import sys
+
+if float(sys.version[:3]) >= 2.6:
+    import json
+else:
+    # python 2.4 or 2.5 can also import simplejson
+    # as working alternative to the json included.
+    import simplejson as json
+
+
 
 class SqueezeConnectionWorker(Thread):
     """Thread executing tasks from a given tasks queue"""
@@ -14,99 +30,100 @@ class SqueezeConnectionWorker(Thread):
         self.connectionString = None
         self.SocketErrNo = Observable(0)
         self.SocketErrMsg = Observable("")
-        self.log = logging.getLogger("JrpcServer.SqueezeConnectionWorker")
+        self.log = logging.getLogger("JrpcServerthreadPool.SqueezeConnectionWorker")
+        self.conn = None
     def cbAddTaskDone(self,funct):
         self.callbacks['task_done'][funct] = 1
-    def taskDone(self):
+            
+    def taskDone(self,request):
+        self.log.debug( 'taskDone')
         for func in self.callbacks['task_done']:
-            func(self.request)    
+            func(request)
+        # Now process nicely   
         self.tasks.task_done()
         return
+    def processRequest(self,request):
+        params = request['params']
+        if self.connectionString == None:
+            self.log.debug('Connection is none')
+            return
+        if self.conn == None:
+            self.log.debug('Connection creating = "%s"' % (self.connectionString))
+            self.conn = httplib.HTTPConnection(self.connectionString,timeout=10)
+        self.log.debug(self.conn)
+
+        try:
+            #self.log.debug(type(params))
+            self.conn.request("POST", "/jsonrpc.js", unicode(params))
+        except socket.error, E:
+            if hasattr(E,'errno'):
+                errorNumber = int(E.errno)
+            self.SocketErrNo.set(errorNumber)
+            self.SocketErrMsg.set(unicode(E.strerror))
+            self.conn = None
+            self.log.error("Socket error.=%s" % (self.connectionString))
+            return
+        except httplib.CannotSendRequest, E:
+            self.conn = None
+            self.log.error("Cannot Send Request, resetting connection.=%s" % (params))
+            return
+        self.log.debug('now here')
+
+        #errorNoOld = self.SocketErrNo.get()
+        #self.SocketErrNo.set(0)
+        #self.SocketErrMsg.set(unicode(""))
+        self.log.debug('now here2')
+        try:
+            response = self.conn.getresponse()
+            self.log.debug('now here3')
+        except exceptions.AttributeError, E:
+            self.log.error("AttributeError=%s" % (E))
+
+            
+            return
+        except socket.error, E:
+            errorNumber = E.errno
+            if errorNumber == None:
+                errorNumber = 0
+            self.SocketErrNo.set(errorNumber)
+            self.SocketErrMsg.set(unicode(E.message))
+            self.log.error("SocketErrNo2=%s,SocketErrMsg=%s" % (self.SocketErrNo.get(),
+                self.SocketErrMsg.get()))
+            self.conn = None
+
+            
+            return
+        except httplib.BadStatusLine, E:
+            self.conn = None
+
+            self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E))
+            
+            return
+        self.log.debug('and here')
+        if response.status != 200:
+            self.log.info( "httplib.BadResponceStatus %s:%s" % (response.status, response.reason))
+            
+            
+        try:
+            rep = json.loads(response.read())
+        except ValueError as E:
+            self.log.info( "Json decoding ValueError:%s" %(E))
+            
+            return
+        return rep
+    
+    
+    
+      
     def run(self):
         while True:
-            self.request = self.tasks.get()
-            func = self.request['function']
-            params = self.request['params']
-            args = self.request['args']
-            kargs = self.request['kargs']
-            if not hasattr(self,'conn'):
-                #print "connectionString", self.connectionString 
-                self.taskDone()
-                continue
-            if self.connectionString == None:
-                self.taskDone()
-                continue
-            if self.conn == None:
-                self.conn = httplib.HTTPConnection(self.connectionString)
-            try:
-                self.conn.request("POST", "/jsonrpc.js", params)
-            except socket.error, E:
-                if hasattr(E,'errno'):
-                    errorNumber = int(E.errno)
-                self.SocketErrNo.set(errorNumber)
-                self.SocketErrMsg.set(unicode(E.strerror))
-                self.taskDone()
-                continue
-            except httplib.CannotSendRequest, E:
-                self.conn = httplib.HTTPConnection(self.connectionString)
-                self.log.error("Cannot Send Request, resetting connection.=%s" % (params))
-                self.log.error(self.connectionString)
-                self.taskDone()
-                continue
-            errorNoOld = self.SocketErrNo.get()
-            self.SocketErrNo.set(0)
-            self.SocketErrMsg.set(unicode(""))
-            try:
-                response = self.conn.getresponse()
-            except exceptions.AttributeError, E:
-                self.taskDone()
-                continue
-            except socket.error, E:
-                errorNumber = int(E.errno)
-                self.SocketErrNo.set(errorNumber)
-                self.SocketErrMsg.set(unicode(E.strerror))
-                self.taskDone()
-                continue
-            except httplib.BadStatusLine:
-                self.conn = httplib.HTTPConnection(self.connectionString)
-                try:
-                    self.conn.request("POST", "/jsonrpc.js", params)
-                except EnvironmentError as exc:
-                    if exc.errno == errno.ECONNREFUSED:
-                        self.log.info( "Connection refused")
-                        self.taskDone()
-                        continue
-                    else:
-                        raise exc
-                except IOError as E:
-                    self.log.info( "IOError error:%s" %(E))
-                    self.taskDone()
-                    continue
-                try:
-                    response = self.conn.getresponse()
-                except httplib.BadStatusLine, E:
-                    self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E))
-                    self.taskDone()
-                    continue
-            if response.status != 200:
-                self.log.info( "httplib.BadResponceStatus %s:%s" % (response.status, response.reason))
-                self.taskDone()
-                return
-            try:
-                rep = json.loads(response.read())
-            except ValueError as E:
-                self.log.info( "Json decoding ValueError:%s" %(E))
-                self.taskDone()
-                continue
-            if func != None:
-                self.request['responce'] = rep
-                #func(rep,*args, **kargs)
-                #try: func(rep)
-                #except Exception, e: 
-                #    print e
-                #    #traceback.print_tb(e, limit=1, file=sys.stdout)
-            self.taskDone()
+            request = self.tasks.get()
+            self.log.debug('Running')
+            reponce = self.processRequest(request)
+            if reponce != None:
+                request['responce'] = reponce
             
+            self.taskDone(request)
             
     def ConnectionSet(self,connectionStr):
         #print "connectionStr", connectionStr
@@ -121,10 +138,7 @@ class SqueezeConnectionWorker(Thread):
             Changed =  True
         elif self.conn == None:
             Changed =  True
-        if Changed:
-            #print connectionStr
-            self.conn = httplib.HTTPConnection(connectionStr)
-        self.conn == None
+        self.conn = None
 
 
 
@@ -133,15 +147,20 @@ class sConTPool:
     """Pool of threads consuming tasks from a queue"""
     
     def __init__(self, squeezeConMdle,num_threads = 10):
-        self.log = logging.getLogger("JrpcServer.SqueezeConnectionThreadPool")
+        self.log = logging.getLogger("sConTPool")
         self.squeezeConMdle = squeezeConMdle
         connectionString = self.squeezeConMdle.connectionStr.get()
         self.tasks = Queue(num_threads)
         self.preTasks = Queue()
         self.arrayOfSqueezeConnectionWorker = []
-        self.taskCache = {}
+        self.taskCacheRunning = {}
+        self.preTaskCache = {}
+        self.callbacks = {
+                "messagesToProcess" : {},
+            }
+        self.taskCacheFinished = {}
         self.postTasks = Queue()
-        for _ in range(num_threads): 
+        for item in range(num_threads): 
             new = SqueezeConnectionWorker(self.tasks)
             new.ConnectionSet(connectionString)
             new.SocketErrNo.addCallback(self.OnSocketErrNo)
@@ -149,14 +168,28 @@ class sConTPool:
             new.cbAddTaskDone(self.handleTaskDoneByThread)
             self.arrayOfSqueezeConnectionWorker.append(new)
         self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
-    
+    def cbAddOnMessagesToProcess(self,function):
+        
+        self.callbacks['messagesToProcess'][function] = 1
+    def cbDoOnMessagesToProcess(self):
+        for item in self.callbacks["messagesToProcess"]:
+            item(self)    
     def handleTaskDoneByThread(self,request):
-        msgHash = request['params']
-        if msgHash in self.taskCache.keys():
-            del(self.taskCache[msgHash])
+        self.log.debug('handleTaskDoneByThread')
+        msgHash = request['params'].__hash__()
+        if msgHash in self.taskCacheRunning.keys():
+            del(self.taskCacheRunning[msgHash])
+        #self.log.debug(request)
         if not 'responce' in request.keys():
+            self.log.error('no reponce')
+            # we will requeue the responce
+            
+            self.preTaskCache[msgHash] = request
+            self.preTasks.put(msgHash)
             return
+        self.taskCacheFinished[msgHash] = request
         self.postTasks.put(msgHash)
+        self.cbDoOnMessagesToProcess()
         
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
@@ -166,10 +199,10 @@ class sConTPool:
     def SendMessage(self,func,message, *args, **kargs):
         #Sends a message now without Queuing 
         #for a aproved thread
-        params = json.dumps(message, sort_keys=True, indent=4)
+        
         request = {
             'function' : func,
-            'params' : params,
+            'params' : message,
             'args' : args,
             'kargs' : kargs,
         }
@@ -178,55 +211,69 @@ class sConTPool:
         
     def QueueProcessPreTask(self):
         # For calling to place messages on 
+        self.log.debug( 'self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
         while True:
             try:
                 request = self.preTasks.get_nowait()
             except Empty:
                 break
-            msgHash = request['params']
-            if msgHash in self.taskCache.keys():
-                self.taskCache[msgHash]["state"] = 'Qued'
+            
+            msgHash = request['params'].__hash__()
+            if msgHash in self.taskCacheRunning.keys():
+                self.log.error("Overwriting task")
+                self.taskCacheRunning[msgHash] = request
+            self.taskCacheRunning[msgHash] = request
+            if msgHash in self.preTaskCache.keys():
+                del self.preTaskCache[msgHash]
+            #print request
             self.tasks.put(request)
             self.preTasks.task_done()
+        self.log.debug('self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
+        self.log.debug('self.tasks.qsize=%s' % (   self.tasks.qsize()))
+        
     def QueueProcessResponces(self):
         # To be processed by external thead
+        counter = 0
+        self.log.debug('self.postTasks.qsize=%s' % (  self.postTasks.qsize()))
         while True:
             try:
-                request = self.postTasks.get_nowait()
+                msgHash = self.postTasks.get_nowait()
             except Empty:
                 break
-            msgHash = request['params']
-            if msgHash in self.taskCache.keys():
-                func = self.taskCache[msgHash]['function']
-                params = self.taskCache[msgHash]['params']
-                args = self.taskCache[msgHash]['args']
-                kargs = self.taskCache[msgHash]['kargs']
-                rep = self.taskCache[msgHash]['responce']
-                
-                
-                func(rep,params,*args, **kargs)
-                #try: func(rep)
-                #except Exception, e: 
-                #    print e
-                #    #traceback.print_tb(e, limit=1, file=sys.stdout)
-                
-                del(self.taskCache[msgHash])
+            if not msgHash in self.taskCacheFinished.keys():
+                self.postTasks.task_done()
+                continue
+
+            func = self.taskCacheFinished[msgHash]['function']
+            params = self.taskCacheFinished[msgHash]['params']
+            args = self.taskCacheFinished[msgHash]['args']
+            kargs = self.taskCacheFinished[msgHash]['kargs']
+            rep = self.taskCacheFinished[msgHash]['responce']
+
+
+            func(rep,params,*args, **kargs)
+            #try: func(rep)
+            #except Exception, e: 
+            #    print e
+            #    #traceback.print_tb(e, limit=1, file=sys.stdout)
+
+            del(self.taskCacheFinished[msgHash])
             self.postTasks.task_done()
-            
+        self.log.debug('self.postTasks.qsize=%s' % ( self.postTasks.qsize())   )
     def QueueProcessAddMessage(self,func,message, *args, **kargs):
         messageDict = {}
-        params = json.dumps(message, sort_keys=True, indent=4)
-        if params in self.taskCache.keys():
-            #self.log.debug('dedupe is working')
+        if message.__hash__() in self.preTaskCache.keys():
+            self.log.debug('preTaskCache dedupe is working')
             return
         request = {
             'function' : func,
-            'params' : params,
+            'params' : message,
             'args' : args,
             'kargs' : kargs,
         }
-        self.taskCache[params] = request
+        self.preTaskCache[message.__hash__()] = request
         self.preTasks.put(request)
+        self.log.debug('adding self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
         
         
         
@@ -246,9 +293,37 @@ class sConTPool:
             self.squeezeConMdle.SocketErrMsg.set(value)
     def OnConnectionStrChange(self,value):
         oldvalue = self.squeezeConMdle.connectionStr.get()
+        self.log.debug('OnConnectionStrChange=%s' % (oldvalue))
         for player in range(len(self.arrayOfSqueezeConnectionWorker)):
             self.arrayOfSqueezeConnectionWorker[player].ConnectionSet(oldvalue)
-        oldValue = self.squeezeConMdle.connected.get()
+        oldValue = self.squeezeConMdle.connected.geat()
         self.squeezeConMdle.connected.set(False)
 
+def testcbDone(one):
+    print one
         
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    import time
+    log = logging.getLogger("main")
+    from modelsConnection import squeezeSong,  squeezePlayerMdl, squeezeConMdle
+    model = squeezeConMdle()
+    model.host.set('mini')
+    poool = sConTPool(model)
+    msg = {
+            "method": "slim.request", 
+            "params": [
+                "-", 
+                [
+                    "player", 
+                    "count", 
+                    "?"
+                ]
+            ]
+        }
+    
+    poool.SendMessage(testcbDone,msg)
+    
+    log.error('self.tasks.qsize=%s' % (  poool.tasks.qsize()))
+    time.sleep(20)
+

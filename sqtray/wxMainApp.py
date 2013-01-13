@@ -27,6 +27,10 @@ from sqtray.wxFrmSettingsPresentor import frmSettingsPresentor
 import logging
 
 from modelsWxFrmSettings import mdlFrmSettings
+
+
+from  modelActions import ConCtrlInteractor
+
 def StoreConfig(FilePath,squeezeConMdle):
     cfg = wx.FileConfig(appName="ApplicationName", 
                                 vendorName="VendorName", 
@@ -41,6 +45,8 @@ def StoreConfig(FilePath,squeezeConMdle):
 
 import  wx
 import  wx.lib.newevent
+from jrpcServerThreadPool  import sConTPool
+
 
 SomeNewEvent, EVT_SOME_NEW_EVENT = wx.lib.newevent.NewEvent()
 SomeNewCommandEvent, EVT_SOME_NEW_COMMAND_EVENT = wx.lib.newevent.NewCommandEvent()
@@ -200,16 +206,7 @@ class  Connection2SettingsInteractor():
     def OnConnectionError(self,value):
         #self.settings.connectionMsg.update("SocketErrNo=%s" % (self.connection.SocketErrNo.get()))
         pass
-class ConCtrlInteractor():
 
-    def install(self,ModelFrmSettings,ModelConPool):
-        self.ModelFrmSettings = ModelFrmSettings
-        self.ModelConPool = ModelConPool
-        
-    def OnApply(self,presentor):
-        self.ModelConPool.host.update(self.ModelFrmSettings.host.get())
-        self.ModelConPool.port.update(self.ModelFrmSettings.port.get())
-    
            
 class mainApp(wx.App):
     def __init__(self):
@@ -290,7 +287,9 @@ class mainApp(wx.App):
         self.tbPopUpMenuInteractor.cbAddOnStop(self.squeezeConCtrl.Stop)
         
         # Now we set up the jrpc server
-        self.jrpc = squeezeConPresentor(self.ModelConPool)
+        self.connectionPool = sConTPool(self.ModelConPool)
+        self.jrpc = squeezeConPresentor(self.ModelConPool,self.connectionPool)
+        self.connectionPool.cbAddOnMessagesToProcess(self.OnNewMessages)
         
         
         #Now load the settings presentor
@@ -303,7 +302,11 @@ class mainApp(wx.App):
         #print self.ModelFrmSettings.host.get()
         self.messagesUnblock()
         
-        
+    def OnNewMessages (self,details):
+        self.log.debug('OnNewMessages')
+        evt = SomeNewEvent(attr1="on_msg")
+        #post the event
+        wx.PostEvent(self, evt)
         
     def messagesBlock(self):
         self.block = True
@@ -323,6 +326,9 @@ class mainApp(wx.App):
             pass
         if evt.attr1 == "on_players":
             pass
+        if evt.attr1 == "on_msg":
+            self.jrpc.requestUpdateModel()
+        
             #print self.ModelConPool.Players
         self.setUpdateModel(evt)
             
@@ -330,9 +336,10 @@ class mainApp(wx.App):
         self.ConCtrlInteractor.OnApply(presentor)
         self.configPresentor.save()
     def OnTimer(self,event):
+        
         if self.block:
             return
-        
+        self.jrpc.requestUpdateModel()
         connected = self.ModelConPool.connected.get()
         if False == connected: 
             self.squeezeConCtrl.RecConnectionOnline()
