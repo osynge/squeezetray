@@ -359,11 +359,9 @@ class mainApp(wx.App):
             self.squeezeConCtrl.RecPlayerStatus(self.count)
             self.squeezeConCtrl.PlayerStatus(self.count)
             self.viewWxToolBarSrc.update()
-        else:
-            self.log.debug("RecConnectionOnline")
         
         
-        self.log.debug("on timer=cccccccccccc %s" % (self.ModelConPool.playerList))
+        self.log.debug("on timer=%s" % (self.ModelConPool.playerList))
         self.setUpdateModel(None)
     def on_event(self,event):
         self.log.debug("on_event")
@@ -371,6 +369,7 @@ class mainApp(wx.App):
     def Exit(self):
         self.SettingClose(None)
         self.messagesBlock()
+        self.connectionPool.wait_completion()
         self.squeezeConCtrl.view1.wait_completion()
         self.tb.Destroy()
     def CreatePopUp(self):
