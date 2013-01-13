@@ -156,124 +156,6 @@ class pollPlayerName(poller):
             playerId = responce["result"]["_id"] 
             self.model.playerList[playerIndex].identifier.set(playerId)
 
-class pollPlayerStatus(poller):
-    def __init__(self,model):
-        poller.__init__(self,model)
-        self.log = logging.getLogger('poller.pollPlayerStatus')
-    def GetNextDue(self):
-        online = self.model.connected.get()
-        if online != True:
-            self.Pollfrequancy.update(6)
-            return []
-        secondDelay = 0
-        secondInterval = 1
-        commands = []
-        for index in range(len(self.model.playerList)):
-            identifier = self.model.playerList[index].identifier.get() 
-            if identifier == None:
-                continue
-            msg = {"id":index,
-                    "method":"slim.request",
-                    "params":[identifier , 
-                            ["status","-","4","tags:playlist_id"]
-                        ]
-                }
-            secondDelay += secondInterval
-            commands.append([secondDelay,msg])
-        if len(commands) > 0:
-            self.Pollfrequancy.update(1)
-        output = self.wrapOutput( commands)
-        #self.log.debug("msg=%s" % (output))
-        return output
-    def handleResponce(self,responce,ding,dong,foo):
-        #print json.dumps(responce, sort_keys=True, indent=4)
-        playerId = responce['params'][0]
-        playerMode = responce['result']['mode']
-        playerConnected = responce['result']["player_connected"]
-        playerPower = responce['result']["power"]
-        
-        
-        now = datetime.datetime.now()
-        #print "OnPlayerStatus:",datetime.datetime.now()
-        #print  "OnPlayerStatus",responce
-        #print "OnPlayerStatus",unicode(json.dumps(responce, indent=4))
-        playerName = unicode(responce["result"]["player_name"])
-        playerIndex = int(responce['id'])
-        if not( playerIndex < len(self.model.playerList)):
-            self.log.error("Player not found")
-            return
-        self.model.playerList[playerIndex].name.update(playerName)
-        lsbsMode = unicode(responce["result"]["mode"])
-        mappings = {"play" : "playing",
-            "pause" : "paused",
-            "off" : "Off",
-            "stop" : "stop"
-        }
-        if lsbsMode in mappings:
-            newOperationMode = mappings[lsbsMode]
-            self.model.playerList[playerIndex].operationMode.update(mappings[lsbsMode])
-        else:
-            self.log.error("Unknown player mode=%s" % (lsbsMode))
-        playlist_cur_index = None
-        if not "playlist_cur_index" in responce["result"].keys():
-            self.log.debug("Message contained no playlist_cur_index")
-            self.log.debug("Message=%s" % responce)
-            self.model.playerList[playerIndex].CurrentTrackTitle.update(None)
-            self.model.playerList[playerIndex].CurrentTrackId.update(None)
-            self.model.playerList[playerIndex].CurrentTrackArtist.update(None)
-            self.model.playerList[playerIndex].CurrentTrackEnds.update(None)
-        else:
-            playlist_cur_index = int(responce["result"]["playlist_cur_index"])
-        playlist_loop = []
-        if "playlist_loop" in responce["result"]:
-            playlist_loop = responce["result"]["playlist_loop"]
-        CurrentTrackTime = None
-        if "time" in responce["result"].keys():
-            CurrentTrackTime = responce["result"]["time"]
-        CurrentTrackTitle = None
-        for item in playlist_loop:
-            playlistIndex = int(item["playlist index"])
-            CurrentTrackId = int(item["id"])
-            CurrentTrackTitle = None
-            if "title" in item.keys():
-                CurrentTrackTitle = unicode(item["title"])
-            CurrentTrackArtist = None
-            if "artist" in item.keys():
-                CurrentTrackArtist = unicode(item["artist"])            
-            if playlistIndex == playlist_cur_index:
-                self.model.playerList[playerIndex].CurrentTrackTitle.update(CurrentTrackTitle)
-                
-                self.model.playerList[playerIndex].CurrentTrackArtist.update(CurrentTrackArtist)
-                CurrentTrackDuration = None
-                try:
-                    CurrentTrackDuration = responce["result"]["duration"]
-                except KeyError:
-                    pass
-                if (CurrentTrackDuration != None) and (self.model.playerList[playerIndex].operationMode.get() == "playing"):
-                    CurrentTrackRemaining = CurrentTrackDuration - CurrentTrackTime
-                    CurrentTrackEnds = datetime.datetime.now() + datetime.timedelta(seconds=CurrentTrackRemaining)
-                    OldCurrentTrackEnds = self.model.playerList[playerIndex].CurrentTrackEnds.get()
-                    if OldCurrentTrackEnds == None:
-                        self.model.playerList[playerIndex].CurrentTrackEnds.set(CurrentTrackEnds)
-                    else:
-                        timediff = abs(CurrentTrackEnds - OldCurrentTrackEnds)
-                        if timediff.seconds > 0:
-                            self.model.playerList[playerIndex].CurrentTrackEnds.update(CurrentTrackEnds)
-                else:
-                    self.model.playerList[playerIndex].CurrentTrackEnds.update(None)
-                # Now Change the ID last so people shoudl call back on this.
-                self.model.playerList[playerIndex].CurrentTrackId.update(CurrentTrackId)
-            #Now we process each song
-            if not CurrentTrackId in self.model.SongCache.keys():
-                
-                newSong = squeezeSong()
-                newSong.id.update(CurrentTrackId)
-                newSong.title.update(CurrentTrackTitle)
-                newSong.artist.update(CurrentTrackArtist)
-                self.model.SongCache[CurrentTrackId] = newSong
-        #print (self.model.SongCache.keys())
-
-
 
 class pollSongStatus(poller):
     def __init__(self,model):
@@ -283,10 +165,10 @@ class pollSongStatus(poller):
         online = self.model.connected.get()
         if online != True:
             self.Pollfrequancy.update(6)
-            return []
+            return self.wrapOutput([])
         if self.model.SongCache.count() == 0:
             self.Pollfrequancy.update(6)
-            return []
+            return self.wrapOutput([])
         
         secondDelay = 2
         secondInterval = 1
@@ -307,7 +189,7 @@ class pollSongStatus(poller):
         if len(commands) > 0:
             self.Pollfrequancy.update(1)
         output = self.wrapOutput( commands)
-        self.log.debug("msg=%s" % (output))
+        #self.log.debug("msg=%s" % (output))
         return output
     def handleResponce(self,responce,ding,dong,foo):
         #print "OnSongInfo",unicode(json.dumps(responce, indent=4))
@@ -386,6 +268,144 @@ class pollSongStatus(poller):
         if not identifier in self.model.SongCache.keys():
             self.model.SongCache[identifier] = newSongInfo
         
+class pollPlayerStatus(poller):
+    def __init__(self,model,playerIndex):
+        poller.__init__(self,model)
+        self.log = logging.getLogger('poller.pollPlayerStatus2')
+        self.playerIndex = playerIndex
+    def GetNextDue(self):
+        online = self.model.connected.get()
+        if online != True:
+            self.Pollfrequancy.update(6)
+            return self.wrapOutput([])
+        if self.playerIndex >=  len(self.model.playerList):
+            self.log.error('player has invalid index')
+            self.Pollfrequancy.update(6)
+            return self.wrapOutput([])
+        identifier = self.model.playerList[self.playerIndex].identifier.get()
+        if identifier == None:
+            self.Pollfrequancy.update(2)
+            return self.wrapOutput([])
+        newUpdateFrequancy = 3
+        currentTrack = self.model.playerList[self.playerIndex].CurrentTrackId.get()
+        if currentTrack == None:
+            newUpdateFrequancy = 60
+        
+        currentMode = self.model.playerList[self.playerIndex].operationMode.get()
+        
+        if currentMode == None:
+            newUpdateFrequancy = 1
+        else:
+            maper = {"playing" : 2,
+                "paused" : 15,
+                "Off" : 15,
+                "stop" : 15
+            }
+            if currentMode in maper.keys():
+                newUpdateFrequancy = maper[currentMode]
+            
+        msg = {"id":self.playerIndex,
+                "method":"slim.request",
+                "params":[identifier , 
+                        ["status","-","4","tags:playlist_id"]
+                    ]
+            }
+        self.Pollfrequancy.update(newUpdateFrequancy)
+        
+        output = self.wrapOutput([(10,msg)])
+        #print newUpdateFrequancy,currentMode,identifier
+        return output
+        
+        
+    def handleResponce(self,responce,ding,dong,foo):
+        #print json.dumps(responce, sort_keys=True, indent=4)
+        playerId = responce['params'][0]
+        playerMode = responce['result']['mode']
+        playerConnected = responce['result']["player_connected"]
+        playerPower = responce['result']["power"]
+        
+        
+        now = datetime.datetime.now()
+        #print "OnPlayerStatus:",datetime.datetime.now()
+        #print  "OnPlayerStatus",responce
+        #print "OnPlayerStatus",unicode(json.dumps(responce, indent=4))
+        playerName = unicode(responce["result"]["player_name"])
+        playerIndex = int(responce['id'])
+        if not( playerIndex < len(self.model.playerList)):
+            self.log.error("Player not found")
+            return
+        self.model.playerList[playerIndex].name.update(playerName)
+        lsbsMode = unicode(responce["result"]["mode"])
+        mappings = {"play" : "playing",
+            "pause" : "paused",
+            "off" : "Off",
+            "stop" : "stop"
+        }
+        if lsbsMode in mappings:
+            newOperationMode = mappings[lsbsMode]
+            self.model.playerList[playerIndex].operationMode.update(mappings[lsbsMode])
+        else:
+            self.model.playerList[playerIndex].operationMode.update(None)
+            self.log.error("Unknown player mode=%s" % (lsbsMode))
+        playlist_cur_index = None
+        if not "playlist_cur_index" in responce["result"].keys():
+            self.log.debug("Message contained no playlist_cur_index")
+            self.log.debug("Message=%s" % responce)
+            self.model.playerList[playerIndex].CurrentTrackTitle.update(None)
+            self.model.playerList[playerIndex].CurrentTrackId.update(None)
+            self.model.playerList[playerIndex].CurrentTrackArtist.update(None)
+            self.model.playerList[playerIndex].CurrentTrackEnds.update(None)
+        else:
+            playlist_cur_index = int(responce["result"]["playlist_cur_index"])
+        playlist_loop = []
+        if "playlist_loop" in responce["result"]:
+            playlist_loop = responce["result"]["playlist_loop"]
+        CurrentTrackTime = None
+        if "time" in responce["result"].keys():
+            CurrentTrackTime = responce["result"]["time"]
+        CurrentTrackTitle = None
+        for item in playlist_loop:
+            playlistIndex = int(item["playlist index"])
+            CurrentTrackId = int(item["id"])
+            CurrentTrackTitle = None
+            if "title" in item.keys():
+                CurrentTrackTitle = unicode(item["title"])
+            CurrentTrackArtist = None
+            if "artist" in item.keys():
+                CurrentTrackArtist = unicode(item["artist"])            
+            if playlistIndex == playlist_cur_index:
+                self.model.playerList[playerIndex].CurrentTrackTitle.update(CurrentTrackTitle)
+                self.model.playerList[playerIndex].CurrentTrackId.update(playlistIndex)
+                self.model.playerList[playerIndex].CurrentTrackArtist.update(CurrentTrackArtist)
+                CurrentTrackDuration = None
+                try:
+                    CurrentTrackDuration = responce["result"]["duration"]
+                except KeyError:
+                    pass
+                if (CurrentTrackDuration != None) and (self.model.playerList[playerIndex].operationMode.get() == "playing"):
+                    CurrentTrackRemaining = CurrentTrackDuration - CurrentTrackTime
+                    CurrentTrackEnds = datetime.datetime.now() + datetime.timedelta(seconds=CurrentTrackRemaining)
+                    OldCurrentTrackEnds = self.model.playerList[playerIndex].CurrentTrackEnds.get()
+                    if OldCurrentTrackEnds == None:
+                        self.model.playerList[playerIndex].CurrentTrackEnds.set(CurrentTrackEnds)
+                    else:
+                        timediff = abs(CurrentTrackEnds - OldCurrentTrackEnds)
+                        if timediff.seconds > 0:
+                            self.model.playerList[playerIndex].CurrentTrackEnds.update(CurrentTrackEnds)
+                else:
+                    self.model.playerList[playerIndex].CurrentTrackEnds.update(None)
+                # Now Change the ID last so people shoudl call back on this.
+                self.model.playerList[playerIndex].CurrentTrackId.update(CurrentTrackId)
+            #Now we process each song
+            if not CurrentTrackId in self.model.SongCache.keys():
+                
+                newSong = squeezeSong()
+                newSong.id.update(CurrentTrackId)
+                newSong.title.update(CurrentTrackTitle)
+                newSong.artist.update(CurrentTrackArtist)
+                self.model.SongCache[CurrentTrackId] = newSong
+        #print (self.model.SongCache.keys())
+
         
         
 class pollholder:
@@ -393,18 +413,21 @@ class pollholder:
         self.log = logging.getLogger("pollholder")
     
         self.model = model
+        self.model.playersCount.addCallback(self.OnPlayersCountChange)
+        
         self.view = view
         self.polls = []
+        self.pollsPalyer = []
         item = pollOnline(self.model )
         self.polls.append(item)
         item = pollPlayerName(self.model)
         self.polls.append(item)
-        item = pollPlayerStatus(self.model)
-        self.polls.append(item)
+        #item = pollPlayerStatus(self.model)
+        #self.polls.append(item)
         item = pollSongStatus(self.model)
         self.polls.append(item)
     def check(self):
-        for item in self.polls:
+        for item in self.polls + self.pollsPalyer:
             isdue = item.isDue()
             if isdue != True:
                 #self.log.debug('not due')
@@ -414,6 +437,16 @@ class pollholder:
                 dueOn = ting['dueDate']
                 msg = ting['msg']
                 self.view.update(dueOn, msg,item)
+    def OnPlayersCountChange(self,value):
+        currentNumber = len(self.pollsPalyer)
+        while ( currentNumber < value):
+            newpoller = pollPlayerStatus(self.model,currentNumber)
+            self.pollsPalyer.append(newpoller)
+            currentNumber += 1
+        currentNumber = len(self.pollsPalyer)
+        while ( currentNumber > value):
+            currentNumber -= 1
+            del self.pollsPalyer[currentNumber]
         
 
 
@@ -441,14 +474,13 @@ class schedular:
         for key in keys2check:
             metadata = self.jobsById[key]
             if now > metadata['duedate']:
-                self.log.debug('overdue')
+                diff = now - metadata['duedate']
+                self.log.debug('overdue=%s' % (diff.seconds))
                 del self.jobsById[key]
                 #Make sure on next polling it responds
                 metadata['poller'].PollNext.update(now)
                 results[key] =  metadata
-                #self.log.debug ('%s:%s:%s:%s' % (metadata['poller'].handleResponce,
-                #    metadata['msg'],[],{}
-                #    ))
+                #print metadata
                 self.threadpool.QueueProcessAddMessage(metadata['poller'].handleResponce,
                     metadata['msg'],[],{}
                     )

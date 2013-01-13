@@ -200,7 +200,7 @@ class sConTPool:
         }
         msgHash = request['params'].__hash__()
         if msgHash in self.taskCacheRunning.keys():
-            self.log.error("Overwriting task")
+            self.log.error("SendMessage Overwriting task")
         self.taskCacheRunning[msgHash] = request
         self.tasks.put(request)
         
@@ -216,8 +216,6 @@ class sConTPool:
                 break
             
             msgHash = request['params'].__hash__()
-            if msgHash in self.taskCacheRunning.keys():
-                self.log.error("Overwriting task")
             self.taskCacheRunning[msgHash] = request
             if msgHash in self.preTaskCache.keys():
                 del self.preTaskCache[msgHash]
