@@ -245,9 +245,8 @@ class sConTPool:
             args = self.taskCacheFinished[msgHash]['args']
             kargs = self.taskCacheFinished[msgHash]['kargs']
             rep = self.taskCacheFinished[msgHash]['responce']
-
-
-            func(rep,params,*args, **kargs)
+            if func != None:
+                func(rep,params,*args, **kargs)
             #try: func(rep)
             #except Exception, e: 
             #    print e
