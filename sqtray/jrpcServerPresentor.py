@@ -29,34 +29,38 @@ from  modelActions import ConCtrlInteractor
 
 class squeezeConPresentor:
     def __init__(self,model,connectionPool):
-        self.externalModel = model
-        self.callbacks = {'requestUpdateModel'}
+        self.model = model
         #self.internalModel = squeezeConMdle()
         #self.internalModel.host.update('mini')
         #self.connectionCopyer = ConCtrlInteractor()
-        #self.connectionCopyer.install(self.externalModel,self.internalModel)
+        #self.connectionCopyer.install(self.model,self.internalModel)
         #self.internalUpdator = SqueezeConnectionModelUpdator()
         #self.internalUpdator.Install(self.internalModel)
         self.connectionPool = connectionPool
-        self.threadpoolPresentor = jrpcServerTaskQueuePresentor(self.externalModel,
+        self.threadpoolPresentor = jrpcServerTaskQueuePresentor(self.model,
             self.connectionPool)
         
-        #print 'ssssssssssssssss'
-        #self.ConCtrlView = squeezeConCtrl(self.internalModel)
-        
-    def cbAddRequestUpdateModel(self,functionRequestUpdateModel):
-        # Note this calback may be called by any internal thread
-        self.callbacks['requestUpdateModel'][functionRequestUpdateModel] = 1
-    def cbDelRequestUpdateModel(self,functionRequestUpdateModel):
-        # Note this calback may be called by any internal thread
-        del(self.callbacks['requestUpdateModel'][functionRequestUpdateModel])
-    def cbDoRequestUpdateModel(self):
-        # Note this may be called by any internal thread
-        for func in self.callbacks:
-            func(self)
+   
     def requestUpdateModel(self):
         # This will empty the queue of messages to process
         self.threadpoolPresentor.QueueProcess()
         
         
             
+    def Pause(self,player):
+        if not self.model.connected.get():
+            return None
+        if not player in self.model.Players:
+            return None
+        playerIndex = self.model.Players[player].index.get()
+        playerId = self.model.Players[player].identifier.get()
+        msg = { 
+            "id":playerIndex,
+            "method":"slim.request",
+            "params":[ playerId, 
+                    ["pause"]
+                ]
+        }
+        msg = json.dumps(msg, sort_keys=True, indent=4)
+        reponce = self.connectionPool.SendMessage(None,msg)
+        
