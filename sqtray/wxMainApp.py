@@ -250,7 +250,7 @@ class mainApp(wx.App):
         
         
         
-        self.timer.Start(9000)  # x100 milliseconds
+        self.timer.Start(1000)  # x100 milliseconds
         wx.EVT_TIMER(self, TIMER_ID, self.OnTimer)  # call the on_timer function
         self.taskbarInteractor = TaskBarIconInteractor()
         self.tbPresentor =  TaskBarIconPresentor(self.ModelGuiThread,self.tb,self.taskbarInteractor)
@@ -314,7 +314,8 @@ class mainApp(wx.App):
 
     def EventRevived(self,evt):
         self.log.debug("EventRevived=%s",(evt.attr1 ))
-        
+        if self.block:
+            return
         if evt.attr1 == "on_msg":
             self.jrpc.requestUpdateModel()
         
@@ -331,9 +332,10 @@ class mainApp(wx.App):
         self.log.debug("on_event")
         
     def Exit(self):
-        self.SettingClose(None)
         self.messagesBlock()
         self.connectionPool.wait_completion()
+        self.SettingClose(None)
+               
         self.tb.Destroy()
     def CreatePopUp(self):
         newMenu = self.tbPopUpMenuPresentor.getMenu()
