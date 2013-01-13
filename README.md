@@ -25,6 +25,23 @@ python squeezetray
 Installing squeezetray
 ================
 
+First generate the icons as PNG from SVG using the following script
+
+    #bin/bash
+    sizes="16 22 24 32 48 72 128"
+    basedirect="icons"
+    for item in `ls icons/*.svg`
+    do
+       for size in $sizes
+       do
+           name=$(echo $item | sed -e 's/.*\///' | sed -e 's/\.svg.*$//')
+           cmd="convert  -background transparent  -resize ${size}x${size} $item  ${basedirect}/${name}_${size}x${size}.png"
+           $cmd
+       done
+    done
+
+NOw we can install the application.
+
     #python setup.py install
     /usr/lib/python2.7/distutils/dist.py:267: UserWarning: Unknown distribution option: 'install_requires'
       warnings.warn(msg)
@@ -81,6 +98,15 @@ A Graphical discusion of this was found here:
 
     http://www.howtogeek.com/68119/how-to-bring-app-icons-back-into-unitys-system-tray/
 
+Question: The application cannot find icons?
+
+Answer: Sadly no good way exists in python to distribute data files and store thier path.
+
+FOr thsi reason we are installing them in defiened directories that may change with platform.
+
+
+
+
 
 code structure
 ==========
@@ -104,14 +130,15 @@ for some reason svg is not yet well supportied in python for this reason all svg
 
 Or you can script it with a little bash
 
-   sizes="16 22 24 32 48 72 128"
-   basedirect="icons"
-   for item in `ls icons/*.svg`
-   do
+    #bin/bash
+    sizes="16 22 24 32 48 72 128"
+    basedirect="icons"
+    for item in `ls icons/*.svg`
+    do
        for size in $sizes
        do
            name=$(echo $item | sed -e 's/.*\///' | sed -e 's/\.svg.*$//')
            cmd="convert  -background transparent  -resize ${size}x${size} $item  ${basedirect}/${name}_${size}x${size}.png"
            $cmd
        done
-   done
+    done
