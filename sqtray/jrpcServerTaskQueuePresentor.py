@@ -187,7 +187,7 @@ class pollPlayerStatus(poller):
         self.log.debug("msg=%s" % (output))
         return output
     def handleResponce(self,responce,ding,dong,foo):
-        print json.dumps(responce, sort_keys=True, indent=4)
+        #print json.dumps(responce, sort_keys=True, indent=4)
         playerId = responce['params'][0]
         playerMode = responce['result']['mode']
         playerConnected = responce['result']["player_connected"]
@@ -273,6 +273,121 @@ class pollPlayerStatus(poller):
                 newSong.artist.update(CurrentTrackArtist)
                 self.model.SongCache[CurrentTrackId] = newSong
         print (self.model.SongCache.keys())
+
+
+
+class pollSongStatus(poller):
+    def __init__(self,model,view):
+        poller.__init__(self,model,view)
+    def GetNextDue(self):
+        online = self.model.connected.get()
+        if online != True:
+            self.Pollfrequancy.update(6)
+            return []
+        if self.model.SongCache.count() == 0:
+            self.Pollfrequancy.update(6)
+            return []
+        
+        secondDelay = 0
+        secondInterval = 1
+        commands = []
+        
+        for trackId in self.model.SongCache.keys():
+            identifier = self.model.SongCache[trackId].modificationTime.get() 
+            if identifier != None:
+                continue
+            msg = { 
+                        "method":"slim.request",
+                        "params": ["-",
+                            ['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]     
+                    }
+            
+            secondDelay += secondInterval
+            commands.append([secondDelay,msg])
+        if len(commands) > 0:
+            self.Pollfrequancy.update(1)
+        output = self.wrapOutput( commands)
+        self.log.debug("msg=%s" % (output))
+        return output
+    def handleResponce(self,responce,ding,dong,foo):
+        print "OnSongInfo",unicode(json.dumps(responce, indent=4))
+        now = datetime.datetime.now()
+        #print "OnPlayerStatus:",datetime.datetime.now()
+        #print  "OnTrackInfo",responce
+        #print "OnTrackInfo",unicode(json.dumps(responce, indent=4))
+        
+        def cleanList(inputStr):
+            inputList = inputStr.split(",")
+            outputList = []
+            for item in inputList:
+                cleanItem = item.strip()
+                if len(cleanItem) > 0:
+                    outputList.append(cleanItem)
+            return outputList
+        
+        
+        identifier = responce["result"]["songinfo_loop"][0][u'id']
+        if identifier == 0:
+            self.log.error("Invalid song ID")
+            return
+        newSongInfo = None
+        if identifier in self.model.SongCache.keys():
+            newSongInfo = self.model.SongCache[identifier]
+        else:
+            newSongInfo = squeezeSong()
+        for metadata in  responce["result"]["songinfo_loop"]:
+            #print metadata
+            for key in metadata:
+                #print key
+                if key == u'id':
+                    newSongInfo.id.update( int(metadata[key]))
+                if key == u'title':
+                    newSongInfo.title.update(cleanList(metadata[key]))
+                if key == u'genres':
+                    newSongInfo.genres.update(cleanList(metadata[key]))
+                if key == u'artist':
+                    newSongInfo.artist.update(cleanList(metadata[key]))
+                if key == u'artist_ids':
+                    newSongInfo.artist_ids.update(cleanList(metadata[key]))
+                    
+                if key == u'samplesize':
+                    newSongInfo.samplesize.update(cleanList(metadata[key]))
+                if key == u'duration':
+                    newSongInfo.duration.update(cleanList(metadata[key]))
+                if key == u'tracknum':
+                    newSongInfo.tracknum.update(cleanList(metadata[key]))
+                if key == u'year':
+                    newSongInfo.year.update(cleanList(metadata[key]))      
+                if key == u'album':
+                    newSongInfo.album.update(cleanList(metadata[key]))
+                if key == u'album_id':
+                    newSongInfo.album_id.update(cleanList(metadata[key]))
+                if key == u'duration':
+                    newSongInfo.duration.update(cleanList(metadata[key]))   
+                if key == u'type':
+                    newSongInfo.type.update(cleanList(metadata[key]))
+                if key == u'tagversion':
+                    newSongInfo.tagversion.update(cleanList(metadata[key]))
+                if key == u'bitrate':
+                    newSongInfo.bitrate.update(cleanList(metadata[key]))
+                if key == u'filesize':
+                    newSongInfo.filesize.update(cleanList(metadata[key]))    
+                if key == u'coverart':
+                    newSongInfo.coverart.update(cleanList(metadata[key]))
+                if key == u'modificationTime':
+                    newSongInfo.modificationTime.update(cleanList(metadata[key]))
+                if key == u'compilation':
+                    newSongInfo.compilation.update(cleanList(metadata[key]))
+                if key == u'samplerate':
+                    newSongInfo.samplerate.update(cleanList(metadata[key])) 
+                if key == u'url':
+                    newSongInfo.url.update(cleanList(metadata[key]))
+        newSongInfo.updated.update(datetime.datetime.now())
+        if not identifier in self.model.SongCache.keys():
+            self.model.SongCache[identifier] = newSongInfo
+        
+        
+        
 class pollholder:
     def __init__(self, model,view,updator):
         self.log = logging.getLogger("pollholder")
@@ -286,6 +401,8 @@ class pollholder:
         item = pollPlayerName(self.model,self.updator)
         self.polls.append(item)
         item = pollPlayerStatus(self.model,self.updator)
+        self.polls.append(item)
+        item = pollSongStatus(self.model,self.updator)
         self.polls.append(item)
     def check(self):
         for item in self.polls:
