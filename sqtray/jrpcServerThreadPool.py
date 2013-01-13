@@ -182,10 +182,11 @@ class sConTPool:
         #self.log.debug(request)
         if not 'responce' in request.keys():
             self.log.error('no reponce')
+            self.log.debug(request)
             # we will requeue the responce
             
             self.preTaskCache[msgHash] = request
-            self.preTasks.put(msgHash)
+            self.preTasks.put(request)
             return
         self.taskCacheFinished[msgHash] = request
         self.postTasks.put(msgHash)
