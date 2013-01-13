@@ -67,15 +67,8 @@ class SqueezeConnectionWorker(Thread):
             self.conn = None
             self.log.error("Cannot Send Request, resetting connection.=%s" % (params))
             return
-        self.log.debug('now here')
-
-        #errorNoOld = self.SocketErrNo.get()
-        #self.SocketErrNo.set(0)
-        #self.SocketErrMsg.set(unicode(""))
-        self.log.debug('now here2')
         try:
             response = self.conn.getresponse()
-            self.log.debug('now here3')
         except exceptions.AttributeError, E:
             self.log.error("AttributeError=%s" % (E))
 
@@ -99,7 +92,6 @@ class SqueezeConnectionWorker(Thread):
             self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E))
             
             return
-        self.log.debug('and here')
         if response.status != 200:
             self.log.info( "httplib.BadResponceStatus %s:%s" % (response.status, response.reason))
             
