@@ -17,12 +17,20 @@ class FrmNowPlaying(wx.Frame):
         self.callbacks = {
             "on_apply" : {},
             "on_save" : {},
-            "on_cancel" : {},
+            "on_quit" : {},
         }
         self.parent = parent
         self.title = title
         w, h = (250, 250)
         wx.Frame.__init__(self, self.parent, -1, self.title, wx.DefaultPosition, wx.Size(w, h))
+        self.menubar = wx.MenuBar()
+        self.fileMenu = wx.Menu()
+        fitem = self.fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
+        self.Bind(wx.EVT_MENU, self.OnQuit, fitem)
+        self.menubar.Append(self.fileMenu, '&File')
+        self.SetMenuBar(self.menubar)
+        
+        
         self.CreateStatusBar()
         self.sizer = wx.GridBagSizer(8, 8)
         self.Connect(-1, -1, EVT_RESULT_CONNECTED_ID, self.OnConnected)
@@ -31,19 +39,20 @@ class FrmNowPlaying(wx.Frame):
         self.BtnApply = wx.Button(self,-1, "Apply")
         self.BtnCancel = wx.Button(self,-1, "Cancel")
         self.BtnSave = wx.Button(self,-1, "Save")
-        save_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_PLAY', wx.ART_TOOLBAR, (32,32))
         
-        self.BtnPlay = wx.BitmapButton(self,id=-1,bitmap=save_ico,style=wx.BU_AUTODRAW)
-        self.BtnPause = wx.Button(self,-1, "Pause")
+        play_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_PLAY',wx.ART_BUTTON, (32,32))
+        self.BtnPlay = wx.BitmapButton(self,id=-1,bitmap=play_ico,style=wx.BU_AUTODRAW)
+        pause_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_PAUSE',wx.ART_BUTTON, (32,32))
+        #self.BtnPause = wx.Button(self,-1, "Pause")
+        
+        self.BtnPause = wx.BitmapButton(self,id=-1,bitmap=pause_ico,style=wx.BU_AUTODRAW)
+        
         self.BtnStop = wx.Button(self,-1, "Stop")
         self.BtnNext = wx.Button(self,-1, "Next")
         self.BtnLast = wx.Button(self,-1, "Last")
         
         
         
-        #self.BtnPlay.SetBitmap(save_ico)
-        #self.button1 = wx.BitmapButton(self, id=-1, bitmap=image1,
-        #pos=(10, 20), size = (image1.GetWidth()+5, image1.GetHeight()+5))
         self.Bind(wx.EVT_BUTTON, self.OnCancel, id=self.BtnCancel.GetId())
         self.Bind(wx.EVT_BUTTON, self.OnSave,id=self.BtnSave.GetId())
         self.Bind(wx.EVT_BUTTON, self.OnApply,id=self.BtnApply.GetId())
@@ -78,11 +87,15 @@ class FrmNowPlaying(wx.Frame):
         
         self.sizer.Add(label3, (2, 0), wx.DefaultSpan, wx.EXPAND)
         
-        #self.statusbar = self.CreateStatusBar()
+        self.statusbar = self.CreateStatusBar()
         #self.sizer.Add(self.statusbar, (9, 0),(2,9), wx.EXPAND)
         
         self.scPort = wx.SpinCtrl(self, -1, unicode(9000),  min=1, max=99999)
         self.sizer.Add(self.scPort, (4, 1),wx.DefaultSpan, wx.EXPAND)
+        
+        self.slider = wx.Slider(self, value=200, minValue=0, maxValue=10000,style=wx.SL_HORIZONTAL)
+        self.sizer.Add(self.slider, (5, 0),(1,8), wx.EXPAND)
+        self.Bind(wx.EVT_SCROLL, self.OnSliderScroll)
         
         
         self.sizer.AddGrowableRow(8)
@@ -120,11 +133,11 @@ class FrmNowPlaying(wx.Frame):
     def cbDoOnSave(self):
         for item in self.callbacks["on_save"]:
             item(self)    
-    def cbAddOnCancel(self,func):
-        self.callbacks['on_cancel'][func] = 1
+    def cbAddOnQuit(self,func):
+        self.callbacks['on_quit'][func] = 1
         
-    def cbDoOnCancel(self):
-        for item in self.callbacks["on_cancel"]:
+    def cbDoOnQuit(self):
+        for item in self.callbacks["on_quit"]:
             item(self)    
 
     def OnConnected(self,event):
@@ -150,7 +163,7 @@ class FrmNowPlaying(wx.Frame):
         #self.app.configSave()
         #self.log.error('should call call back here')
         self.cbDoOnSave()
-#
+
     def OnApply(self, event):
         newHost = self.tcHost.GetValue()
         self.model.host.update(newHost)
@@ -164,4 +177,8 @@ class FrmNowPlaying(wx.Frame):
         #self.app.tb.on_settings_close(event)
         #close = wx.PyEvent()
         #wx.EVT_CLOSE
-        self.cbDoOnCancel () 
+        self.cbDoOnCancel ()
+    def OnSliderScroll(self, event):
+        pass
+    def OnQuit(self, event):
+        self.cbDoOnQuit()

@@ -4,7 +4,7 @@ from sqtray.models import Observable
 from sqtray.modelsConnection import squeezeConMdle, squeezePlayerMdl
 from sqtray.modelsWxTaskbar import taskBarMdle
 
-from sqtray.wxTrayIconPopUpMenu import CreatePopupMenu,PopUpMenuInteractor, PopupMenuPresentor, TrayMenuInteractor, TrayMenuPresentor
+from sqtray.wxTrayIconPopUpMenu import PopUpMenuInteractor, PopupMenuPresentor, TrayMenuInteractor, TrayMenuPresentor
 
 from wxEvents import EVT_RESULT_CONNECTED_ID
 from wxEvents import EVT_RESULT_PLAYERS_ID
@@ -219,7 +219,7 @@ class mainApp(wx.App):
         self.ModelGuiThread = taskBarMdle()
         self.ModelFrmSettings = mdlFrmSettings()
         self.ModelFrmNowPlaying = mdlFrmNowPlaying()
-        
+    def InitUI(self):    
         self.ConCtrlInteractor = ConCtrlInteractor()
         self.ConCtrlInteractor.install(self.ModelFrmSettings,self.ModelConPool)
         
@@ -298,14 +298,16 @@ class mainApp(wx.App):
         self.SettingsPresentor.cbAddOnSave(self.OnSave)
         
         self.presentorNowPlaying = frmPlayingPresentor(self.ModelFrmNowPlaying)
-        
+        self.presentorNowPlaying.cbAddOnQuit(self.Exit)
         
         # Now apply the Settings
         #self.ConCtrlInteractor.OnApply(None)
         #print self.ModelFrmSettings.host.get()
         self.messagesUnblock()
         self.jrpc.requestUpdateModel()
-        
+    
+    
+        self.ShowNowPlaying()
     def OnNewMessages (self,details):
         self.log.debug('OnNewMessages')
         evt = SomeNewEvent(attr1="on_msg")
@@ -340,6 +342,8 @@ class mainApp(wx.App):
         self.log.debug("on_event")
         
     def Exit(self):
+        self.presentorNowPlaying.ViewClose()
+        
         self.messagesBlock()
         self.connectionPool.wait_completion()
         self.SettingClose(None)
@@ -357,9 +361,12 @@ class mainApp(wx.App):
         #self.log.debug("setUpdateModel")
         self.ModelGuiThread.currentIconName.update(currentIcon)
         #self.log.debug("setUpdateModel=%s" % (currentIcon))
+    def ShowNowPlaying(self):
+        self.presentorNowPlaying.ViewOpen()
+        
     def SettingsOpen(self):
         self.SettingsPresentor.SettingsOpen()
-        self.presentorNowPlaying.ViewOpen()
+        
         
     def SettingClose(self,evnt):
         self.SettingsPresentor.SettingClose(None)

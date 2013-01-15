@@ -17,46 +17,6 @@ def create_menu_item(menu, label, art,func):
 
 
 
-def CreatePopupMenu(model,interactor):
-    toolsMENU = wx.Menu()
-    ConnectionStatus = model.connected.get()
-    #ConnectionStatus = False
-    if ConnectionStatus:
-        
-        create_menu_item(toolsMENU, 'Play',"ART_PLAYER_PLAY", interactor.onScPlay)
-        create_menu_item(toolsMENU, 'Pause', "ART_PLAYER_PAUSE",interactor.onScPause)
-        create_menu_item(toolsMENU, 'Next', "ART_PLAYER_SEEK_FORWARD",interactor.onScNext)
-        create_menu_item(toolsMENU, 'Previous', 'ART_PLAYER_SEEK_BACKWARD',interactor.onScPrevious)
-        create_menu_item(toolsMENU, 'Rnd', None,interactor.onScRandom)
-        toolsMENU.AppendSeparator()
-    playersLen = len(model.Players)
-    #print "Players=\n%s\n%s" % (model.Players,model.playerList)
-    #playersLen = 0
-    if playersLen >1:
-        playersMENU = wx.Menu()
-        toolsMENU.AppendMenu(-1, "Change Player", playersMENU) 
-        #player = model.GuiPlayer.get()
-        player = None
-        if player != None:
-            MenuItem = wx.MenuItem(playersMENU, -1, player)
-            # Bind event to self.ChangePlayer but add the parameter "player" to the call back, with the value "player"
-            playersMENU.Bind(wx.EVT_MENU, functools.partial(interactor.ChangePlayer,player = player), id=MenuItem.GetId())
-            playersMENU.AppendItem(MenuItem)
-            playersMENU.AppendSeparator()
-        for playerName in  model.Players:
-            if playerName != player:
-                MenuItem = wx.MenuItem(playersMENU, -1, playerName)
-                playersMENU.Bind(wx.EVT_MENU, functools.partial(interactor.ChangePlayer,player = playerName), id=MenuItem.GetId())
-                playersMENU.AppendItem(MenuItem)
-
-        toolsMENU.AppendSeparator()
-    create_menu_item(toolsMENU, 'Settings',None, interactor.on_settings)
-    toolsMENU.AppendSeparator()
-    create_menu_item(toolsMENU, 'Exit', wx.ART_QUIT,interactor.on_exit)
-    return toolsMENU
-
-
-
 
 class PopUpMenuInteractor(object):
     """ http://wiki.wxpython.org/ModelViewPresenter inspired """
@@ -78,6 +38,8 @@ class PopUpMenuInteractor(object):
         self.presenter.ChangePlayer(playerStr)
     def on_settings(self,event):
         self.presenter.on_settings()
+    def on_nowPlaying(self,event):
+        self.presenter.on_nowPlaying()
     def on_exit(self,event):
         self.presenter.on_exit()
 

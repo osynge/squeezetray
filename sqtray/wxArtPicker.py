@@ -166,7 +166,7 @@ class MyArtProvider(wx.ArtProvider):
         # images for specific sizes, whatever...   
    
         # See end of file for the image data   
-        self.log.debug("MyArtProvider: providing %s:%s at %s" %(artid, client, size))  
+        self.log.error("MyArtProvider: providing %s:%s at %s" %(artid, client, size))  
         if ((not isinstance(artid, str)) and (not isinstance(artid, unicode))):
             return 
         bmp = wx.NullBitmap   

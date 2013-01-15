@@ -3,7 +3,7 @@ from models import Observable
 import logging
 
 from wxTaskBarIcon import TaskBarIconUpdateInteractor
-from sqtray.wxTrayIconPopUpMenu import CreatePopupMenu,PopUpMenuInteractor, PopupMenuPresentor
+from sqtray.wxTrayIconPopUpMenu import PopUpMenuInteractor, PopupMenuPresentor
 
 class TaskBarIconPresentor(object):
     def __init__(self, Model, View, interactor):

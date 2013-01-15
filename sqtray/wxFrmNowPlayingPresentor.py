@@ -36,7 +36,16 @@ class frmPlayingPresentor:
         self.GuiModel = model
         self.settingsOpen = False
         self.Example = None
+        self.callbacks = {
+            "on_quit" : {},
+        }
+    def cbAddOnQuit(self,func):
+        self.callbacks['on_quit'][func] = 1
         
+    def cbDoOnQuit(self):
+        for item in self.callbacks["on_quit"]:
+            item()
+         
     def ViewOpen(self):
         if self.settingsOpen == True:
             return
@@ -46,7 +55,7 @@ class frmPlayingPresentor:
         self.Example.updateFromModel()
         self.Example.cbAddOnApply(self.OnApply)
         self.Example.cbAddOnSave(self.OnSave)
-        self.Example.cbAddOnCancel(self.OnCancel)
+        self.Example.cbAddOnQuit(self.OnQuit)
         
         self.Example.Show()
         
@@ -58,9 +67,9 @@ class frmPlayingPresentor:
             self.Example.Destroy()
         self.Example = None
         
-    def OnCancel(self,iconName):
+    def OnQuit(self,iconName):
         self.ViewClose(None)
-        
+        self.cbDoOnQuit()
     def OnSave(self,iconName):
         self.cbDoOnSave()
         
