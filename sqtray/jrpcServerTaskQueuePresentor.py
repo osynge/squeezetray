@@ -175,6 +175,8 @@ class pollSongStatus(poller):
         commands = []
         
         for trackId in self.model.SongCache.keys():
+            if trackId < 1:
+                continue
             identifier = self.model.SongCache[trackId].modificationTime.get() 
             if identifier != None:
                 continue
@@ -187,7 +189,7 @@ class pollSongStatus(poller):
             secondDelay += secondInterval
             commands.append([secondDelay,msg])
         if len(commands) > 0:
-            self.Pollfrequancy.update(1)
+            self.Pollfrequancy.update(5)
         output = self.wrapOutput( commands)
         #self.log.debug("msg=%s" % (output))
         return output
@@ -498,6 +500,8 @@ class jrpcServerTaskQueuePresentor():
         
     
     def QueueProcess(self):
+        self.threadpool.QueueProcessResponces()
+        self.threadpool.QueueProcessPreTask()
         self.pollholder.check()
         self.scheduler.Overdue()
         self.threadpool.QueueProcessPreTask()

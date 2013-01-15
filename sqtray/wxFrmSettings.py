@@ -325,7 +325,7 @@ class FrmSettingsOld(wx.Frame):
             return
         self.IconStatus = status
         self.IconSize = size
-        self.log.debug("Icon changed '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))
+        #self.log.debug("Icon changed '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))
         
         
         #self.icon = wxIcons.trayDefault.getIcon()
@@ -336,5 +336,7 @@ class FrmSettingsOld(wx.Frame):
         if not testIcon.Ok():
             self.log.debug("Icon not OK")
             return
-        self.icon = testIcon
-        self.SetIcon(self.icon)
+        if self.icon != testIcon:
+            self.SetIcon(self.icon)
+            self.icon = testIcon
+        

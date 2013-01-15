@@ -29,6 +29,10 @@ from modelsWxFrmSettings import mdlFrmSettings
 
 from  modelActions import ConCtrlInteractor
 
+
+from wxFrmNowPlayingPresentor import mdlFrmNowPlaying, frmPlayingPresentor
+from wxFrmNowPlayingView import FrmNowPlaying
+
 def StoreConfig(FilePath,squeezeConMdle):
     cfg = wx.FileConfig(appName="ApplicationName", 
                                 vendorName="VendorName", 
@@ -214,7 +218,7 @@ class mainApp(wx.App):
         self.ModelConPool = squeezeConMdle()
         self.ModelGuiThread = taskBarMdle()
         self.ModelFrmSettings = mdlFrmSettings()
-        
+        self.ModelFrmNowPlaying = mdlFrmNowPlaying()
         
         self.ConCtrlInteractor = ConCtrlInteractor()
         self.ConCtrlInteractor.install(self.ModelFrmSettings,self.ModelConPool)
@@ -292,6 +296,10 @@ class mainApp(wx.App):
         self.SettingsPresentor  = frmSettingsPresentor(self.ModelFrmSettings)
         self.SettingsPresentor.cbAddOnApply(self.ConCtrlInteractor.OnApply)
         self.SettingsPresentor.cbAddOnSave(self.OnSave)
+        
+        self.presentorNowPlaying = frmPlayingPresentor(self.ModelFrmNowPlaying)
+        
+        
         # Now apply the Settings
         #self.ConCtrlInteractor.OnApply(None)
         #print self.ModelFrmSettings.host.get()
@@ -351,7 +359,7 @@ class mainApp(wx.App):
         #self.log.debug("setUpdateModel=%s" % (currentIcon))
     def SettingsOpen(self):
         self.SettingsPresentor.SettingsOpen()
-    
+        self.presentorNowPlaying.SettingsOpen()
         
     def SettingClose(self,evnt):
         self.SettingsPresentor.SettingClose(None)
