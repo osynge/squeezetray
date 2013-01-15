@@ -4,8 +4,9 @@ from sqtray.wxMainApp import  mainApp
 import optparse
 
 import logging
+import logging.config
 from sqtray.__version__ import version
-
+import os
 import wx
 from sqtray.wxArtPicker import MyArtProvider,getProgramFolder,directoryArray
 

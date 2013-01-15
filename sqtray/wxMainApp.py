@@ -4,8 +4,6 @@ from sqtray.models import Observable
 from sqtray.modelsConnection import squeezeConMdle, squeezePlayerMdl
 from sqtray.modelsWxTaskbar import taskBarMdle
 
-
-from sqtray.JrpcServer import squeezeConCtrl
 from sqtray.wxTrayIconPopUpMenu import CreatePopupMenu,PopUpMenuInteractor, PopupMenuPresentor, TrayMenuInteractor, TrayMenuPresentor
 
 from wxEvents import EVT_RESULT_CONNECTED_ID
@@ -22,11 +20,15 @@ from sqtray.wxArtPicker import MyArtProvider
 
 from sqtray.wxConfig import ConfigPresentor
 
-
+from sqtray.jrpcServerPresentor import squeezeConPresentor
 from sqtray.wxFrmSettingsPresentor import frmSettingsPresentor
 import logging
 
 from modelsWxFrmSettings import mdlFrmSettings
+
+
+from  modelActions import ConCtrlInteractor
+
 def StoreConfig(FilePath,squeezeConMdle):
     cfg = wx.FileConfig(appName="ApplicationName", 
                                 vendorName="VendorName", 
@@ -41,6 +43,8 @@ def StoreConfig(FilePath,squeezeConMdle):
 
 import  wx
 import  wx.lib.newevent
+from jrpcServerThreadPool  import sConTPool
+
 
 SomeNewEvent, EVT_SOME_NEW_EVENT = wx.lib.newevent.NewEvent()
 SomeNewCommandEvent, EVT_SOME_NEW_COMMAND_EVENT = wx.lib.newevent.NewCommandEvent()
@@ -118,6 +122,7 @@ class viewWxToolBarSrc():
         self.toolTipCache.update(newToolTip)
         #self.log.warn("xxx%sxxx" % (self.toolTipCache.get() ) )
         return self.toolTipCache.get()
+        
     def updateToolTip(self):
         self.log.debug("updateToolTip")
         newToolTip = unicode()
@@ -199,16 +204,7 @@ class  Connection2SettingsInteractor():
     def OnConnectionError(self,value):
         #self.settings.connectionMsg.update("SocketErrNo=%s" % (self.connection.SocketErrNo.get()))
         pass
-class ConCtrlInteractor():
 
-    def install(self,ModelFrmSettings,ModelConPool):
-        self.ModelFrmSettings = ModelFrmSettings
-        self.ModelConPool = ModelConPool
-        
-    def OnApply(self,presentor):
-        self.ModelConPool.host.update(self.ModelFrmSettings.host.get())
-        self.ModelConPool.port.update(self.ModelFrmSettings.port.get())
-    
            
 class mainApp(wx.App):
     def __init__(self):
@@ -254,7 +250,7 @@ class mainApp(wx.App):
         
         
         
-        self.timer.Start(9000)  # x100 milliseconds
+        self.timer.Start(1000)  # x100 milliseconds
         wx.EVT_TIMER(self, TIMER_ID, self.OnTimer)  # call the on_timer function
         self.taskbarInteractor = TaskBarIconInteractor()
         self.tbPresentor =  TaskBarIconPresentor(self.ModelGuiThread,self.tb,self.taskbarInteractor)
@@ -265,13 +261,17 @@ class mainApp(wx.App):
         
         self.interactorWxUpdate = interactorWxUpdate()
         self.interactorWxUpdate.install(self.ModelConPool,self)
-        
-        # Now we hook up the view
-        self.squeezeConCtrl = squeezeConCtrl(self.ModelConPool)
-        #self.squeezeConCtrl.ConectionStringSet("mini:9000")
+       
         self.count = 0
         self.viewWxToolBarSrc = viewWxToolBarSrc()
         self.viewWxToolBarSrc.install(self.ModelConPool)
+        
+        
+        
+        # Now we set up the jrpc server
+        self.connectionPool = sConTPool(self.ModelConPool)
+        self.jrpc = squeezeConPresentor(self.ModelConPool,self.connectionPool)
+        self.connectionPool.cbAddOnMessagesToProcess(self.OnNewMessages)
         
         #Now we set up the Tray Pup Up menu
         self.tbPopUpMenuInteractor = TrayMenuInteractor()
@@ -279,12 +279,12 @@ class mainApp(wx.App):
         self.tbPopUpMenuInteractor.cbAddOnExit(self.Exit)
         self.tbPopUpMenuInteractor.cbAddOnSettings(self.SettingsOpen)
         
-        self.tbPopUpMenuInteractor.cbAddOnPause(self.squeezeConCtrl.Pause)
-        self.tbPopUpMenuInteractor.cbAddOnSeekIndex(self.squeezeConCtrl.Index)
+        self.tbPopUpMenuInteractor.cbAddOnPause(self.jrpc.Pause)
+        self.tbPopUpMenuInteractor.cbAddOnSeekIndex(self.jrpc.Index)
         
-        self.tbPopUpMenuInteractor.cbAddOnRandomSongs(self.squeezeConCtrl.PlayRandomSong)
-        self.tbPopUpMenuInteractor.cbAddOnPlay(self.squeezeConCtrl.Play)
-        self.tbPopUpMenuInteractor.cbAddOnStop(self.squeezeConCtrl.Stop)
+        self.tbPopUpMenuInteractor.cbAddOnRandomSongs(self.jrpc.PlayRandomSong)
+        self.tbPopUpMenuInteractor.cbAddOnPlay(self.jrpc.Play)
+        self.tbPopUpMenuInteractor.cbAddOnStop(self.jrpc.Stop)
         
         
         #Now load the settings presentor
@@ -296,7 +296,13 @@ class mainApp(wx.App):
         #self.ConCtrlInteractor.OnApply(None)
         #print self.ModelFrmSettings.host.get()
         self.messagesUnblock()
+        self.jrpc.requestUpdateModel()
         
+    def OnNewMessages (self,details):
+        self.log.debug('OnNewMessages')
+        evt = SomeNewEvent(attr1="on_msg")
+        #post the event
+        wx.PostEvent(self, evt)
         
     def messagesBlock(self):
         self.block = True
@@ -307,15 +313,12 @@ class mainApp(wx.App):
         self.CreatePopUp()
 
     def EventRevived(self,evt):
-        if self.block:
-            return    
-        
         self.log.debug("EventRevived=%s",(evt.attr1 ))
-        if evt.attr1 == "on_connected":
-            #self.ModelGuiThread.connected.update(self.ModelConPool.connected.get())
-            pass
-        if evt.attr1 == "on_players":
-            pass
+        if self.block:
+            return
+        if evt.attr1 == "on_msg":
+            self.jrpc.requestUpdateModel()
+        
             #print self.ModelConPool.Players
         self.setUpdateModel(evt)
             
@@ -323,41 +326,16 @@ class mainApp(wx.App):
         self.ConCtrlInteractor.OnApply(presentor)
         self.configPresentor.save()
     def OnTimer(self,event):
-        if self.block:
-            return
-        
-        connected = self.ModelConPool.connected.get()
-        if False == connected: 
-            self.squeezeConCtrl.RecConnectionOnline()
-            return
-        #self.log.debug("on timer")
-        self.log.debug("on timer= %s" % (self.ModelConPool.port.get()))
-        #self.timer.
-        #print dir(self.timer)
-        #self.interactorWxUpdate.on_connected()
-        self.count+= 1
-        #self.squeezeConCtrl.RecConnectionOnline()
-        self.squeezeConCtrl.OnPlayersCount(None)
-        if self.count > 2:
-            self.count = 0
-        
-        if self.count > 0:
-            self.squeezeConCtrl.RecPlayerStatus(self.count)
-            self.squeezeConCtrl.PlayerStatus(self.count)
-            self.viewWxToolBarSrc.update()
-        else:
-            self.log.debug("RecConnectionOnline")
-        
-        
-        self.log.debug("on timer=cccccccccccc %s" % (self.ModelConPool.playerList))
-        self.setUpdateModel(None)
+        self.jrpc.requestUpdateModel()
+        return
     def on_event(self,event):
         self.log.debug("on_event")
         
     def Exit(self):
-        self.SettingClose(None)
         self.messagesBlock()
-        self.squeezeConCtrl.view1.wait_completion()
+        self.connectionPool.wait_completion()
+        self.SettingClose(None)
+               
         self.tb.Destroy()
     def CreatePopUp(self):
         newMenu = self.tbPopUpMenuPresentor.getMenu()
@@ -380,7 +358,7 @@ class mainApp(wx.App):
     
     def doCbOnPlay(self,player):
         
-        self.squeezeConCtrl.Play(player)
+        self.jrpc.Play(player)
         
     def doCbOnPause(self,player):
         results = {}
@@ -401,5 +379,5 @@ class mainApp(wx.App):
         return results
 
     def doCbOnRandomSongs(self,player):
-        self.squeezeConCtrl.PlayRandomSong(player)
+        self.jrpc.PlayRandomSong(player)
         
