@@ -18,31 +18,6 @@ def create_menu_item(menu, label, art,func):
 
 
 
-class PopUpMenuInteractor(object):
-    """ http://wiki.wxpython.org/ModelViewPresenter inspired """
-    def install(self, presenter, view):
-        self.presenter = presenter
-        self.view = view
-    def onScPlay(self,event):
-        self.presenter.onScPlay()
-    def onScPause(self,event):
-        self.presenter.onScPause()
-    def onScNext(self,event):
-        self.presenter.onScNext()
-    def onScPrevious(self,event):
-        self.presenter.onScPrevious()
-    def onScRandom(self,event):
-        self.presenter.onScRandom()
-    def ChangePlayer(self,event,player):
-        playerStr = unicode(player)
-        self.presenter.ChangePlayer(playerStr)
-    def on_settings(self,event):
-        self.presenter.on_settings()
-    def on_nowPlaying(self,event):
-        self.presenter.on_nowPlaying()
-    def on_exit(self,event):
-        self.presenter.on_exit()
-
 
 
 
@@ -138,6 +113,7 @@ class TrayMenuInteractor(object):
         self.callbacks = {
             "on_exit" : {},
             "on_settings" : {},
+            "on_nowPlaying" : {},
             "on_play" : {},
             "on_pause" : {},
             "on_stop" : {},
@@ -150,6 +126,9 @@ class TrayMenuInteractor(object):
         
     def cbAddOnSettings(self,func):
         self.callbacks['on_settings'][func] = 1
+    
+    def cbAddOnNowPlaying(self,func):
+        self.callbacks['on_nowPlaying'][func] = 1
     
     def cbAddOnPlay(self,func):
         self.callbacks['on_play'][func] = 1
@@ -179,7 +158,11 @@ class TrayMenuInteractor(object):
         for item in self.callbacks["on_settings"]:
             results[item] = item()
         return results
-    
+    def doCbOnNowPlaying(self,evt):
+        results = {}
+        for item in self.callbacks["on_nowPlaying"]:
+            results[item] = item()
+        return results
     def doCbOnPlay(self,evt,player):
         results = {}
         for item in self.callbacks["on_play"]:
@@ -266,7 +249,7 @@ class TrayMenuPresentor(object):
                 playersMENU.AppendItem(MenuItem)
                 
             toolsMENU.AppendSeparator()
-        create_menu_item(toolsMENU, 'Now Playing',None, self.interactor.doCbOnSettings)
+        create_menu_item(toolsMENU, 'Now Playing',None, self.interactor.doCbOnNowPlaying)
         create_menu_item(toolsMENU, 'Settings',None, self.interactor.doCbOnSettings)
         toolsMENU.AppendSeparator()
         create_menu_item(toolsMENU, 'Exit', wx.ART_QUIT,self.interactor.doCbOnExit)

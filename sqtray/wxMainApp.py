@@ -4,7 +4,7 @@ from sqtray.models import Observable
 from sqtray.modelsConnection import squeezeConMdle, squeezePlayerMdl
 from sqtray.modelsWxTaskbar import taskBarMdle
 
-from sqtray.wxTrayIconPopUpMenu import PopUpMenuInteractor, PopupMenuPresentor, TrayMenuInteractor, TrayMenuPresentor
+from sqtray.wxTrayIconPopUpMenu import  TrayMenuInteractor, TrayMenuPresentor
 
 from wxEvents import EVT_RESULT_CONNECTED_ID
 from wxEvents import EVT_RESULT_PLAYERS_ID
@@ -282,6 +282,7 @@ class mainApp(wx.App):
         self.tbPopUpMenuPresentor = TrayMenuPresentor(self.ModelConPool,self.tbPopUpMenuInteractor)
         self.tbPopUpMenuInteractor.cbAddOnExit(self.Exit)
         self.tbPopUpMenuInteractor.cbAddOnSettings(self.SettingsOpen)
+        self.tbPopUpMenuInteractor.cbAddOnNowPlaying(self.ShowNowPlaying)
         
         self.tbPopUpMenuInteractor.cbAddOnPause(self.jrpc.Pause)
         self.tbPopUpMenuInteractor.cbAddOnSeekIndex(self.jrpc.Index)
