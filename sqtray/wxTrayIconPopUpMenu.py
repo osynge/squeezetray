@@ -266,6 +266,7 @@ class TrayMenuPresentor(object):
                 playersMENU.AppendItem(MenuItem)
                 
             toolsMENU.AppendSeparator()
+        create_menu_item(toolsMENU, 'Now Playing',None, self.interactor.doCbOnSettings)
         create_menu_item(toolsMENU, 'Settings',None, self.interactor.doCbOnSettings)
         toolsMENU.AppendSeparator()
         create_menu_item(toolsMENU, 'Exit', wx.ART_QUIT,self.interactor.doCbOnExit)
