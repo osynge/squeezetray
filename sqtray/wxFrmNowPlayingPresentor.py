@@ -37,12 +37,12 @@ class frmPlayingPresentor:
         self.settingsOpen = False
         self.Example = None
         
-    def SettingsOpen(self):
+    def ViewOpen(self):
         if self.settingsOpen == True:
             return
         self.Example = FrmNowPlaying(None, title='Now Playing')
         self.Example.ModelSet(self.GuiModel)
-        self.Example.Bind(wx.EVT_CLOSE, self.SettingClose)
+        self.Example.Bind(wx.EVT_CLOSE, self.ViewClose)
         self.Example.updateFromModel()
         self.Example.cbAddOnApply(self.OnApply)
         self.Example.cbAddOnSave(self.OnSave)
@@ -52,14 +52,14 @@ class frmPlayingPresentor:
         
         self.settingsOpen = True
         
-    def SettingClose(self,evnt):
+    def ViewClose(self,evnt = None):
         self.settingsOpen = False
         if self.Example != None:
             self.Example.Destroy()
         self.Example = None
         
     def OnCancel(self,iconName):
-        self.SettingClose(None)
+        self.ViewClose(None)
         
     def OnSave(self,iconName):
         self.cbDoOnSave()

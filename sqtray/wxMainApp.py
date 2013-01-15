@@ -359,7 +359,7 @@ class mainApp(wx.App):
         #self.log.debug("setUpdateModel=%s" % (currentIcon))
     def SettingsOpen(self):
         self.SettingsPresentor.SettingsOpen()
-        self.presentorNowPlaying.SettingsOpen()
+        self.presentorNowPlaying.ViewOpen()
         
     def SettingClose(self,evnt):
         self.SettingsPresentor.SettingClose(None)
