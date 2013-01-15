@@ -11,7 +11,6 @@ SomeNewCommandEvent, EVT_SOME_NEW_COMMAND_EVENT = wx.lib.newevent.NewCommandEven
 
 class frmSettingsModelWatcher():
     def install(self, src, wxObject):
-        
         self.messagesBlock()
         self.model = src
         self.wxObject = wxObject 
@@ -21,7 +20,6 @@ class frmSettingsModelWatcher():
         self.model.port.addCallback(self.onIconChange)
         self.model.connectionMsg.addCallback(self.onIconChange)
         self.model.statusText.addCallback(self.onIconChange)
-        
         self.messagesUnblock()
         
     
