@@ -191,7 +191,7 @@ class viewWxToolBarSrc():
         return self.iconNameCache.get()
         
     
-class  Connection2SettingsInteractor():
+class Connection2SettingsInteractor():
     def install(self, connection, settings):
         self.connection = connection
         self.settings = settings
