@@ -61,4 +61,4 @@ class frmPlayingPresentor:
     
     def Update(self):
         self.updateGuiInteractor.updateTrackEnds()
-        
+        self.updateGuiInteractor.updatePlayerStatus()
