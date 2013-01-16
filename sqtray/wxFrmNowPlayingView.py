@@ -128,31 +128,6 @@ class FrmNowPlaying(wx.Frame):
     def OnConnected(self,event):
         self.updateFromModel()
         
-    
-        
-    def onStatusText(self,value):
-        self.SetStatusText(self.model.statusText.get())
-        
-    def onHost(self,value):
-        self.tcHost.SetValue(self.GuiModel.host.get())
-    def onPort(self,value):
-        self.scPort.SetValue(self.GuiModel.port.get())
-        
-
-    def OnApply(self, event):
-        newHost = self.tcHost.GetValue()
-        self.model.host.update(newHost)
-            #print 'donehostchanged',newHost
-        newPort = int(self.scPort.GetValue())
-        oldPort = self.model.port.get()
-        self.model.port.update(newPort)
-        self.cbDoOnApply()
-    def OnCancel(self, event):
-        #self.FrmCtrl.closeSettings(event)
-        #self.app.tb.on_settings_close(event)
-        #close = wx.PyEvent()
-        #wx.EVT_CLOSE
-        self.cbDoOnCancel ()
     def OnSliderScroll(self, event):
         pass
     def OnQuit(self, event):
