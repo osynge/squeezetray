@@ -68,17 +68,17 @@ class FrmNowPlaying(wx.Frame):
         self.sizer.Add(self.cbPlayer, (0, 1), (1,7), wx.EXPAND)
         
         self.tcHost = wx.TextCtrl(self, -1 )
-        self.sizer.Add(self.tcHost , (1, 1), (1,8), wx.EXPAND)
+        self.sizer.Add(self.tcHost , (1, 1), (1,7), wx.EXPAND)
         label2 = wx.StaticText(self, -1, 'Title:')
         self.sizer.Add(label2, (1, 0), wx.DefaultSpan, wx.EXPAND)
         label3 = wx.StaticText(self, -1, 'Arist:')
         self.sizer.Add(label3, (2, 0), wx.DefaultSpan, wx.EXPAND)
         self.tbArtist = wx.TextCtrl(self, -1 )
-        self.sizer.Add(self.tbArtist, (2, 1), (1,8), wx.EXPAND)
+        self.sizer.Add(self.tbArtist, (2, 1), (1,7), wx.EXPAND)
         label4 = wx.StaticText(self, -1, 'Album:')
         self.sizer.Add(label4, (3, 0), wx.DefaultSpan, wx.EXPAND)
         self.tbAlbum = wx.TextCtrl(self, -1 )
-        self.sizer.Add(self.tbAlbum, (3, 1), (1,8), wx.EXPAND)
+        self.sizer.Add(self.tbAlbum, (3, 1), (1,7), wx.EXPAND)
         
         self.statusbar = self.CreateStatusBar()
         #self.sizer.Add(self.statusbar, (9, 0),(2,9), wx.EXPAND)
@@ -89,7 +89,8 @@ class FrmNowPlaying(wx.Frame):
         
         
         self.sizer.AddGrowableRow(8)
-        self.sizer.AddGrowableCol(8)
+        
+        self.sizer.AddGrowableCol(7)
         
         self.SetSizerAndFit(self.sizer)
         
