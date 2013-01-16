@@ -222,7 +222,8 @@ class FrmNowPlayingInteractor():
         self.ModelConPool.connected.addCallback(self.onConnected)
         
     def onConnected(self,value):
-        self.ModelFrmNowPlaying.statusText.update('Connected=%s' % (value))
+        self.ModelFrmNowPlaying.serverConnected.update(value)
+        
     def onPlayers(self,value):
         added = False
         if value in self.ModelConPool.Players.keys():
@@ -271,6 +272,7 @@ class mainApp(wx.App):
         self.ModelGuiThread = taskBarMdle()
         self.ModelFrmSettings = mdlFrmSettings()
         self.ModelFrmNowPlaying = mdlFrmNowPlaying()
+        
     def InitUI(self):    
         self.ConCtrlInteractor = ConCtrlInteractor()
         self.ConCtrlInteractor.install(self.ModelFrmSettings,self.ModelConPool)
@@ -358,7 +360,6 @@ class mainApp(wx.App):
         #print self.ModelFrmSettings.host.get()
         self.messagesUnblock()
         self.jrpc.requestUpdateModel()
-    
         
         self.ShowNowPlaying()
     def OnNewMessages (self,details):

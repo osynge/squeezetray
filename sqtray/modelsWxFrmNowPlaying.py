@@ -6,7 +6,7 @@ class mdlFrmNowPlaying:
         self.frmCurrentIconName = Observable(None)
         self.frmPosition = Observable(wx.DefaultPosition)
         self.frmSize = wx.Size(250, 250)
-        
+        self.serverConnected = Observable(None)
         self.availablePlayer = ObservableDict()
         self.availableSong = ObservableDict()
         self.availableArtist = ObservableDict()

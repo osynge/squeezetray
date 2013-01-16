@@ -83,15 +83,13 @@ class FrmNowPlaying(wx.Frame):
         self.statusbar = self.CreateStatusBar()
         #self.sizer.Add(self.statusbar, (9, 0),(2,9), wx.EXPAND)
         
-        self.slider = wx.Slider(self, value=200, minValue=0, maxValue=10000,style=wx.SL_HORIZONTAL)
+        self.slider = wx.Slider(self, value=0, minValue=0, maxValue=10000,style=wx.SL_HORIZONTAL)
         self.sizer.Add(self.slider, (5, 0),(1,8), wx.EXPAND)
         self.Bind(wx.EVT_SCROLL, self.OnSliderScroll)
         
         
         self.sizer.AddGrowableRow(8)
-        self.sizer.AddGrowableCol(4)
-        self.sizer.AddGrowableCol(1)
-        self.sizer.AddGrowableCol(2)
+        self.sizer.AddGrowableCol(8)
         
         self.SetSizerAndFit(self.sizer)
         

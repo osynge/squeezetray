@@ -118,8 +118,10 @@ class interactorNowPlaying:
         self.view.BtnPlay.Bind(wx.EVT_BUTTON, self.OnCbPlay)
         self.view.BtnStop.Bind(wx.EVT_BUTTON, self.OnCbStop)
         
+        
         self.view.Bind(wx.EVT_MENU, self.OnShowSettings,id=self.view.MenuItemSettings.GetId() )
         self.updateView()
+        self.OnUpdateFrmIcon()
     def install(self,mdlNowPlaying,mainInteractor):
         self.mdlNowPlaying = mdlNowPlaying
         self.watchers = {}
@@ -134,15 +136,50 @@ class interactorNowPlaying:
         self.mdlNowPlaying.CurrentTrackEnds.addCallback(self.updateTrackEnds)
         self.mdlNowPlaying.CurrentTrackDuration.addCallback(self.updateTrackEnds)
         self.mdlNowPlaying.CurrentPlayerStatus.addCallback(self.updatePlayerStatus)
+        self.mdlNowPlaying.frmCurrentIconName.addCallback(self.OnUpdateFrmIcon)
+        self.mdlNowPlaying.serverConnected.addCallback(self.OnConnected)
+        
         self.watchingPlayer = Observable(None)
         self.watchingSong = Observable(None)
         
         for player in self.mdlNowPlaying.availablePlayer.keys():
             self.onAvailablePlayer(player)
-        
-        
-        #self.updateCombo(None)
         self.updateView()
+    
+    def UpdateIcon(self,event = None):
+        if self.view == None:
+            return
+        connected = self.mdlNowPlaying.serverConnected.get()
+        playerId = self.mdlNowPlaying.CurrentTrackId.get()
+        playerStatus = self.mdlNowPlaying.CurrentPlayerStatus.get()
+        iconName = 'ART_APPLICATION_STATUS_DISCONECTED'
+        if connected:
+            iconName = 'ART_APPLICATION_STATUS_CONNECTED'
+        if playerId != None:
+            
+            iconName = 'ART_PLAYER_PLAY'
+        if playerStatus != None:
+            mapping = {'playing' :'ART_PLAYER_PLAY',
+                        'paused' : 'ART_PLAYER_PAUSE',
+                        'stop' : 'ART_PLAYER_STOP' }
+            if playerStatus in mapping.keys():
+                iconName = mapping[playerStatus]
+        self.mdlNowPlaying.frmCurrentIconName.update(iconName)
+        
+    def OnConnected(self,event = None):
+        self.UpdateIcon()
+        
+    
+    def OnUpdateFrmIcon(self,event = None):
+        if self.view == None:
+            return
+        iconName = self.mdlNowPlaying.frmCurrentIconName.get()
+        if iconName == None:
+            return
+        icon = wx.ArtProvider.GetIcon(iconName, wx.ART_TOOLBAR, (16,16))
+        self.view.SetIcon(icon)
+        
+        
     def OnShowSettings(self,event):
         self.mainInteractor.doCbOnSettings(event)
     def OnCbPlay(self,event):
@@ -202,7 +239,7 @@ class interactorNowPlaying:
         self.updateTrackArtist()
         self.updateTrackAlbum()
         self.updateTrackEnds()
-            
+        #self.OnConnected()
             
         
     def onOperatingMode(self,key):
@@ -260,6 +297,7 @@ class interactorNowPlaying:
             if selectedplayer in self.view.cbPlayer.Items:
                 self.view.cbPlayer.SetValue(selectedplayer)
     def updatePlayerId(self,value):
+        self.UpdateIcon()
         self.updateView()
         currentKey = self.mdlNowPlaying.nowPlayPlayerId.get()
         if None == currentKey:
@@ -355,6 +393,7 @@ class interactorNowPlaying:
             sliderpos = 10000
         self.view.slider.SetValue(sliderpos)
     def updatePlayerStatus(self,event= None):
+        self.UpdateIcon()
         if self.view == None:
             return
         
