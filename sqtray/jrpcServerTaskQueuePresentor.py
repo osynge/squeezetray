@@ -208,6 +208,16 @@ class pollSongStatus(poller):
                 if len(cleanItem) > 0:
                     outputList.append(cleanItem)
             return outputList
+        def cleanIntList(inputStr):
+            inputList = inputStr.split(",")
+            outputList = []
+            for item in inputList:
+                cleanItem = item.strip()
+                if len(cleanItem) > 0:
+                    asInt = float(cleanItem)
+                    outputList.append(asInt)
+            return outputList
+        
         
         
         identifier = responce["result"]["songinfo_loop"][0][u'id']
@@ -247,7 +257,7 @@ class pollSongStatus(poller):
                 if key == u'album_id':
                     newSongInfo.album_id.update(cleanList(metadata[key]))
                 if key == u'duration':
-                    newSongInfo.duration.update(cleanList(metadata[key]))   
+                    newSongInfo.duration.update(cleanIntList(metadata[key]))   
                 if key == u'type':
                     newSongInfo.type.update(cleanList(metadata[key]))
                 if key == u'tagversion':
