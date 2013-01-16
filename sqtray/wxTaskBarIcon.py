@@ -13,7 +13,7 @@ TRAY_TOOLTIP = 'SqueezeTray'
 
 from sqtray.models import Observable
 
-from sqtray.wxTrayIconPopUpMenu import CreatePopupMenu,PopUpMenuInteractor, PopupMenuPresentor
+from sqtray.wxTrayIconPopUpMenu import  PopupMenuPresentor
 class TaskBarIcon(wx.TaskBarIcon):
     def __init__(self,model):
         super(TaskBarIcon, self).__init__()

@@ -175,6 +175,8 @@ class pollSongStatus(poller):
         commands = []
         
         for trackId in self.model.SongCache.keys():
+            if trackId < 1:
+                continue
             identifier = self.model.SongCache[trackId].modificationTime.get() 
             if identifier != None:
                 continue
@@ -187,7 +189,7 @@ class pollSongStatus(poller):
             secondDelay += secondInterval
             commands.append([secondDelay,msg])
         if len(commands) > 0:
-            self.Pollfrequancy.update(1)
+            self.Pollfrequancy.update(5)
         output = self.wrapOutput( commands)
         #self.log.debug("msg=%s" % (output))
         return output
@@ -206,6 +208,16 @@ class pollSongStatus(poller):
                 if len(cleanItem) > 0:
                     outputList.append(cleanItem)
             return outputList
+        def cleanIntList(inputStr):
+            inputList = inputStr.split(",")
+            outputList = []
+            for item in inputList:
+                cleanItem = item.strip()
+                if len(cleanItem) > 0:
+                    asInt = float(cleanItem)
+                    outputList.append(asInt)
+            return outputList
+        
         
         
         identifier = responce["result"]["songinfo_loop"][0][u'id']
@@ -245,7 +257,7 @@ class pollSongStatus(poller):
                 if key == u'album_id':
                     newSongInfo.album_id.update(cleanList(metadata[key]))
                 if key == u'duration':
-                    newSongInfo.duration.update(cleanList(metadata[key]))   
+                    newSongInfo.duration.update(cleanIntList(metadata[key]))   
                 if key == u'type':
                     newSongInfo.type.update(cleanList(metadata[key]))
                 if key == u'tagversion':
@@ -498,6 +510,8 @@ class jrpcServerTaskQueuePresentor():
         
     
     def QueueProcess(self):
+        self.threadpool.QueueProcessResponces()
+        self.threadpool.QueueProcessPreTask()
         self.pollholder.check()
         self.scheduler.Overdue()
         self.threadpool.QueueProcessPreTask()

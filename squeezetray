@@ -101,7 +101,7 @@ def main():
     da.checkPathsExist()
     ArtProvider = MyArtProvider(da) 
     wx.ArtProvider.Push(ArtProvider)
-    
+    app.InitUI()
     app.MainLoop()
 
 if __name__ == '__main__':

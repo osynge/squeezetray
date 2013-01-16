@@ -36,11 +36,11 @@ class SqueezeConnectionWorker(Thread):
         self.callbacks['task_done'][funct] = 1
             
     def taskDone(self,request):
+        self.tasks.task_done()
         self.log.debug( 'taskDone')
         for func in self.callbacks['task_done']:
             func(request)
         # Now process nicely   
-        self.tasks.task_done()
         return
     def processRequest(self,request):
         params = request['params']
@@ -50,8 +50,6 @@ class SqueezeConnectionWorker(Thread):
         if self.conn == None:
             self.log.debug('Connection creating = "%s"' % (self.connectionString))
             self.conn = httplib.HTTPConnection(self.connectionString,timeout=10)
-        self.log.debug(self.conn)
-
         try:
             #self.log.debug(type(params))
             self.conn.request("POST", "/jsonrpc.js", unicode(params))
@@ -152,6 +150,7 @@ class sConTPool:
             }
         self.taskCacheFinished = {}
         self.postTasks = Queue()
+        self.blockedMessages = {}
         for item in range(num_threads): 
             new = SqueezeConnectionWorker(self.tasks)
             new.ConnectionSet(connectionString)
@@ -176,8 +175,16 @@ class sConTPool:
             self.log.error('no reponce')
             self.log.debug(request)
             # we will requeue the responce
-            
-            self.preTaskCache[msgHash] = request
+            if not 'retries' in request.keys():
+                request['retries'] = 0
+            request['retries'] += 1
+            if request['retries'] > 2:
+                self.blockedMessages[msgHash] = request
+                return
+            if msgHash in self.preTaskCache.keys():
+                self.preTaskCache[msgHash]['retries'] = request['retries']
+            else:
+                self.preTaskCache[msgHash] = request
             self.preTasks.put(request)
             return
         self.taskCacheFinished[msgHash] = request
@@ -208,7 +215,7 @@ class sConTPool:
         
     def QueueProcessPreTask(self):
         # For calling to place messages on 
-        self.log.debug( 'self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
+        #self.log.debug( 'self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
         while True:
             try:
                 request = self.preTasks.get_nowait()
@@ -222,13 +229,13 @@ class sConTPool:
             #print request
             self.tasks.put(request)
             self.preTasks.task_done()
-        self.log.debug('self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
-        self.log.debug('self.tasks.qsize=%s' % (   self.tasks.qsize()))
+        #self.log.debug('self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
+        #self.log.debug('self.tasks.qsize=%s' % (   self.tasks.qsize()))
         
     def QueueProcessResponces(self):
         # To be processed by external thead
         counter = 0
-        self.log.debug('self.postTasks.qsize=%s' % (  self.postTasks.qsize()))
+        #self.log.debug('self.postTasks.qsize=%s' % (  self.postTasks.qsize()))
         while True:
             try:
                 msgHash = self.postTasks.get_nowait()
@@ -252,7 +259,7 @@ class sConTPool:
 
             del(self.taskCacheFinished[msgHash])
             self.postTasks.task_done()
-        self.log.debug('self.postTasks.qsize=%s' % ( self.postTasks.qsize())   )
+        #self.log.debug('self.postTasks.qsize=%s' % ( self.postTasks.qsize())   )
     def QueueProcessAddMessage(self,func,message, *args, **kargs):
         messageDict = {}
         if message.__hash__() in self.preTaskCache.keys():
@@ -266,7 +273,7 @@ class sConTPool:
         }
         self.preTaskCache[message.__hash__()] = request
         self.preTasks.put(request)
-        self.log.debug('adding self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
+        #self.log.debug('adding self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
         
         
         
