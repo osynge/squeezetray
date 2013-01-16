@@ -23,7 +23,10 @@ class FrmNowPlaying(wx.Frame):
         wx.Frame.__init__(self, self.parent, -1, self.title, wx.DefaultPosition, wx.Size(w, h))
         self.menubar = wx.MenuBar()
         self.fileMenu = wx.Menu()
+        self.MenuItemSettings = self.fileMenu.Append(wx.NewId(), "Settings",
+                                       "Configure the application")
         fitem = self.fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
+        
         self.Bind(wx.EVT_MENU, self.OnQuit, fitem)
         self.menubar.Append(self.fileMenu, '&File')
         self.SetMenuBar(self.menubar)

@@ -118,6 +118,7 @@ class interactorNowPlaying:
         self.view.BtnPlay.Bind(wx.EVT_BUTTON, self.OnCbPlay)
         self.view.BtnStop.Bind(wx.EVT_BUTTON, self.OnCbStop)
         
+        self.view.Bind(wx.EVT_MENU, self.OnShowSettings,id=self.view.MenuItemSettings.GetId() )
         self.updateView()
     def install(self,mdlNowPlaying,mainInteractor):
         self.mdlNowPlaying = mdlNowPlaying
@@ -142,6 +143,8 @@ class interactorNowPlaying:
         
         #self.updateCombo(None)
         self.updateView()
+    def OnShowSettings(self,event):
+        self.mainInteractor.doCbOnSettings(event)
     def OnCbPlay(self,event):
         currentPlayer = self.mdlNowPlaying.nowPlayPlayerId.get()
         if currentPlayer != None:
