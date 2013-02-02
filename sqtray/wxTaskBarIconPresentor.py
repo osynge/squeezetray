@@ -20,26 +20,33 @@ class TaskBarIconPresentor(object):
             "on_settings" : {},
             "on_modelUpdate" : {},
             "on_popupMenu" : {},
+            "on_left_up" : {},
         }
         
         self.TaskBarIconName = None
         self.Model.currentIconName.addCallback(self._OnIconChange)
         self.Model.tooltip.addCallback(self._OnToolTipChange)
     
+    def doCbAbstract(self,indexer):
+        
+        results = {}
+        if not indexer in self.callbacks.keys():
+            return results
+        for item in self.callbacks[indexer]:
+            results[item] = item()
+        return results  
+    
     def doCbModelUpdate(self):
         for item in self.callbacks["on_modelUpdate"]:
             item(self)
         
     def doCbPopupMenu(self):
-        results = {}
-        for item in self.callbacks["on_popupMenu"]:
-            results[item] = item()
-        return results
+        return self.doCbAbstract("on_popupMenu")
+        
+        
     def doCbExit(self):
-        results = {}
-        for item in self.callbacks["on_exit"]:
-            results[item] = item()
-        return results  
+        return self.doCbAbstract("on_exit")
+        
  
     def _OnIconChange(self,IconName):
         self.View.set_icon(IconName,(16,16))
@@ -114,12 +121,9 @@ class TaskBarIconPresentor(object):
         self.doCbExit()
 
     def on_left_up(self,):
-        self.log.debug( 'on_left_up=%s' % self.GetSqueezeServerPlayer())
-        player = self.GetSqueezeServerPlayer()
-        if player != None:
-            self.squeezeConCtrl.RecPlayerStatus(player)
-        else:
-            self.on_settings()
+        #self.log.debug( 'on_left_up=%s' % self.GetSqueezeServerPlayer())
+        return self.doCbAbstract("on_left_up")
+        
     def on_right_down(self):
         #print 'on_right_down'
         pass

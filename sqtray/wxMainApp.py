@@ -316,7 +316,7 @@ class mainApp(wx.App):
         
         self.tbPresentor.cbAddReqMdlUpdate(self.setUpdateModel)
         self.tbPresentor.cbAddRequestPopUpMenu(self.CreatePopUp)
-        
+        self.tbPresentor.callbacks['on_left_up'][self.leftClick] = 1
         
         self.interactorWxUpdate = interactorWxUpdate()
         self.interactorWxUpdate.install(self.ModelConPool,self)
@@ -416,6 +416,15 @@ class mainApp(wx.App):
         #self.log.debug("setUpdateModel")
         self.ModelGuiThread.currentIconName.update(currentIcon)
         #self.log.debug("setUpdateModel=%s" % (currentIcon))
+    
+    
+    def leftClick(self):
+        if self.presentorNowPlaying.settingsOpen == False:
+            self.presentorNowPlaying.ViewOpen()
+        else:
+            self.presentorNowPlaying.ViewClose()
+        
+    
     def ShowNowPlaying(self):
         self.presentorNowPlaying.ViewOpen()
         
