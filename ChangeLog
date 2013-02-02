@@ -1,3 +1,10 @@
+
+SqueezeWxTray-0.0.3
+    The code has changed dramaticlly. Much more professional but sadly much more bulky and lots to clean up.
+    Now we have the thread pool not just taking requests from a thread safe queue and executing them but 
+    also storing the result in a thread safe thread pool and passing the message to wx GUI thread. This is 
+    The same model I intend for Android.
+
 prerelease 
 
     I changed the code to be more and more Model, View, Controller Pattern.
