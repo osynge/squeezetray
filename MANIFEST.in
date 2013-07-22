@@ -1,6 +1,7 @@
 include README.md
 include ChangeLog
 include LICENSE
+include logger.conf
 include icons/CREDITS.icons
 include icons/media_eject_128x128.png
 include icons/media_eject_16x16.png
