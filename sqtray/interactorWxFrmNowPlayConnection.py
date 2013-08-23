@@ -118,8 +118,16 @@ class interactorNowPlaying:
         self.view.BtnPlay.Bind(wx.EVT_BUTTON, self.OnCbPlay)
         self.view.BtnStop.Bind(wx.EVT_BUTTON, self.OnCbStop)
         
-        
         self.view.Bind(wx.EVT_MENU, self.OnShowSettings,id=self.view.MenuItemSettings.GetId() )
+        
+        self.view.Bind(wx.EVT_MENU, self.OnCbPause,id=self.view.MenuItemPause.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbTrackSeekForward,id=self.view.MenuItemNext.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbTrackSeekBackward,id=self.view.MenuItemLast.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbPlay,id=self.view.MenuItemPlay.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbStop,id=self.view.MenuItemStop.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbRandomSong,id=self.view.MenuItemRndSong.GetId() )
+        
+        
         self.updateView()
         self.OnUpdateFrmIcon()
     def install(self,mdlNowPlaying,mainInteractor):
@@ -214,7 +222,10 @@ class interactorNowPlaying:
             self.mainInteractor.doCbOnSeekBackwards(event,currentPlayer)
             
             
-            
+    def OnCbRandomSong (self,event):
+        currentPlayer = self.mdlNowPlaying.nowPlayPlayerId.get()
+        if currentPlayer != None:
+            self.mainInteractor.doCbOnRandomSongs(event,currentPlayer)
             
             
     def updateView(self):
