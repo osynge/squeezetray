@@ -50,7 +50,7 @@ First generate the icons as PNG from SVG using the following script
        for size in $sizes
        do
            name=$(echo $item | sed -e 's/.*\///' | sed -e 's/\.svg.*$//')
-           cmd="convert  -background transparent  -resize ${size}x${size} $item  ${basedirect}/${name}_${size}x${size}.png"
+           cmd="convert  -strip -background transparent  -resize ${size}x${size} $item  ${basedirect}/${name}_${size}x${size}.png"
            $cmd
        done
     done
