@@ -1,4 +1,5 @@
 SqueezeWxTray-0.0.4
+
  * Fixed broken iCCP
    - This produced an anoying bug, a pop up saying
      "iCCP: known incorrect sRGB profile"
@@ -6,6 +7,9 @@ SqueezeWxTray-0.0.4
    - improvement to instructions for making icons
  * set an error number of 99 on all errors serialising the error from a soucket request
  * Added actions menu
+
+SqueezeWxTray-0.0.4
+
  * Added missing icons
  
 SqueezeWxTray-0.0.3
