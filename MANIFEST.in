@@ -1,6 +1,7 @@
 include README.md
 include ChangeLog
 include LICENSE
+include tests/*.py
 include logger.conf
 include icons/CREDITS.icons
 include icons/application_connected_128x128.png
