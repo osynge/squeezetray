@@ -18,10 +18,9 @@ class TaskBarIcon(wx.TaskBarIcon):
     def __init__(self,model):
         super(TaskBarIcon, self).__init__()
         self.model = model
-        #self.icon = wxIcons.trayDefault.getIcon()
         self.icon = wx.ArtProvider.GetIcon(
             "ART_APPLICATION_STATUS_DISCONECTED", 
-            "ART_APPLICATION_STATUS_DISCONECTED", 
+            wx.ART_OTHER,
             (16,16))
         self.SetIcon(self.icon,"SqueezeTray")
         self.Example = None
@@ -61,7 +60,7 @@ class TaskBarIcon(wx.TaskBarIcon):
             self.log.error("status == None")
             return
         #self.icon = wx.ArtProvider.GetIcon(status, "WIBBLE",size)
-        testIcon = wx.ArtProvider.GetIcon(self.IconStatus,"WIBBLE" ,size)
+        testIcon = wx.ArtProvider.GetIcon(self.IconStatus,wx.ART_OTHER ,size)
         if not testIcon.Ok():
             self.log.debug("Icon not OK")
             return
