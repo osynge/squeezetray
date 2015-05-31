@@ -86,7 +86,7 @@ class FrmNowPlaying(wx.Frame):
         self.Bind(wx.EVT_SCROLL, self.OnSliderScroll)
         
         
-        self.sizer.AddGrowableRow(8)
+        self.sizer.AddGrowableRow(7)
         
         self.sizer.AddGrowableCol(7)
         
