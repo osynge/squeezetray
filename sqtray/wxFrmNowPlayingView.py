@@ -30,9 +30,7 @@ class FrmNowPlaying(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnQuit, fitem)
         self.menubar.Append(self.fileMenu, '&File')
         self.SetMenuBar(self.menubar)
-        
-        
-        self.CreateStatusBar()
+
         self.sizer = wx.GridBagSizer(8, 8)
         self.Connect(-1, -1, EVT_RESULT_CONNECTED_ID, self.OnConnected)
         self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnConnected)
