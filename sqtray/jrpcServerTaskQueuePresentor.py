@@ -247,7 +247,7 @@ class pollSongStatus(poller):
                 if key == u'samplesize':
                     newSongInfo.samplesize.update(cleanList(metadata[key]))
                 if key == u'duration':
-                    newSongInfo.duration.update(cleanList(metadata[key]))
+                    newSongInfo.duration.update([metadata[key]])
                 if key == u'tracknum':
                     newSongInfo.tracknum.update(cleanList(metadata[key]))
                 if key == u'year':
@@ -256,8 +256,6 @@ class pollSongStatus(poller):
                     newSongInfo.album.update(cleanList(metadata[key]))
                 if key == u'album_id':
                     newSongInfo.album_id.update(cleanList(metadata[key]))
-                if key == u'duration':
-                    newSongInfo.duration.update(cleanIntList(metadata[key]))   
                 if key == u'type':
                     newSongInfo.type.update(cleanList(metadata[key]))
                 if key == u'tagversion':
