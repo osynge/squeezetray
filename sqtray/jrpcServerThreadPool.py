@@ -54,8 +54,11 @@ class SqueezeConnectionWorker(Thread):
             #self.log.debug(type(params))
             self.conn.request("POST", "/jsonrpc.js", unicode(params))
         except socket.error, E:
-            if hasattr(E,'errno'):
-                errorNumber = int(E.errno)
+            errorNumber = 99
+            try:
+                errorNumber = E.errno
+            except TypeError:
+                pass
             self.SocketErrNo.set(errorNumber)
             self.SocketErrMsg.set(unicode(E.strerror))
             self.conn = None

@@ -1,13 +1,28 @@
 squeezetray
 ===========
 
+Cross platform Graphical User Interface client for the Logitech squeeze box server.
+
+This application has been developed on debian with icewm and I have one report of soem one trying on ubuntu LTS.
+
+Features
+========
+
+ * Supports as many squeezebox's as available.
+ * Tray icon changes colour depending on state.
+ * Multithreaded request queue.
+ * Right click dynamic submenus on traybar.
+ * Cross platform code base. (but only tested on Linux so far)
+ 
+Depends on wxPython and a requires a Logitech Squeeze Box Server.
+
 Controls the Logitech squeeze box, with basic commands from the system tray. Based upon wxpython
 
 
 Getting the source
 =============
 
-Check ithe code out on the command line with:
+Check the code out on the command line with:
 
     git clone git://github.com/osynge/squeezetray.git
 
@@ -35,7 +50,7 @@ First generate the icons as PNG from SVG using the following script
        for size in $sizes
        do
            name=$(echo $item | sed -e 's/.*\///' | sed -e 's/\.svg.*$//')
-           cmd="convert  -background transparent  -resize ${size}x${size} $item  ${basedirect}/${name}_${size}x${size}.png"
+           cmd="convert  -strip -background transparent  -resize ${size}x${size} $item  ${basedirect}/${name}_${size}x${size}.png"
            $cmd
        done
     done
@@ -129,6 +144,26 @@ for some reason svg is not yet well supportied in python for this reason all svg
    convert  -background transparent  -resize 16x16 ${IMPUT}.svg  ${OUTPUT}.png
 
 Or you can script it with a little bash
+
+    #bin/bash
+    sizes="16 22 24 32 48 72 128"
+    basedirect="icons"
+    for item in `ls icons/*.svg`
+    do
+       for size in $sizes
+       do
+           name=$(echo $item | sed -e 's/.*\///' | sed -e 's/\.svg.*$//')
+           cmd="convert  -background transparent  -resize ${size}x${size} $item  ${basedirect}/${name}_${size}x${size}.png"
+           $cmd
+       done
+    done
+
+
+Building from Git
+=================
+
+
+First generate the icons as PNG from SVG using the following script
 
     #bin/bash
     sizes="16 22 24 32 48 72 128"

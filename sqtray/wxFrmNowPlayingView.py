@@ -29,6 +29,22 @@ class FrmNowPlaying(wx.Frame):
         
         self.Bind(wx.EVT_MENU, self.OnQuit, fitem)
         self.menubar.Append(self.fileMenu, '&File')
+        self.menuActions = wx.Menu()
+        self.MenuItemPlay = self.menuActions.Append(wx.NewId(), "Play",
+                                       "Start Playing")
+        self.MenuItemStop = self.menuActions.Append(wx.NewId(), "Stop",
+                                       "Stop Start")
+        self.MenuItemPause = self.menuActions.Append(wx.NewId(), "Pause",
+                                       "Pause, stop playing but keep place.")
+        self.MenuItemNext = self.menuActions.Append(wx.NewId(), "Next",
+                                       "Skip to next track in Playlist")
+        self.MenuItemLast = self.menuActions.Append(wx.NewId(), "Last",
+                                       "Play Previous Track on Playlist")
+        self.MenuItemRndSong = self.menuActions.Append(wx.NewId(), "RndSong",
+                                       "Randomise playlist and start playing")
+        
+        
+        self.menubar.Append(self.menuActions, '&Actions')
         self.SetMenuBar(self.menubar)
 
         self.sizer = wx.GridBagSizer(8, 8)

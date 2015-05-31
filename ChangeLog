@@ -1,4 +1,22 @@
+SqueezeWxTray-0.0.6
 
+ * Added an example dummy nose test.
+ * Improved documentation.
+
+SqueezeWxTray-0.0.4
+
+ * Fixed broken iCCP
+   - This produced an anoying bug, a pop up saying
+     "iCCP: known incorrect sRGB profile"
+ * Improved Documentation
+   - improvement to instructions for making icons
+ * set an error number of 99 on all errors serialising the error from a soucket request
+ * Added actions menu
+
+SqueezeWxTray-0.0.4
+
+ * Added missing icons
+ 
 SqueezeWxTray-0.0.3
     The code has changed dramaticlly. Much more professional but sadly much more bulky and lots to clean up.
     Now we have the thread pool not just taking requests from a thread safe queue and executing them but 

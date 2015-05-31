@@ -1,7 +1,21 @@
 from sqtray.__version__ import version
 from sys import version_info
 
-from distutils.core import setup
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+	try:
+            from distutils.core import setup
+	except ImportError:
+            from ez_setup import use_setuptools
+            use_setuptools()
+            from setuptools import setup, find_packages
+# we want this module for nosetests
+try:
+    import multiprocessing
+except ImportError:
+    # its not critical if this fails though.
+    pass
 
 Application = 'SqueezeWxTray'
 
@@ -13,9 +27,7 @@ application allows control of your squeezeboxes via mouse.""",
     author="O M Synge",
     author_email="owen.synge@desy.de",
     license='Apache License (2.0)',
-    install_requires=[
-       "wx",
-        ],
+    install_requires=[],
     url = 'https://github.com/hepix-virtualisation/hepixvmilsubscriber',
     packages = ['sqtray'],
     classifiers=[
@@ -104,5 +116,14 @@ application allows control of your squeezeboxes via mouse.""",
                 'icons/application_disconected_32x32.png',
                 'icons/application_disconected_48x48.png',
                 'icons/application_disconected_72x72.png',
-                ])]    
+                ])],
+    tests_require=[
+        'coverage >= 3.0',
+        'nose >= 1.1.0',
+        'mock',
+    ],
+    setup_requires=[
+        'nose',
+    ],
+    test_suite = 'nose.collector',
     )
