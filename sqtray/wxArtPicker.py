@@ -135,18 +135,6 @@ class MyArtProvider(wx.ArtProvider):
                 "media_skip_forward_32x32.png",
                 "media_eject_32x32.png"]),
             }
-    def ScanPathsOld(self,item):
-        if len (self.foundpaths) == 0:
-            self.log.warning("Icon paths not found")
-            for directory in self.path:
-                if os.path.isdir(directory):
-                    self.foundpaths
-        
-        for directory in self.foundpaths:
-            fullpath = joindirs()
-            if os.path.isfile(fullpath):
-                return fullpath
-        return None     
     def ScanPaths(self,item):
         
         if len (self.foundpaths) == 0:
@@ -159,14 +147,14 @@ class MyArtProvider(wx.ArtProvider):
             fullpath = joindirs()
             if os.path.isfile(fullpath):
                 return fullpath
-        return None      
-    def CreateBitmap(self, artid, client, size):   
+        return None
+
+    def CreateBitmap(self, artid, client, size):
         # You can do anything here you want, such as using the same   
         # image for any size, any client, etc., or using specific   
         # images for specific sizes, whatever...   
    
-        # See end of file for the image data   
-        self.log.debug("MyArtProvider: providing %s:%s at %s" %(artid, client, size))  
+        # See end of file for the image data
         if ((not isinstance(artid, str)) and (not isinstance(artid, unicode))):
             return 
         bmp = wx.NullBitmap   
@@ -212,3 +200,4 @@ class MyArtProvider(wx.ArtProvider):
             self.log.debug("MyArtProvider: providing %s:%s at %s" %(artid, client, size))   
         return bmp   
    
+
