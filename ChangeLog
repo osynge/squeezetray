@@ -1,3 +1,8 @@
+SqueezeWxTray-0.0.7
+
+ * Bug fixes for newer versions of logitech server
+ * bug fixes to work on debian stable on suse 13.2
+
 SqueezeWxTray-0.0.6
 
  * Added an example dummy nose test.
