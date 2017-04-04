@@ -8,7 +8,7 @@ import logging.config
 from sqtray.__version__ import version
 import os
 import wx
-from sqtray.wxArtPicker import MyArtProvider,getProgramFolder,directoryArray
+from sqtray.wxArtSvg import MyArtProvider,getProgramFolder,directoryArray
 
 def checkEnviromentLinuxUbuntuWhiteList():
     log = logging.getLogger("checkEnviromentLinuxUbuntuWhiteList")
@@ -99,7 +99,7 @@ def main():
     iconfolders = [getProgramFolder(),"icons","/usr/share/pixmaps/SqueezeWxTray"]
     da.path = iconfolders
     da.checkPathsExist()
-    ArtProvider = MyArtProvider(da) 
+    ArtProvider = MyArtProvider() 
     wx.ArtProvider.Push(ArtProvider)
     app.InitUI()
     app.MainLoop()

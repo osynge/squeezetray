@@ -18,7 +18,7 @@ import datetime
 from sqtray.wxTaskBarIcon import TaskBarIcon, TaskBarIconInteractor, timedelta2str
 from sqtray.wxTaskBarIconPresentor import TaskBarIconPresentor
 
-from sqtray.wxArtPicker import MyArtProvider
+from sqtray.wxArtSvg import MyArtProvider
 
 from sqtray.wxConfig import ConfigPresentor
 

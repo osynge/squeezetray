@@ -4,7 +4,7 @@ from sqtray.models import Observable
 import functools
 
 import logging
-from sqtray.wxArtPicker import MyArtProvider
+from sqtray.wxArtSvg import MyArtProvider
 from wxAppInteractor import GuiInteractor as TrayMenuInteractor
 def create_menu_item(menu, label, art,func):
     item = wx.MenuItem(menu, -1, label)
