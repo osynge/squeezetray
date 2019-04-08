@@ -13,7 +13,7 @@ class frmSettingsModelWatcher():
     def install(self, src, wxObject):
         self.messagesBlock()
         self.model = src
-        self.wxObject = wxObject 
+        self.wxObject = wxObject
         self.model.currentIconName.addCallback(self.onIconChange)
         self.model.tooltip.addCallback(self.onIconChange)
         self.model.host.addCallback(self.onIconChange)
@@ -87,10 +87,10 @@ class frmSettingsPresentor:
 
     def cbDoOnApply(self):
         for item in self.callbacks["on_apply"]:
-            item(self)    
+            item(self)
     def cbAddOnSave(self,func):
         self.callbacks['on_save'][func] = 1
 
     def cbDoOnSave(self):
         for item in self.callbacks["on_save"]:
-            item(self)    
+            item(self)
