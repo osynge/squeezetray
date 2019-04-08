@@ -7,13 +7,13 @@ class watcherPlayer:
         self.update()
     def disable(self):
         self._enabled = False
-    def autoEnable(self,value=None):
+    def autoEnable(self, value=None):
         activePlayer = self.NowPlayingMdl.nowPlayPlayerId.get()
         if activePlayer == self.player.name.get():
             self.enable()
         else:
             self.disable()
-    def install(self,Player,NowPlayingMdl):
+    def install(self, Player, NowPlayingMdl):
 
         self.disable()
         self.player = Player
@@ -33,19 +33,19 @@ class watcherPlayer:
         self.onCurrentTrackEnds()
 
 
-    def onTrackId(self,value = None):
+    def onTrackId(self, value = None):
         if not self._enabled:
             return
         newCurrentTrackId = self.player.CurrentTrackId.get()
         self.NowPlayingMdl.CurrentTrackId.update(newCurrentTrackId)
 
-    def onOperatingMode(self,value = None):
+    def onOperatingMode(self, value = None):
         if not self._enabled:
             return
         newOperatinMode = self.player.operationMode.get()
         self.NowPlayingMdl.CurrentPlayerStatus.update(newOperatinMode)
 
-    def onCurrentTrackEnds(self,value = None):
+    def onCurrentTrackEnds(self, value = None):
         if not self._enabled:
             return
         newCurrentTrackEnds = self.player.CurrentTrackEnds.get()
@@ -58,7 +58,7 @@ class SongWatcher:
         self.update()
     def disable(self):
         self._enabled = False
-    def install(self,Song,NowPlayingMdl):
+    def install(self, Song, NowPlayingMdl):
         self.disable()
         self.song = Song
         self.NowPlayingMdl = NowPlayingMdl
@@ -91,23 +91,23 @@ class SongWatcher:
         self.onArtist()
         self.onAlbum()
         self.onDuration()
-    def onTitle(self,value=None):
+    def onTitle(self, value=None):
         newCurrentTrackId = self.song.title.get()
         self.NowPlayingMdl.CurrentTrackName.update(newCurrentTrackId)
 
-    def onArtist(self,value=None):
+    def onArtist(self, value=None):
         newCurrentTrackId = self.song.artist.get()
         self.NowPlayingMdl.CurrentTrackArtist.update(newCurrentTrackId)
-    def onAlbum(self,value=None):
+    def onAlbum(self, value=None):
         newCurrentTrackId = self.song.album.get()
         self.NowPlayingMdl.CurrentTrackAlbum.update(newCurrentTrackId)
-    def onDuration(self,value=None):
+    def onDuration(self, value=None):
         newCurrentTrackId = self.song.duration.get()
         self.NowPlayingMdl.CurrentTrackDuration.update(newCurrentTrackId)
 class interactorNowPlaying:
     def __init__(self):
         self.installGui(None)
-    def installGui(self,gui):
+    def installGui(self, gui):
         self.view = gui
         if self.view == None:
             return
@@ -118,19 +118,19 @@ class interactorNowPlaying:
         self.view.BtnPlay.Bind(wx.EVT_BUTTON, self.OnCbPlay)
         self.view.BtnStop.Bind(wx.EVT_BUTTON, self.OnCbStop)
 
-        self.view.Bind(wx.EVT_MENU, self.OnShowSettings,id=self.view.MenuItemSettings.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnShowSettings, id=self.view.MenuItemSettings.GetId() )
 
-        self.view.Bind(wx.EVT_MENU, self.OnCbPause,id=self.view.MenuItemPause.GetId() )
-        self.view.Bind(wx.EVT_MENU, self.OnCbTrackSeekForward,id=self.view.MenuItemNext.GetId() )
-        self.view.Bind(wx.EVT_MENU, self.OnCbTrackSeekBackward,id=self.view.MenuItemLast.GetId() )
-        self.view.Bind(wx.EVT_MENU, self.OnCbPlay,id=self.view.MenuItemPlay.GetId() )
-        self.view.Bind(wx.EVT_MENU, self.OnCbStop,id=self.view.MenuItemStop.GetId() )
-        self.view.Bind(wx.EVT_MENU, self.OnCbRandomSong,id=self.view.MenuItemRndSong.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbPause, id=self.view.MenuItemPause.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbTrackSeekForward, id=self.view.MenuItemNext.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbTrackSeekBackward, id=self.view.MenuItemLast.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbPlay, id=self.view.MenuItemPlay.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbStop, id=self.view.MenuItemStop.GetId() )
+        self.view.Bind(wx.EVT_MENU, self.OnCbRandomSong, id=self.view.MenuItemRndSong.GetId() )
 
 
         self.updateView()
         self.OnUpdateFrmIcon()
-    def install(self,mdlNowPlaying,mainInteractor):
+    def install(self, mdlNowPlaying, mainInteractor):
         self.mdlNowPlaying = mdlNowPlaying
         self.watchers = {}
         self.watchersSong = {}
@@ -154,7 +154,7 @@ class interactorNowPlaying:
             self.onAvailablePlayer(player)
         self.updateView()
 
-    def UpdateIcon(self,event = None):
+    def UpdateIcon(self, event = None):
         if self.view == None:
             return
         connected = self.mdlNowPlaying.serverConnected.get()
@@ -174,32 +174,32 @@ class interactorNowPlaying:
                 iconName = mapping[playerStatus]
         self.mdlNowPlaying.frmCurrentIconName.update(iconName)
 
-    def OnConnected(self,event = None):
+    def OnConnected(self, event = None):
         self.UpdateIcon()
 
 
-    def OnUpdateFrmIcon(self,event = None):
+    def OnUpdateFrmIcon(self, event = None):
         if self.view == None:
             return
         iconName = self.mdlNowPlaying.frmCurrentIconName.get()
         if iconName == None:
             return
-        icon = wx.ArtProvider.GetIcon(iconName, wx.ART_TOOLBAR, (16,16))
+        icon = wx.ArtProvider.GetIcon(iconName, wx.ART_TOOLBAR, (16, 16))
         self.view.SetIcon(icon)
 
 
-    def OnShowSettings(self,event):
+    def OnShowSettings(self, event):
         self.mainInteractor.doCbOnSettings(event)
-    def OnCbPlay(self,event):
+    def OnCbPlay(self, event):
         currentPlayer = self.mdlNowPlaying.nowPlayPlayerId.get()
         if currentPlayer != None:
-            self.mainInteractor.doCbOnPlay(event,currentPlayer)
-    def OnCbStop(self,event):
+            self.mainInteractor.doCbOnPlay(event, currentPlayer)
+    def OnCbStop(self, event):
         currentPlayer = self.mdlNowPlaying.nowPlayPlayerId.get()
         if currentPlayer != None:
-            self.mainInteractor.doCbOnStop(event,currentPlayer)
+            self.mainInteractor.doCbOnStop(event, currentPlayer)
 
-    def OnCbSelect(self,event):
+    def OnCbSelect(self, event):
         value = event.GetString()
         if not value in self.mdlNowPlaying.availablePlayer.keys():
             return
@@ -207,25 +207,25 @@ class interactorNowPlaying:
         self.mdlNowPlaying.nowPlayPlayerId.update(value)
 
         self.updatePlayerStatus()
-    def OnCbPause(self,event):
+    def OnCbPause(self, event):
         currentPlayer = self.mdlNowPlaying.nowPlayPlayerId.get()
         if currentPlayer != None:
-            self.mainInteractor.doCbOnPause(event,currentPlayer)
-    def OnCbTrackSeekForward(self,event):
+            self.mainInteractor.doCbOnPause(event, currentPlayer)
+    def OnCbTrackSeekForward(self, event):
         currentPlayer = self.mdlNowPlaying.nowPlayPlayerId.get()
         if currentPlayer != None:
-            self.mainInteractor.doCbOnSeekForward(event,currentPlayer)
+            self.mainInteractor.doCbOnSeekForward(event, currentPlayer)
 
-    def OnCbTrackSeekBackward(self,event):
+    def OnCbTrackSeekBackward(self, event):
         currentPlayer = self.mdlNowPlaying.nowPlayPlayerId.get()
         if currentPlayer != None:
-            self.mainInteractor.doCbOnSeekBackwards(event,currentPlayer)
+            self.mainInteractor.doCbOnSeekBackwards(event, currentPlayer)
 
 
-    def OnCbRandomSong (self,event):
+    def OnCbRandomSong (self, event):
         currentPlayer = self.mdlNowPlaying.nowPlayPlayerId.get()
         if currentPlayer != None:
-            self.mainInteractor.doCbOnRandomSongs(event,currentPlayer)
+            self.mainInteractor.doCbOnRandomSongs(event, currentPlayer)
 
 
     def updateView(self):
@@ -253,19 +253,19 @@ class interactorNowPlaying:
         #self.OnConnected()
 
 
-    def onOperatingMode(self,key):
+    def onOperatingMode(self, key):
         self.log.error("onOperatingMode=" % (self.watchingPlayer.get()))
 
-    def onCurrentTrackEnds(self,key):
+    def onCurrentTrackEnds(self, key):
         self.log.error("onCurrentTrackEnds=" % (self.watchingPlayer.get()))
 
-    def onOperatingMode(self,operationMode):
+    def onOperatingMode(self, operationMode):
         self.log.error("onTrackId=" % (self.watchingPlayer.get()))
         playerId = self.mdlNowPlaying.nowPlayPlayerId.get()
         self.mdlNowPlaying.operationMode.update(operationMode)
 
 
-    def onAvailablePlayer(self,key):
+    def onAvailablePlayer(self, key):
         added = False
         if not key in self.mdlNowPlaying.availablePlayer.keys():
             added = True
@@ -284,7 +284,7 @@ class interactorNowPlaying:
         self.updateCombo()
 
 
-    def updateCombo(self,key = None):
+    def updateCombo(self, key = None):
         if self.view == None:
             return
         availableKeys = self.mdlNowPlaying.availablePlayer.keys()
@@ -307,7 +307,7 @@ class interactorNowPlaying:
         if selectedplayer != None:
             if selectedplayer in self.view.cbPlayer.Items:
                 self.view.cbPlayer.SetValue(selectedplayer)
-    def updatePlayerId(self,value):
+    def updatePlayerId(self, value):
         self.UpdateIcon()
         self.updateView()
         currentKey = self.mdlNowPlaying.nowPlayPlayerId.get()
@@ -338,7 +338,7 @@ class interactorNowPlaying:
             return
 
 
-    def updateTrackId(self,TrackId):
+    def updateTrackId(self, TrackId):
 
         currentWatching = self.mdlNowPlaying.CurrentTrackId.get()
 
@@ -346,9 +346,9 @@ class interactorNowPlaying:
             return
 
         self.songWatch = SongWatcher()
-        self.songWatch.install(self.mdlNowPlaying.availableSong[TrackId],self.mdlNowPlaying)
+        self.songWatch.install(self.mdlNowPlaying.availableSong[TrackId], self.mdlNowPlaying)
 
-    def updateTrackName(self,event = None):
+    def updateTrackName(self, event = None):
         if self.view == None:
             return
         displayText = ''
@@ -359,7 +359,7 @@ class interactorNowPlaying:
         for track in TrackName:
             displayText += track
         self.view.tcHost.SetValue(displayText)
-    def updateTrackArtist(self,event= None):
+    def updateTrackArtist(self, event= None):
         if self.view == None:
             return
         displayText = ''
@@ -372,7 +372,7 @@ class interactorNowPlaying:
         oldValue = self.view.tbArtist.GetValue()
         if oldValue != displayText:
             self.view.tbArtist.SetValue(displayText)
-    def updateTrackAlbum(self,event= None):
+    def updateTrackAlbum(self, event= None):
         if self.view == None:
             return
         displayText = ''
@@ -383,7 +383,7 @@ class interactorNowPlaying:
         for track in TrackAlbum:
             displayText += track
         self.view.tbAlbum.SetValue(displayText)
-    def updateTrackEnds(self,event= None):
+    def updateTrackEnds(self, event= None):
         if self.view == None:
             return
         displayText = ''
@@ -403,7 +403,7 @@ class interactorNowPlaying:
         if sliderpos > 10000:
             sliderpos = 10000
         self.view.slider.SetValue(sliderpos)
-    def updatePlayerStatus(self,event= None):
+    def updatePlayerStatus(self, event= None):
         self.UpdateIcon()
         if self.view == None:
             return
