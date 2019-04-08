@@ -32,12 +32,12 @@ class TaskBarIcon(wx.TaskBarIcon):
         """Callback items shoudl return Menu objects"""
         if 'CreatePopupMenu' in self.CallBacks:
             self.CallBacks['CreatePopupMenu'].append(funct)
-        
+
     def Show(self):
-        
+
         self.app.squeezeConCtrl.RecConnectionOnline()
         super(TaskBarIcon, self).Show()        
-        
+
     def GetSqueezeServerPlayer(self):
         if not hasattr(self,'model'):
             return None
@@ -49,12 +49,12 @@ class TaskBarIcon(wx.TaskBarIcon):
         if (self.IconStatus == status) and (self.IconSize == size):
             self.log.debug("Icon unchanged")
             return
-        
+
         self.log.debug("Icon changed from '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))
         self.log.debug("Icon changed to '%s:%s'" % (status,size))
         self.IconStatus = status
         self.IconSize = size
-        
+
         #self.icon = wxIcons.trayDefault.getIcon()
         if status == None:
             self.log.error("status == None")
@@ -69,7 +69,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         if hasattr(self,'ToolTipText'):
             CurrentToolTip = self.ToolTipText
         self.SetIcon(self.icon, CurrentToolTip)
-        
+
     def set_toolTip(self, tooltip):
         if hasattr(self,'ToolTipText'):
             if self.ToolTipText == tooltip:
@@ -80,12 +80,12 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.ToolTipText = unicode(tooltip)
     def CreatePopupMenu(self):
         result = None
-        
+
         if "CreatePopupMenu" in self.CallBacks:
             resultSet = {}
             for item in self.CallBacks["CreatePopupMenu"]:
                 #print "called"
-                
+
                 rc = item()
                 if rc == None:
                     continue
@@ -93,11 +93,11 @@ class TaskBarIcon(wx.TaskBarIcon):
                 #print "rc=%s" % (rc)
                 if rc != None:
                     result = rc
-            
-            
+
+
         self.log.debug('No menu? result = %s' % (result))
         return result
-        
+
 
 class TaskBarIconInteractor(object):
     """ http://wiki.wxpython.org/ModelViewPresenter inspired """
@@ -116,7 +116,7 @@ class TaskBarIconInteractor(object):
         self.view.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnPlayers)
         self.view.Connect(-1, -1, EVT_RESULT_CURRENT_TRACK_ID, self.OnTrack)
         self.view.CbAddCreatePopupMenu(self.CreatePopupMenu)
-        
+
     def on_move(self, evt):
         self.presenter.on_move()
     def on_left_down(self, evt):
@@ -139,7 +139,7 @@ class TaskBarIconInteractor(object):
         self.presenter.OnTrack()
     def CreatePopupMenu(self):
         return self.presenter.SelectPopupMenu()
-        
+
     def on_settings(self, evt):
         #print "asdasdaSD"
         self.presenter.on_settings()
@@ -151,13 +151,13 @@ class TaskBarIconUpdateInteractor(object):
         self.model = model
         self.view = view
         self.model.tooltip.addCallback(self._OnToolTipChange)
-        
+
     def _OnToolTipChange(self,event):
         self.view.set_toolTip(ToolTip)
-        
+
         self.log.warn("dsfsf")
-    
-        
+
+
 
 def timedelta2str(timedeltainst):
     delta = abs(timedeltainst)
