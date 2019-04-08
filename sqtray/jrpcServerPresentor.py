@@ -36,7 +36,7 @@ class squeezeConPresentor:
         #self.internalUpdator.Install(self.internalModel)
         self.connectionPool = connectionPool
         self.threadpoolPresentor = jrpcServerTaskQueuePresentor(self.model,
-            self.connectionPool)
+                                                                self.connectionPool)
 
 
     def requestUpdateModel(self):
@@ -55,9 +55,7 @@ class squeezeConPresentor:
         msg = {
             "id": playerIndex,
             "method": "slim.request",
-            "params": [ playerId,
-                    ["pause"]
-                ]
+            "params": [ playerId, ["pause"]]
         }
         msg = json.dumps(msg, sort_keys=True, indent=4)
         reponce = self.connectionPool.SendMessage(None, msg)
@@ -72,9 +70,7 @@ class squeezeConPresentor:
         msg = {
             "id" : playerIndex,
             "method": "slim.request",
-            "params": [ playerId,
-                    ["play"]
-                ]
+            "params": [ playerId, ["play"]]
         }
         msg = json.dumps(msg, sort_keys=True, indent=4)
         reponce = self.connectionPool.SendMessage(None, msg)
@@ -89,9 +85,7 @@ class squeezeConPresentor:
         msg = {
             "id" : playerIndex,
             "method": "slim.request",
-            "params": [ playerId,
-                    ["stop"]
-                ]
+            "params": [ playerId, ["stop"]]
         }
         msg = json.dumps(msg, sort_keys=True, indent=4)
         reponce = self.connectionPool.SendMessage(None, msg)
@@ -109,9 +103,7 @@ class squeezeConPresentor:
         msg = {
             "id": playerIndex,
             "method": "slim.request",
-            "params": [ playerId,
-                    ["playlist", "index", prefix + unicode(Count)]
-                ]
+            "params": [ playerId, ["playlist", "index", prefix + unicode(Count)]]
         }
         msg = json.dumps(msg, sort_keys=True, indent=4)
         reponce = self.connectionPool.SendMessage(None, msg)
@@ -126,9 +118,7 @@ class squeezeConPresentor:
         msg = {
             "id": playerIndex,
             "method": "slim.request",
-            "params": [ playerId,
-                    ["randomplay", 'tracks']
-                ]
+            "params": [ playerId, ["randomplay", 'tracks']]
             }
         msg = json.dumps(msg, sort_keys=True, indent=4)
         reponce = self.connectionPool.SendMessage(None, msg)
