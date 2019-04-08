@@ -23,7 +23,7 @@ class frmSettingsModelWatcher():
         self.messagesUnblock()
 
 
-    def onIconChange(self,value):
+    def onIconChange(self, value):
         if self.block:
             return
         evt = SomeNewEvent(attr1="on_connected")
@@ -37,7 +37,7 @@ class frmSettingsModelWatcher():
 
 
 class frmSettingsPresentor:
-    def __init__(self,model):
+    def __init__(self, model):
         self.interactor = frmSettingsModelWatcher()
         self.callbacks = {
             "on_settings" : {},
@@ -61,34 +61,34 @@ class frmSettingsPresentor:
         self.Example.cbAddOnSave(self.OnSave)
         self.Example.cbAddOnCancel(self.OnCancel)
 
-        self.interactor.install(self.GuiModel,self.Example)
+        self.interactor.install(self.GuiModel, self.Example)
         self.Example.Show()
 
         self.settingsOpen = True
 
-    def SettingClose(self,evnt):
+    def SettingClose(self, evnt):
         self.settingsOpen = False
         if self.Example != None:
             self.Example.Destroy()
         self.Example = None
 
-    def OnCancel(self,iconName):
+    def OnCancel(self, iconName):
         self.SettingClose(None)
 
-    def OnSave(self,iconName):
+    def OnSave(self, iconName):
         self.cbDoOnSave()
 
-    def OnApply(self,iconName):
+    def OnApply(self, iconName):
         self.cbDoOnApply()
 
 
-    def cbAddOnApply(self,func):
+    def cbAddOnApply(self, func):
         self.callbacks['on_apply'][func] = 1
 
     def cbDoOnApply(self):
         for item in self.callbacks["on_apply"]:
             item(self)
-    def cbAddOnSave(self,func):
+    def cbAddOnSave(self, func):
         self.callbacks['on_save'][func] = 1
 
     def cbDoOnSave(self):
