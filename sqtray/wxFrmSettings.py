@@ -136,7 +136,6 @@ class FrmSettings(wx.Frame):
     def OnApply(self, event):
         newHost = self.tcHost.GetValue()
         self.model.host.update(newHost)
-            #print 'donehostchanged',newHost
         newPort = int(self.scPort.GetValue())
         oldPort = self.model.port.get()
         self.model.port.update(newPort)
