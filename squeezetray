@@ -99,7 +99,7 @@ def main():
     iconfolders = [getProgramFolder(),"icons","/usr/share/pixmaps/SqueezeWxTray"]
     da.path = iconfolders
     da.checkPathsExist()
-    ArtProvider = MyArtProvider() 
+    ArtProvider = MyArtProvider(da)
     wx.ArtProvider.Push(ArtProvider)
     app.InitUI()
     app.MainLoop()
