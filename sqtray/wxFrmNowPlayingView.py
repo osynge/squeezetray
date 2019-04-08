@@ -133,13 +133,13 @@ class FrmNowPlaying(wx.Frame):
 
     def cbDoOnPause(self):
         for item in self.callbacks["on_save"]:
-            item(self)    
+            item(self)
     def cbAddOnQuit(self,func):
         self.callbacks['on_quit'][func] = 1
 
     def cbDoOnQuit(self):
         for item in self.callbacks["on_quit"]:
-            item(self)    
+            item(self)
 
     def OnConnected(self,event):
         self.updateFromModel()
