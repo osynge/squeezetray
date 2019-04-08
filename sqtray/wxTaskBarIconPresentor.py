@@ -42,10 +42,8 @@ class TaskBarIconPresentor(object):
     def doCbPopupMenu(self):
         return self.doCbAbstract("on_popupMenu")
 
-
     def doCbExit(self):
         return self.doCbAbstract("on_exit")
-
 
     def _OnIconChange(self, IconName):
         self.View.set_icon(IconName, (16, 16))
@@ -60,8 +58,6 @@ class TaskBarIconPresentor(object):
 
     def cbAddRequestPopUpMenu(self, func):
         self.callbacks['on_popupMenu'][func] = 1
-
-
 
     def cbAddOnSettings(self, func):
         self.callbacks['on_settings'].append(func)
@@ -83,7 +79,6 @@ class TaskBarIconPresentor(object):
         #self.View.set_toolTip(newToolTip)
         return newToolTip
 
-
     def OnPlayers(self):
         #print "OnPlayers(=%s)" % (Event)
         self.UpdateToolTip()
@@ -100,10 +95,7 @@ class TaskBarIconPresentor(object):
             if rc == None:
                 continue
             return rc
-
         self.log.debug( "CreatePopupMenu=None")
-
-
         return None
 
     def on_move(self):
@@ -114,7 +106,6 @@ class TaskBarIconPresentor(object):
     def on_settings(self):
         for item in self.callbacks["on_settings"]:
             item()
-
 
     def playerChanged1 (self, value):
         if value != self.Model.GuiPlayer.get():
@@ -146,7 +137,6 @@ class TaskBarIconPresentor(object):
 
     def on_click(self):
         pass
-
 
     def on_left_down(self):
         #print 'Tray icon was left-clicked.'
