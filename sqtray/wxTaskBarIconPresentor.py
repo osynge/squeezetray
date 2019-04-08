@@ -11,7 +11,7 @@ class TaskBarIconPresentor(object):
         self.log = logging.getLogger("TaskBarIconPresentor")
         self.Model = Model
         self.View = View
-        interactor.install(self,self.View)
+        interactor.install(self, self.View)
         #self.tbupdator =  TaskBarIconUpdateInteractor()
         #self.tbupdator.install(self.Model, self.View)
         self.currentPlayer = Observable(None)
@@ -27,7 +27,7 @@ class TaskBarIconPresentor(object):
         self.Model.currentIconName.addCallback(self._OnIconChange)
         self.Model.tooltip.addCallback(self._OnToolTipChange)
 
-    def doCbAbstract(self,indexer):
+    def doCbAbstract(self, indexer):
 
         results = {}
         if not indexer in self.callbacks.keys():
@@ -48,27 +48,27 @@ class TaskBarIconPresentor(object):
         return self.doCbAbstract("on_exit")
 
 
-    def _OnIconChange(self,IconName):
-        self.View.set_icon(IconName,(16,16))
+    def _OnIconChange(self, IconName):
+        self.View.set_icon(IconName, (16, 16))
         #self.doCbModelUpdate()
 
-    def _OnToolTipChange(self,ToolTip):
+    def _OnToolTipChange(self, ToolTip):
         self.log.debug("_OnToolTipChange")
         self.View.set_toolTip(ToolTip)
 
-    def cbAddReqMdlUpdate(self,func):
+    def cbAddReqMdlUpdate(self, func):
         self.callbacks['on_modelUpdate'][func] = 1
-    def cbAddRequestPopUpMenu(self,func):
+    def cbAddRequestPopUpMenu(self, func):
         self.callbacks['on_popupMenu'][func] = 1
 
 
 
-    def cbAddOnSettings(self,func):
+    def cbAddOnSettings(self, func):
         self.callbacks['on_settings'].append(func)
-    def cbAddOnToolTipUpdate(self,func):
+    def cbAddOnToolTipUpdate(self, func):
         self.callbacks['on_settings'].append(func)
 
-    def cbAddOnExit(self,func):
+    def cbAddOnExit(self, func):
         self.callbacks['on_exit'].append(func)
     def OnTrack(self):
         self.UpdateToolTip()
@@ -84,7 +84,7 @@ class TaskBarIconPresentor(object):
         #print "OnPlayers(=%s)" % (Event)
         self.UpdateToolTip()
         #self.View.set_icon("ART_APPLICATION_STATUS_DISCONECTED",(16,16))
-        self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
+        self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED", (16, 16))
     def SelectPopupMenu(self):
         self.log.debug( "CreatePopupMenu")
         resultset = self.doCbPopupMenu()
@@ -110,7 +110,7 @@ class TaskBarIconPresentor(object):
             item()
 
 
-    def playerChanged1 (self,value):
+    def playerChanged1 (self, value):
         if value != self.Model.GuiPlayer.get():
             self.Model.GuiPlayer.set(value)
             #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
@@ -144,6 +144,6 @@ class TaskBarIconPresentor(object):
     def on_left_dclick(self):
         #print 'Tray icon was on_left_dclick-clicked.'
         pass
-    def setIcon(self,IconName):
+    def setIcon(self, IconName):
         #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
-        self.View.set_icon(IconName,(16,16))
+        self.View.set_icon(IconName, (16, 16))
