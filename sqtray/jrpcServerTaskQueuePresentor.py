@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 class poller:
-    def __init__(self,model):
+    def __init__(self, model):
         self.log = logging.getLogger("poller")
         self.model = model
         self.Pollfrequancy = Observable(1)
@@ -30,10 +30,10 @@ class poller:
         if now > lastPolled:
             return True
         return False
-    def handleResponce(self,responce,ding,dong,foo):
+    def handleResponce(self, responce, ding, dong, foo):
         self.log.error('Programing error this methd shoudl be overridern')
 
-    def wrapOutput(self,listcommands):
+    def wrapOutput(self, listcommands):
         now = datetime.datetime.now()
         pollfrequancy = self.Pollfrequancy.get()
         next = now + datetime.timedelta(seconds=pollfrequancy)
@@ -55,8 +55,8 @@ class poller:
         return output
 
 class pollOnline(poller):
-    def __init__(self,model):
-        poller.__init__(self,model)
+    def __init__(self, model):
+        poller.__init__(self, model)
         self.Pollfrequancy.update(1)
         self.log = logging.getLogger('poller.pollOnline')
 
@@ -68,12 +68,12 @@ class pollOnline(poller):
         }
         if online == True:
             self.Pollfrequancy.update(60)
-            return self.wrapOutput([(500,msg)])
+            return self.wrapOutput([(500, msg)])
         else:
             self.Pollfrequancy.update(1)
-            return self.wrapOutput([(-10,msg)])
+            return self.wrapOutput([(-10, msg)])
 
-    def handleResponce(self,responce,ding,dong,foo):
+    def handleResponce(self, responce, ding, dong, foo):
         noPlayers = int(responce["result"]["_count"])
         self.noPlayers = noPlayers
         #print "self.noPlayers=%s" % ( noPlayers )
@@ -84,11 +84,11 @@ class pollOnline(poller):
 
 
 class pollPlayerName(poller):
-    def __init__(self,model):
-        poller.__init__(self,model)
+    def __init__(self, model):
+        poller.__init__(self, model)
         self.model.connected.addCallback(self.onConnected)
         self.log = logging.getLogger('poller.pollPlayerName')
-    def onConnected(self,event):
+    def onConnected(self, event):
         self.log.debug('sheduling update')
         now = datetime.datetime.now()
         self.PollNext.update(now)
@@ -110,20 +110,20 @@ class pollPlayerName(poller):
                 #print "would make a name request"
                 msg = {
                     "method":"slim.request",
-                    "params": [ '-', [ 'player', 'id', index ,"?"] ]
+                    "params": [ '-', [ 'player', 'id', index , "?"] ]
                 }
                 secondDelay += secondInterval
-                commands.append([secondDelay,msg])
+                commands.append([secondDelay, msg])
 
                 #self.view1.sendMessage([self.view1.OnPlayerIndex,msg])
             if name == None:
                 #print "would make a name request"
                 msg = {
                     "method":"slim.request",
-                    "params": [ '-', [ 'player', 'name', index ,"?"] ]
+                    "params": [ '-', [ 'player', 'name', index, "?"] ]
                 }
                 secondDelay += secondInterval
-                commands.append([secondDelay,msg])
+                commands.append([secondDelay, msg])
         if len(commands) > 0:
             self.Pollfrequancy.update(4)
             output = self.wrapOutput( commands)
@@ -133,23 +133,23 @@ class pollPlayerName(poller):
         for index in range(len(self.model.playerList)):
             msg = {
                 "method":"slim.request",
-                "params": [ '-', [ 'player', 'id', index ,"?"] ]
+                "params": [ '-', [ 'player', 'id', index, "?"] ]
             }
 
             secondDelay += secondInterval
-            commands.append([secondDelay,msg])
+            commands.append([secondDelay, msg])
             #print "would make a name request"
             msg = {
                 "method":"slim.request",
-                "params": [ '-', [ 'player', 'name', index ,"?"] ]
+                "params": [ '-', [ 'player', 'name', index, "?"] ]
             }
             secondDelay += secondInterval
-            commands.append([secondDelay,msg])
+            commands.append([secondDelay, msg])
         self.Pollfrequancy.update(60)
         output = self.wrapOutput( commands)
         #self.log.debug("msg=%s" % (output))
         return output
-    def handleResponce(self,responce,ding,dong,foo):
+    def handleResponce(self, responce, ding, dong, foo):
         playerIndex = int(responce['params'][1][2])
         if "_name" in responce["result"].keys():
             playerName = responce["result"]["_name"]
@@ -160,8 +160,8 @@ class pollPlayerName(poller):
 
 
 class pollSongStatus(poller):
-    def __init__(self,model):
-        poller.__init__(self,model)
+    def __init__(self, model):
+        poller.__init__(self, model)
         self.log = logging.getLogger('poller.pollSongStatus')
     def GetNextDue(self):
         online = self.model.connected.get()
@@ -185,17 +185,17 @@ class pollSongStatus(poller):
             msg = {
                         "method":"slim.request",
                         "params": ["-",
-                            ['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]
+                            ['songinfo', '0', '100', 'track_id:%s'  % (trackId), "tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]
                     }
 
             secondDelay += secondInterval
-            commands.append([secondDelay,msg])
+            commands.append([secondDelay, msg])
         if len(commands) > 0:
             self.Pollfrequancy.update(5)
         output = self.wrapOutput( commands)
         #self.log.debug("msg=%s" % (output))
         return output
-    def handleResponce(self,responce,ding,dong,foo):
+    def handleResponce(self, responce, ding, dong, foo):
         #print "OnSongInfo",unicode(json.dumps(responce, indent=4))
         now = datetime.datetime.now()
         #print "OnPlayerStatus:",datetime.datetime.now()
@@ -286,8 +286,8 @@ class pollSongStatus(poller):
             self.model.SongCache[identifier] = newSongInfo
 
 class pollPlayerStatus(poller):
-    def __init__(self,model,playerIndex):
-        poller.__init__(self,model)
+    def __init__(self, model, playerIndex):
+        poller.__init__(self, model)
         self.log = logging.getLogger('poller.pollPlayerStatus2')
         self.playerIndex = playerIndex
     def GetNextDue(self):
@@ -324,17 +324,17 @@ class pollPlayerStatus(poller):
         msg = {"id":self.playerIndex,
                 "method":"slim.request",
                 "params":[identifier ,
-                        ["status","-","4","tags:playlist_id"]
+                        ["status", "-", "4", "tags:playlist_id"]
                     ]
             }
         self.Pollfrequancy.update(newUpdateFrequancy)
 
-        output = self.wrapOutput([(10,msg)])
+        output = self.wrapOutput([(10, msg)])
         #print newUpdateFrequancy,currentMode,identifier
         return output
 
 
-    def handleResponce(self,responce,ding,dong,foo):
+    def handleResponce(self, responce, ding, dong, foo):
         #print json.dumps(responce, sort_keys=True, indent=4)
         playerId = responce['params'][0]
         playerMode = responce['result']['mode']
@@ -426,7 +426,7 @@ class pollPlayerStatus(poller):
 
 
 class pollholder:
-    def __init__(self, model,view):
+    def __init__(self, model, view):
         self.log = logging.getLogger("pollholder")
 
         self.model = model
@@ -453,11 +453,11 @@ class pollholder:
             for ting in duelist:
                 dueOn = ting['dueDate']
                 msg = ting['msg']
-                self.view.update(dueOn, msg,item)
-    def OnPlayersCountChange(self,value):
+                self.view.update(dueOn, msg, item)
+    def OnPlayersCountChange(self, value):
         currentNumber = len(self.pollsPalyer)
         while ( currentNumber < value):
-            newpoller = pollPlayerStatus(self.model,currentNumber)
+            newpoller = pollPlayerStatus(self.model, currentNumber)
             self.pollsPalyer.append(newpoller)
             currentNumber += 1
         currentNumber = len(self.pollsPalyer)
@@ -468,11 +468,11 @@ class pollholder:
 
 
 class schedular:
-    def __init__(self,threadpool):
+    def __init__(self, threadpool):
         self.jobsById = {}
         self.log = logging.getLogger("schedular")
         self.threadpool = threadpool
-    def update(self,duedate,message,poller):
+    def update(self, duedate, message, poller):
         msghash = message.__hash__()
         if msghash in self.jobsById.keys():
             if duedate < self.jobsById[msghash]['duedate']:
@@ -499,19 +499,19 @@ class schedular:
                 results[key] =  metadata
                 #print metadata
                 self.threadpool.QueueProcessAddMessage(metadata['poller'].handleResponce,
-                    metadata['msg'],[],{}
+                    metadata['msg'], [], {}
                     )
 
 
         return results
 class jrpcServerTaskQueuePresentor():
 
-    def __init__(self,model, threadpool):
+    def __init__(self, model, threadpool):
         self.log = logging.getLogger("jrpcServerTaskQueuePresentor")
         self.model = model
         self.threadpool = threadpool
         self.scheduler = schedular(self.threadpool)
-        self.pollholder = pollholder(self.model,self.scheduler)
+        self.pollholder = pollholder(self.model, self.scheduler)
 
 
     def QueueProcess(self):
