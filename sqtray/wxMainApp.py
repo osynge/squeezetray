@@ -37,9 +37,9 @@ from wxFrmNowPlayingView import FrmNowPlaying
 from modelsWxFrmNowPlaying import mdlFrmNowPlaying
 
 def StoreConfig(FilePath,squeezeConMdle):
-    cfg = wx.FileConfig(appName="ApplicationName", 
-                                vendorName="VendorName", 
-                                localFilename=FilePath, 
+    cfg = wx.FileConfig(appName="ApplicationName",
+                                vendorName="VendorName",
+                                localFilename=FilePath,
                                 style=wx.CONFIG_USE_LOCAL_FILE)
     cfg.Write("squeezeServerHost", squeezeConMdle.host.get())
 
@@ -60,7 +60,7 @@ SomeNewCommandEvent, EVT_SOME_NEW_COMMAND_EVENT = wx.lib.newevent.NewCommandEven
 class interactorWxUpdate():
     def install(self, src, wxObject):
         self.src = src
-        self.wxObject = wxObject 
+        self.wxObject = wxObject
         self.wxObject.Bind(EVT_SOME_NEW_EVENT, self.wxObject.EventRevived)
         self.src.connected.addCallback(self.on_connected)
         self.src.CbPlayersAvailableAdd(self.on_players)
@@ -94,7 +94,7 @@ class viewWxToolBarSrc():
         self.iconNameCache = Observable(None)
         self.knowledge = {}
         self.log = logging.getLogger("viewWxToolBarSrc")
-    def install(self, src):        
+    def install(self, src):
         self.src = src
         self.src.connected.addCallback(self.on_connected)
         #self.src.Players.addCallback(self.on_connected)
@@ -168,7 +168,7 @@ class viewWxToolBarSrc():
         self.updateNeeded = True
         #self.availablePlayers
         foundPlayers = set()
-        for index in  range(len(self.src.playerList)):            
+        for index in  range(len(self.src.playerList)):
             playerName = self.src.playerList[index].name.get()
 
             self.src.playerList[index].name.addCallback(self.on_player_name)
@@ -267,13 +267,13 @@ class mainApp(wx.App):
     def __init__(self):
         super(mainApp, self).__init__()
         self.log = logging.getLogger("mainApp")
-        # Used to decide the connection string  
+        # Used to decide the connection string
         self.ModelConPool = squeezeConMdle()
         self.ModelGuiThread = taskBarMdle()
         self.ModelFrmSettings = mdlFrmSettings()
         self.ModelFrmNowPlaying = mdlFrmNowPlaying()
 
-    def InitUI(self):    
+    def InitUI(self):
         self.ConCtrlInteractor = ConCtrlInteractor()
         self.ConCtrlInteractor.install(self.ModelFrmSettings,self.ModelConPool)
         self.FrmNowPlayingInteractor = FrmNowPlayingInteractor()
@@ -292,11 +292,11 @@ class mainApp(wx.App):
 
 
         #self.tb = TaskBarPresntor(self.ModelGuiThread)
-        self.cfg = wx.FileConfig(appName="ApplicationName", 
-                                    vendorName="VendorName", 
-                                    localFilename=".squeezetray.cfg", 
+        self.cfg = wx.FileConfig(appName="ApplicationName",
+                                    vendorName="VendorName",
+                                    localFilename=".squeezetray.cfg",
                                     style=wx.CONFIG_USE_LOCAL_FILE)
-        # Now we can set up forms using the art provider     
+        # Now we can set up forms using the art provider
         self.tb = TaskBarIcon(self.ModelGuiThread)
         self.tb.Bind(wx.EVT_CLOSE, self.Exit)
 
@@ -371,7 +371,7 @@ class mainApp(wx.App):
     def messagesBlock(self):
         self.block = True
     def messagesUnblock(self):
-        self.block = False    
+        self.block = False
     def onTaskBarPopUpMenu(self,evt):
         self.log.debug("onTaskBarPopUpMenu=%s",(None))
         self.CreatePopUp()
