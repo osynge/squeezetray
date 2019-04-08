@@ -6,7 +6,7 @@ import logging
 
 
 class ConfigView():
-    def __init__(self,model):
+    def __init__(self, model):
         self.model = model
         self.log = logging.getLogger("ConfigView")
         self.cfg = wx.FileConfig(appName="ApplicationName",
@@ -51,7 +51,7 @@ class ConfigView():
         #self.SetSqueezeServerPlayer(SqueezeServerPlayer)
         #self.model.GuiPlayerDefault.set(SqueezeServerPlayer)
         #self.squeezeConCtrl.RecConnectionOnline()
-        self.log.debug("%s:%s" % (self.model.host.get(),self.model.port.get()))
+        self.log.debug("%s:%s" % (self.model.host.get(), self.model.port.get()))
         return
 
     def configSave(self):
@@ -59,7 +59,7 @@ class ConfigView():
         self.cfg.WriteInt("squeezeServerPort", self.model.port.get())
         result = self.cfg.Flush()
 class ConfigPresentor():
-    def __init__(self,model):
+    def __init__(self, model):
 
 
         self.ExternalModel = model
