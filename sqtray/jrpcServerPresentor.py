@@ -12,7 +12,7 @@ from models import Observable
 import exceptions
 from jrpcServerThreadPool  import sConTPool
 
-        
+
 if float(sys.version[:3]) >= 2.6:
     import json
 else:
@@ -37,14 +37,14 @@ class squeezeConPresentor:
         self.connectionPool = connectionPool
         self.threadpoolPresentor = jrpcServerTaskQueuePresentor(self.model,
             self.connectionPool)
-        
-   
+
+
     def requestUpdateModel(self):
         # This will empty the queue of messages to process
         self.threadpoolPresentor.QueueProcess()
-        
-        
-            
+
+
+
     def Pause(self,player):
         if not self.model.connected.get():
             return None
@@ -61,7 +61,7 @@ class squeezeConPresentor:
         }
         msg = json.dumps(msg, sort_keys=True, indent=4)
         reponce = self.connectionPool.SendMessage(None,msg)
-        
+
     def Play(self,player):
         if not self.model.connected.get():
             return None
