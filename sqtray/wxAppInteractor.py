@@ -13,36 +13,36 @@ class GuiInteractor(object):
 
     def cbAddOnExit(self,func):
         self.callbacks['on_exit'][func] = 1   
-        
+
     def cbAddOnSettings(self,func):
         self.callbacks['on_settings'][func] = 1
-    
+
     def cbAddOnNowPlaying(self,func):
         self.callbacks['on_nowPlaying'][func] = 1
-    
+
     def cbAddOnPlay(self,func):
         self.callbacks['on_play'][func] = 1
-    
+
     def cbAddOnPause(self,func):
         self.callbacks['on_pause'][func] = 1
     def cbAddOnStop(self,func):
         self.callbacks['on_stop'][func] = 1
-    
-    
-    
+
+
+
     def cbAddOnSeekIndex(self,func):
         self.callbacks['on_seek_index'][func] = 1
-    
+
     def cbAddOnRandomSongs(self,func):
         self.callbacks['on_random_songs'][func] = 1
-    
-    
+
+
     def doCbOnExit(self,evt):
         results = {}
         for item in self.callbacks["on_exit"]:
             results[item] = item()
         return results
-        
+
     def doCbOnSettings(self,evt):
         results = {}
         for item in self.callbacks["on_settings"]:
@@ -68,13 +68,13 @@ class GuiInteractor(object):
         for item in self.callbacks["on_pause"]:
             results[item] = item(player)
         return results
-    
+
     def doCbOnSeekForward(self,evt,player):
         results = {}
         for item in self.callbacks["on_seek_index"]:
             results[item] = item(player,1)
         return results
-        
+
     def doCbOnSeekBackwards(self,evt,player):
         results = {}
         for item in self.callbacks["on_seek_index"]:
