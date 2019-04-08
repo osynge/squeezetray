@@ -58,6 +58,7 @@ class PopupMenuPresentor(object):
 
     def GetSqueezeServerPlayer(self):
         return self.player.get()
+
     def onScPause(self):
         player = self.GetSqueezeServerPlayer()
         #print "player",player
@@ -65,6 +66,7 @@ class PopupMenuPresentor(object):
             self.squeezeConCtrl.Pause(player)
         else:
             self.on_settings()
+
     def onScPlay(self):
         player = self.GetSqueezeServerPlayer()
         if player != None:
@@ -81,6 +83,7 @@ class PopupMenuPresentor(object):
             self.squeezeConCtrl.Index(player, 1)
         else:
             self.on_settings()
+
     def onScPrevious(self):
         player = self.GetSqueezeServerPlayer()
         if player != None:
@@ -88,6 +91,7 @@ class PopupMenuPresentor(object):
             self.squeezeConCtrl.Index(player, -1)
         else:
             self.on_settings()
+
     def onScRandom(self):
         player = self.GetSqueezeServerPlayer()
         if player != None:
@@ -99,10 +103,12 @@ class PopupMenuPresentor(object):
 
     def on_settings(self):
         self.doCbSettings()
+
     def ChangePlayer(self, player):
         oldPlayer = self.player.get()
         if oldPlayer != player:
             self.player.set(player)
+
     def on_exit(self):
         self.doCbExit()
 
