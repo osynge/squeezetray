@@ -32,24 +32,24 @@ class SqueezeConnectionWorker(Thread):
         self.SocketErrMsg = Observable("")
         self.log = logging.getLogger("JrpcServerthreadPool.SqueezeConnectionWorker")
         self.conn = None
-    def cbAddTaskDone(self,funct):
+    def cbAddTaskDone(self, funct):
         self.callbacks['task_done'][funct] = 1
 
-    def taskDone(self,request):
+    def taskDone(self, request):
         self.tasks.task_done()
         self.log.debug( 'taskDone')
         for func in self.callbacks['task_done']:
             func(request)
         # Now process nicely
         return
-    def processRequest(self,request):
+    def processRequest(self, request):
         params = request['params']
         if self.connectionString == None:
             self.log.debug('Connection is none')
             return
         if self.conn == None:
             self.log.debug('Connection creating = "%s"' % (self.connectionString))
-            self.conn = httplib.HTTPConnection(self.connectionString,timeout=10)
+            self.conn = httplib.HTTPConnection(self.connectionString, timeout=10)
         try:
             #self.log.debug(type(params))
             self.conn.request("POST", "/jsonrpc.js", unicode(params))
@@ -90,7 +90,7 @@ class SqueezeConnectionWorker(Thread):
         except httplib.BadStatusLine, E:
             self.conn = None
 
-            self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E))
+            self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message, E))
 
             return
         if response.status != 200:
@@ -118,16 +118,16 @@ class SqueezeConnectionWorker(Thread):
 
             self.taskDone(request)
 
-    def ConnectionSet(self,connectionStr):
+    def ConnectionSet(self, connectionStr):
         #print "connectionStr", connectionStr
         Changed =  False
-        if not hasattr(self,'connectionString'):
+        if not hasattr(self, 'connectionString'):
             Changed =  True
             self.connectionString = connectionStr
         if self.connectionString != connectionStr:
             Changed =  True
             self.connectionString = connectionStr
-        if not hasattr(self,'conn'):
+        if not hasattr(self, 'conn'):
             Changed =  True
         elif self.conn == None:
             Changed =  True
@@ -139,7 +139,7 @@ class SqueezeConnectionWorker(Thread):
 class sConTPool:
     """Pool of threads consuming tasks from a queue"""
 
-    def __init__(self, squeezeConMdle,num_threads = 10):
+    def __init__(self, squeezeConMdle, num_threads = 10):
         self.log = logging.getLogger("sConTPool")
         self.squeezeConMdle = squeezeConMdle
         connectionString = self.squeezeConMdle.connectionStr.get()
@@ -162,13 +162,13 @@ class sConTPool:
             new.cbAddTaskDone(self.handleTaskDoneByThread)
             self.arrayOfSqueezeConnectionWorker.append(new)
         self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
-    def cbAddOnMessagesToProcess(self,function):
+    def cbAddOnMessagesToProcess(self, function):
 
         self.callbacks['messagesToProcess'][function] = 1
     def cbDoOnMessagesToProcess(self):
         for item in self.callbacks["messagesToProcess"]:
             item(self)
-    def handleTaskDoneByThread(self,request):
+    def handleTaskDoneByThread(self, request):
         self.log.debug('handleTaskDoneByThread')
         msgHash = request['params'].__hash__()
         if msgHash in self.taskCacheRunning.keys():
@@ -199,7 +199,7 @@ class sConTPool:
         self.log.error("Wait for completion of all the tasks in the queue")
         self.tasks.join()
 
-    def SendMessage(self,func,message, *args, **kargs):
+    def SendMessage(self, func, message, *args, **kargs):
         #Sends a message now without Queuing
         #for a aproved thread
         request = {
@@ -254,7 +254,7 @@ class sConTPool:
             kargs = self.taskCacheFinished[msgHash]['kargs']
             rep = self.taskCacheFinished[msgHash]['responce']
             if func != None:
-                func(rep,params,*args, **kargs)
+                func(rep, params, *args, **kargs)
             #try: func(rep)
             #except Exception, e:
             #    print e
@@ -263,7 +263,7 @@ class sConTPool:
             del(self.taskCacheFinished[msgHash])
             self.postTasks.task_done()
         #self.log.debug('self.postTasks.qsize=%s' % ( self.postTasks.qsize())   )
-    def QueueProcessAddMessage(self,func,message, *args, **kargs):
+    def QueueProcessAddMessage(self, func, message, *args, **kargs):
         messageDict = {}
         if message.__hash__() in self.preTaskCache.keys():
             self.log.debug('preTaskCache dedupe is working')
@@ -281,20 +281,20 @@ class sConTPool:
 
 
 
-    def OnSocketErrNo(self,value):
+    def OnSocketErrNo(self, value):
         #print "OnSocketErrNo='%s'" % (value)
         SocketErrNo = self.squeezeConMdle.SocketErrNo.get()
         if SocketErrNo != value:
             #print "OnSocketErrNo from '%s' to '%s'" % (SocketErrNo,value)
             self.squeezeConMdle.SocketErrNo.set(value)
 
-    def OnSocketErrMsg(self,value):
+    def OnSocketErrMsg(self, value):
         #print "OnSocketErrMsg='%s'" % (value)
         SocketErrMsg = self.squeezeConMdle.SocketErrMsg.get()
         if SocketErrMsg != value:
             #print "OnSocketErrMsg from '%s' to '%s'" % (SocketErrMsg,value)
             self.squeezeConMdle.SocketErrMsg.set(value)
-    def OnConnectionStrChange(self,value):
+    def OnConnectionStrChange(self, value):
         oldvalue = self.squeezeConMdle.connectionStr.get()
         self.log.debug('OnConnectionStrChange=%s' % (oldvalue))
         for player in range(len(self.arrayOfSqueezeConnectionWorker)):
@@ -324,8 +324,8 @@ if __name__ == '__main__':
             ]
         }
 
-    poool.SendMessage(testcbDone,msg)
+    poool.SendMessage(testcbDone, msg)
 
-    log.error('self.tasks.qsize=%s' % (  poool.tasks.qsize()))
+    log.error('self.tasks.qsize=%s' % (poool.tasks.qsize()))
     time.sleep(20)
 
