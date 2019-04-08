@@ -25,17 +25,15 @@ class GuiInteractor(object):
 
     def cbAddOnPause(self, func):
         self.callbacks['on_pause'][func] = 1
+
     def cbAddOnStop(self, func):
         self.callbacks['on_stop'][func] = 1
-
-
 
     def cbAddOnSeekIndex(self, func):
         self.callbacks['on_seek_index'][func] = 1
 
     def cbAddOnRandomSongs(self, func):
         self.callbacks['on_random_songs'][func] = 1
-
 
     def doCbOnExit(self, evt):
         results = {}
@@ -48,21 +46,25 @@ class GuiInteractor(object):
         for item in self.callbacks["on_settings"]:
             results[item] = item()
         return results
+
     def doCbOnNowPlaying(self, evt):
         results = {}
         for item in self.callbacks["on_nowPlaying"]:
             results[item] = item()
         return results
+
     def doCbOnPlay(self, evt, player):
         results = {}
         for item in self.callbacks["on_play"]:
             results[item] = item(player)
         return results
+
     def doCbOnStop(self, evt, player):
         results = {}
         for item in self.callbacks["on_stop"]:
             results[item] = item(player)
         return results
+
     def doCbOnPause(self, evt, player):
         results = {}
         for item in self.callbacks["on_pause"]:
