@@ -34,7 +34,7 @@ class ObservableDict( UserDict.DictMixin):
         self._dict = {}
         self.callbacks = {}
     def __getitem__(self, item):
-        
+
         if not item in self._dict.keys():
             raise KeyError("Item %s does not exist" % item)
         return self._dict[item]
@@ -42,7 +42,7 @@ class ObservableDict( UserDict.DictMixin):
         self.callbacks[func] = 1
     def delCallback(self, func):
         del self.callback[func]
-    
+
     def _docallbacks(self,key):
         for func in self.callbacks:
             func(key)
