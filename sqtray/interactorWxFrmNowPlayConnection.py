@@ -330,7 +330,7 @@ class interactorNowPlaying:
                 self.watchers[player].disable()
 
 
-        #self.watchPlayer(value)  
+        #self.watchPlayer(value)
         playerId = self.mdlNowPlaying.nowPlayPlayerId.get()
         if playerId == None:
             return
