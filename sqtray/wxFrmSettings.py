@@ -101,13 +101,13 @@ class FrmSettings(wx.Frame):
 
     def cbDoOnSave(self):
         for item in self.callbacks["on_save"]:
-            item(self)    
+            item(self)
     def cbAddOnCancel(self,func):
         self.callbacks['on_cancel'][func] = 1
 
     def cbDoOnCancel(self):
         for item in self.callbacks["on_cancel"]:
-            item(self)    
+            item(self)
 
     def OnConnected(self,event):
         self.updateFromModel()
@@ -146,4 +146,4 @@ class FrmSettings(wx.Frame):
         #self.app.tb.on_settings_close(event)
         #close = wx.PyEvent()
         #wx.EVT_CLOSE
-        self.cbDoOnCancel () 
+        self.cbDoOnCancel ()
