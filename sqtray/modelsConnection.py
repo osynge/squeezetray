@@ -1,6 +1,6 @@
 from models import Observable, ObservableDict
 class squeezePlayerMdl:
-    def __init__(self,index,identifier = None, Name = None):
+    def __init__(self, index, identifier = None, Name = None):
         self.index = Observable(index)
         self.identifier = Observable(identifier)
         self.name = Observable(Name)
@@ -13,7 +13,7 @@ class squeezePlayerMdl:
         self.CurrentTrackArtist = Observable(None)
         self.CurrentTrackEnds = Observable(None)
         self.CurrentTrackId = Observable(None)
-    def OnAtribChange(self,value):
+    def OnAtribChange(self, value):
 
         discovered = True
         if  (self.name.get() == None):
@@ -85,25 +85,25 @@ class squeezeConMdle:
 
         self.SongCache = ObservableDict()
 
-    def OnHostChange(self,value):
+    def OnHostChange(self, value):
         newHost = self.host.get()
         newPort = self.port.get()
-        newConnectionStr = "%s:%s" % (self.host.get(),self.port.get())
+        newConnectionStr = "%s:%s" % (self.host.get(), self.port.get())
         self.connectionStr.update(newConnectionStr)
 
-    def OnPortChange(self,value):
+    def OnPortChange(self, value):
         newHost = self.host.get()
         newPort = self.port.get()
-        newConnectionStr = "%s:%s" % (self.host.get(),self.port.get())
+        newConnectionStr = "%s:%s" % (self.host.get(), self.port.get())
         self.connectionStr.update(newConnectionStr)
 
 
-    def OnConnectedChange(self,value):
+    def OnConnectedChange(self, value):
         if not self.connected.get():
             if 0 != self.playersCount.get():
                 self.playersCount.set(0)
 
-    def OnPlayersCountChange(self,value):
+    def OnPlayersCountChange(self, value):
         self.playerList = []
         for index in range(value):
             self.playerList.append(squeezePlayerMdl(index))
@@ -113,7 +113,7 @@ class squeezeConMdle:
 
 
 
-    def OnPlayersAvailableChange(self,value):
+    def OnPlayersAvailableChange(self, value):
         #print "OnPlayersAvailableChange"
         AvailablePlayersList = []
         for index in range(len(self.playerList)):
@@ -131,11 +131,11 @@ class squeezeConMdle:
         for func, args, kargs in self.CbPlayersAvailable:
             func(*args, **kargs)
 
-    def CbPlayersAvailableAdd(self,func, *args, **kargs):
+    def CbPlayersAvailableAdd(self, func, *args, **kargs):
         self.CbPlayersAvailable.append((func, args, kargs))
-    def CbChurrentTrackAdd(self,func, *args, **kargs):
+    def CbChurrentTrackAdd(self, func, *args, **kargs):
         self.CbChurrentTrack.append((func, args, kargs))
-    def OnCurrentTrack(self,value):
+    def OnCurrentTrack(self, value):
         #print "OnCurrentTrack (%s)" % value
         for func, args, kargs in self.CbChurrentTrack:
             func(*args, **kargs)
