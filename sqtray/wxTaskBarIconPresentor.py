@@ -34,7 +34,7 @@ class TaskBarIconPresentor(object):
             return results
         for item in self.callbacks[indexer]:
             results[item] = item()
-        return results  
+        return results
 
     def doCbModelUpdate(self):
         for item in self.callbacks["on_modelUpdate"]:
@@ -81,7 +81,7 @@ class TaskBarIconPresentor(object):
 
 
     def OnPlayers(self):
-        #print "OnPlayers(=%s)" % (Event)            
+        #print "OnPlayers(=%s)" % (Event)
         self.UpdateToolTip()
         #self.View.set_icon("ART_APPLICATION_STATUS_DISCONECTED",(16,16))
         self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
