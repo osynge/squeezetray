@@ -53,19 +53,19 @@ class FrmNowPlaying(wx.Frame):
         self.Connect(-1, -1, EVT_RESULT_CONNECTION_ID, self.OnConnected)
 
 
-        play_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_PLAY',wx.ART_BUTTON, (32,32))
-        self.BtnPlay = wx.BitmapButton(self,id=-1,bitmap=play_ico,style=wx.BU_AUTODRAW)
-        pause_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_PAUSE',wx.ART_BUTTON, (32,32))
+        play_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_PLAY', wx.ART_BUTTON, (32, 32))
+        self.BtnPlay = wx.BitmapButton(self, id=-1, bitmap=play_ico, style=wx.BU_AUTODRAW)
+        pause_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_PAUSE', wx.ART_BUTTON, (32, 32))
 
-        self.BtnPause = wx.BitmapButton(self,id=-1,bitmap=pause_ico,style=wx.BU_AUTODRAW)
-        stop_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_STOP',wx.ART_BUTTON, (32,32))
-        self.BtnStop = wx.BitmapButton(self,id=-1,bitmap=stop_ico,style=wx.BU_AUTODRAW)
+        self.BtnPause = wx.BitmapButton(self, id=-1, bitmap=pause_ico, style=wx.BU_AUTODRAW)
+        stop_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_STOP', wx.ART_BUTTON, (32, 32))
+        self.BtnStop = wx.BitmapButton(self, id=-1, bitmap=stop_ico, style=wx.BU_AUTODRAW)
 
-        next_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_SEEK_FORWARD',wx.ART_BUTTON, (32,32))
-        self.BtnNext = wx.BitmapButton(self,id=-1,bitmap=next_ico,style=wx.BU_AUTODRAW)
+        next_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_SEEK_FORWARD', wx.ART_BUTTON, (32, 32))
+        self.BtnNext = wx.BitmapButton(self, id=-1, bitmap=next_ico, style=wx.BU_AUTODRAW)
 
-        next_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_SEEK_BACKWARD',wx.ART_BUTTON, (32,32))
-        self.BtnLast = wx.BitmapButton(self,id=-1,bitmap=next_ico,style=wx.BU_AUTODRAW)
+        next_ico = wx.ArtProvider.GetBitmap('ART_PLAYER_SEEK_BACKWARD', wx.ART_BUTTON, (32, 32))
+        self.BtnLast = wx.BitmapButton(self, id=-1, bitmap=next_ico, style=wx.BU_AUTODRAW)
 
 
         self.sizer.Add(self.BtnLast, (7, 0), wx.DefaultSpan, wx.EXPAND)
@@ -79,26 +79,26 @@ class FrmNowPlaying(wx.Frame):
         self.sizer.Add(label1, (0, 0), wx.DefaultSpan, wx.EXPAND)
 
         self.cbPlayer = wx.ComboBox(self, -1, style=wx.CB_READONLY)
-        self.sizer.Add(self.cbPlayer, (0, 1), (1,7), wx.EXPAND)
+        self.sizer.Add(self.cbPlayer, (0, 1), (1, 7), wx.EXPAND)
 
         self.tcHost = wx.TextCtrl(self, -1 )
-        self.sizer.Add(self.tcHost , (1, 1), (1,7), wx.EXPAND)
+        self.sizer.Add(self.tcHost , (1, 1), (1, 7), wx.EXPAND)
         label2 = wx.StaticText(self, -1, 'Title:')
         self.sizer.Add(label2, (1, 0), wx.DefaultSpan, wx.EXPAND)
         label3 = wx.StaticText(self, -1, 'Arist:')
         self.sizer.Add(label3, (2, 0), wx.DefaultSpan, wx.EXPAND)
         self.tbArtist = wx.TextCtrl(self, -1 )
-        self.sizer.Add(self.tbArtist, (2, 1), (1,7), wx.EXPAND)
+        self.sizer.Add(self.tbArtist, (2, 1), (1, 7), wx.EXPAND)
         label4 = wx.StaticText(self, -1, 'Album:')
         self.sizer.Add(label4, (3, 0), wx.DefaultSpan, wx.EXPAND)
         self.tbAlbum = wx.TextCtrl(self, -1 )
-        self.sizer.Add(self.tbAlbum, (3, 1), (1,7), wx.EXPAND)
+        self.sizer.Add(self.tbAlbum, (3, 1), (1, 7), wx.EXPAND)
 
         self.statusbar = self.CreateStatusBar()
         #self.sizer.Add(self.statusbar, (9, 0),(2,9), wx.EXPAND)
 
-        self.slider = wx.Slider(self, value=0, minValue=0, maxValue=10000,style=wx.SL_HORIZONTAL)
-        self.sizer.Add(self.slider, (5, 0),(1,8), wx.EXPAND)
+        self.slider = wx.Slider(self, value=0, minValue=0, maxValue=10000, style=wx.SL_HORIZONTAL)
+        self.sizer.Add(self.slider, (5, 0), (1, 8), wx.EXPAND)
         self.Bind(wx.EVT_SCROLL, self.OnSliderScroll)
 
 
@@ -117,31 +117,31 @@ class FrmNowPlaying(wx.Frame):
 
         self.CurrentStatusText = None
 
-    def ModelSet(self,model):
+    def ModelSet(self, model):
         self.model = model
 
 
 
-    def cbAddOnPause(self,func):
+    def cbAddOnPause(self, func):
         self.callbacks['on_pause'][func] = 1
 
     def cbDoOnPause(self):
         for item in self.callbacks["on_pause"]:
             item(self)
-    def cbAddOnPause(self,func):
+    def cbAddOnPause(self, func):
         self.callbacks['on_save'][func] = 1
 
     def cbDoOnPause(self):
         for item in self.callbacks["on_save"]:
             item(self)
-    def cbAddOnQuit(self,func):
+    def cbAddOnQuit(self, func):
         self.callbacks['on_quit'][func] = 1
 
     def cbDoOnQuit(self):
         for item in self.callbacks["on_quit"]:
             item(self)
 
-    def OnConnected(self,event):
+    def OnConnected(self, event):
         self.updateFromModel()
 
     def OnSliderScroll(self, event):
