@@ -293,9 +293,9 @@ class mainApp(wx.App):
 
         #self.tb = TaskBarPresntor(self.ModelGuiThread)
         self.cfg = wx.FileConfig(appName="ApplicationName",
-                                    vendorName="VendorName",
-                                    localFilename=".squeezetray.cfg",
-                                    style=wx.CONFIG_USE_LOCAL_FILE)
+                                 vendorName="VendorName",
+                                 localFilename=".squeezetray.cfg",
+                                 style=wx.CONFIG_USE_LOCAL_FILE)
         # Now we can set up forms using the art provider
         self.tb = TaskBarIcon(self.ModelGuiThread)
         self.tb.Bind(wx.EVT_CLOSE, self.Exit)
