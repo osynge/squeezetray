@@ -18,11 +18,6 @@ def create_menu_item(menu, label, art, func):
     return item
 
 
-
-
-
-
-
 class PopupMenuPresentor(object):
     def __init__(self, Model, View, squeezecmd, interactor):
         self.Model = Model
@@ -56,8 +51,6 @@ class PopupMenuPresentor(object):
     def cbAddOnSettings(self, func):
         self.callbacks['on_settings'][func] = 1
 
-
-
     def GetSqueezeServerPlayer(self):
         return self.player.get()
 
@@ -75,7 +68,6 @@ class PopupMenuPresentor(object):
             self.squeezeConCtrl.Play(player)
         else:
             self.on_settings()
-
 
     def onScNext(self):
         player = self.GetSqueezeServerPlayer()
@@ -102,7 +94,6 @@ class PopupMenuPresentor(object):
         else:
             self.on_settings()
 
-
     def on_settings(self):
         self.doCbSettings()
 
@@ -113,12 +104,6 @@ class PopupMenuPresentor(object):
 
     def on_exit(self):
         self.doCbExit()
-
-###############################################################################
-
-
-
-
 
 
 class TrayMenuPresentor(object):
