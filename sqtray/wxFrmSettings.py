@@ -28,14 +28,14 @@ class FrmSettings(wx.Frame):
         self.Connect(-1, -1, EVT_RESULT_CONNECTED_ID, self.OnConnected)
         self.Connect(-1, -1, EVT_RESULT_PLAYERS_ID, self.OnConnected)
         self.Connect(-1, -1, EVT_RESULT_CONNECTION_ID, self.OnConnected)
-        self.BtnApply = wx.Button(self,-1, "Apply")
-        self.BtnCancel = wx.Button(self,-1, "Cancel")
-        self.BtnSave = wx.Button(self,-1, "Save")
+        self.BtnApply = wx.Button(self, -1, "Apply")
+        self.BtnCancel = wx.Button(self, -1, "Cancel")
+        self.BtnSave = wx.Button(self, -1, "Save")
 
 
         self.Bind(wx.EVT_BUTTON, self.OnCancel, id=self.BtnCancel.GetId())
-        self.Bind(wx.EVT_BUTTON, self.OnSave,id=self.BtnSave.GetId())
-        self.Bind(wx.EVT_BUTTON, self.OnApply,id=self.BtnApply.GetId())
+        self.Bind(wx.EVT_BUTTON, self.OnSave, id=self.BtnSave.GetId())
+        self.Bind(wx.EVT_BUTTON, self.OnApply, id=self.BtnApply.GetId())
 
 
 
@@ -49,7 +49,7 @@ class FrmSettings(wx.Frame):
         self.sizer.Add(label1, (0, 0), wx.DefaultSpan, wx.EXPAND)
 
         self.tcHost = wx.TextCtrl(self, -1 )
-        self.sizer.Add(self.tcHost , (0, 1), (1,2), wx.EXPAND)
+        self.sizer.Add(self.tcHost , (0, 1), (1, 2), wx.EXPAND)
         label2 = wx.StaticText(self, -1, 'Port:')
 
 
@@ -59,12 +59,12 @@ class FrmSettings(wx.Frame):
         self.sizer.Add(label3, (2, 0), wx.DefaultSpan, wx.EXPAND)
 
         self.scPort = wx.SpinCtrl(self, -1, unicode(9000),  min=1, max=99999)
-        self.sizer.Add(self.scPort, (1, 1),wx.DefaultSpan, wx.EXPAND)
+        self.sizer.Add(self.scPort, (1, 1), wx.DefaultSpan, wx.EXPAND)
         #self.statusbar = self.CreateStatusBar()
         #self.sizer.Add(self.statusbar, (9, 0),(2,9), wx.EXPAND)
 
         self.cbPlayer = wx.ComboBox(self, -1, style=wx.CB_READONLY)
-        self.sizer.Add(self.cbPlayer, (2, 1), (1,2), wx.EXPAND)
+        self.sizer.Add(self.cbPlayer, (2, 1), (1, 2), wx.EXPAND)
 
 
         self.sizer.AddGrowableRow(8)
@@ -87,29 +87,29 @@ class FrmSettings(wx.Frame):
 
         self.CurrentStatusText = None
 
-    def ModelSet(self,model):
+    def ModelSet(self, model):
         self.model = model
 
-    def cbAddOnApply(self,func):
+    def cbAddOnApply(self, func):
         self.callbacks['on_apply'][func] = 1
 
     def cbDoOnApply(self):
         for item in self.callbacks["on_apply"]:
             item(self)
-    def cbAddOnSave(self,func):
+    def cbAddOnSave(self, func):
         self.callbacks['on_save'][func] = 1
 
     def cbDoOnSave(self):
         for item in self.callbacks["on_save"]:
             item(self)
-    def cbAddOnCancel(self,func):
+    def cbAddOnCancel(self, func):
         self.callbacks['on_cancel'][func] = 1
 
     def cbDoOnCancel(self):
         for item in self.callbacks["on_cancel"]:
             item(self)
 
-    def OnConnected(self,event):
+    def OnConnected(self, event):
         self.updateFromModel()
 
     def updateFromModel(self):
@@ -119,12 +119,12 @@ class FrmSettings(wx.Frame):
         self.GuiModel.host.update(self.model.host.get())
         self.GuiModel.port.update(self.model.port.get())
 
-    def onStatusText(self,value):
+    def onStatusText(self, value):
         self.SetStatusText(self.model.statusText.get())
 
-    def onHost(self,value):
+    def onHost(self, value):
         self.tcHost.SetValue(self.GuiModel.host.get())
-    def onPort(self,value):
+    def onPort(self, value):
         self.scPort.SetValue(self.GuiModel.port.get())
 
     def OnSave(self, event):
