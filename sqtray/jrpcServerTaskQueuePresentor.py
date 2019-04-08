@@ -43,12 +43,12 @@ class poller:
         for command in listcommands:
             seconds, message = command
             msg = json.dumps(message, sort_keys=True, indent=4)
-            #print 'seconds, msg' ,seconds, msg 
+            #print 'seconds, msg' ,seconds, msg
             next = now + datetime.timedelta(seconds=seconds)
             diction = {
                 'dueDate' : next,
                 'msg' : msg
-            } 
+            }
             output.append(diction)
 
 
@@ -62,7 +62,7 @@ class pollOnline(poller):
 
     def GetNextDue(self):
         online = self.model.connected.get()
-        msg = { 
+        msg = {
             "method":"slim.request",
             "params": [ '-', [ 'player', 'count', '?' ] ]
         }
@@ -108,7 +108,7 @@ class pollPlayerName(poller):
             name = self.model.playerList[index].name.get()
             if identifier == None:
                 #print "would make a name request"
-                msg = { 
+                msg = {
                     "method":"slim.request",
                     "params": [ '-', [ 'player', 'id', index ,"?"] ]
                 }
@@ -118,7 +118,7 @@ class pollPlayerName(poller):
                 #self.view1.sendMessage([self.view1.OnPlayerIndex,msg])
             if name == None:
                 #print "would make a name request"
-                msg = { 
+                msg = {
                     "method":"slim.request",
                     "params": [ '-', [ 'player', 'name', index ,"?"] ]
                 }
@@ -131,7 +131,7 @@ class pollPlayerName(poller):
         secondDelay = 60
         secondInterval = 60
         for index in range(len(self.model.playerList)):
-            msg = { 
+            msg = {
                 "method":"slim.request",
                 "params": [ '-', [ 'player', 'id', index ,"?"] ]
             }
@@ -139,7 +139,7 @@ class pollPlayerName(poller):
             secondDelay += secondInterval
             commands.append([secondDelay,msg])
             #print "would make a name request"
-            msg = { 
+            msg = {
                 "method":"slim.request",
                 "params": [ '-', [ 'player', 'name', index ,"?"] ]
             }
@@ -152,10 +152,10 @@ class pollPlayerName(poller):
     def handleResponce(self,responce,ding,dong,foo):
         playerIndex = int(responce['params'][1][2])
         if "_name" in responce["result"].keys():
-            playerName = responce["result"]["_name"] 
+            playerName = responce["result"]["_name"]
             self.model.playerList[playerIndex].name.update(playerName)
         if "_id" in responce["result"].keys():
-            playerId = responce["result"]["_id"] 
+            playerId = responce["result"]["_id"]
             self.model.playerList[playerIndex].identifier.set(playerId)
 
 
@@ -179,13 +179,13 @@ class pollSongStatus(poller):
         for trackId in self.model.SongCache.keys():
             if trackId < 1:
                 continue
-            identifier = self.model.SongCache[trackId].modificationTime.get() 
+            identifier = self.model.SongCache[trackId].modificationTime.get()
             if identifier != None:
                 continue
-            msg = { 
+            msg = {
                         "method":"slim.request",
                         "params": ["-",
-                            ['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]     
+                            ['songinfo', '0', '100', 'track_id:%s'  % (trackId),"tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]
                     }
 
             secondDelay += secondInterval
@@ -258,7 +258,7 @@ class pollSongStatus(poller):
                 if key == u'tracknum':
                     newSongInfo.tracknum.update(cleanList(metadata[key]))
                 if key == u'year':
-                    newSongInfo.year.update(cleanList(metadata[key]))      
+                    newSongInfo.year.update(cleanList(metadata[key]))
                 if key == u'album':
                     newSongInfo.album.update(cleanList(metadata[key]))
                 if key == u'album_id':
@@ -270,7 +270,7 @@ class pollSongStatus(poller):
                 if key == u'bitrate':
                     newSongInfo.bitrate.update(cleanList(metadata[key]))
                 if key == u'filesize':
-                    newSongInfo.filesize.update(cleanList(metadata[key]))    
+                    newSongInfo.filesize.update(cleanList(metadata[key]))
                 if key == u'coverart':
                     newSongInfo.coverart.update(cleanList(metadata[key]))
                 if key == u'modificationTime':
@@ -278,7 +278,7 @@ class pollSongStatus(poller):
                 if key == u'compilation':
                     newSongInfo.compilation.update(cleanList(metadata[key]))
                 if key == u'samplerate':
-                    newSongInfo.samplerate.update(cleanList(metadata[key])) 
+                    newSongInfo.samplerate.update(cleanList(metadata[key]))
                 if key == u'url':
                     newSongInfo.url.update(cleanList(metadata[key]))
         newSongInfo.updated.update(datetime.datetime.now())
@@ -323,7 +323,7 @@ class pollPlayerStatus(poller):
 
         msg = {"id":self.playerIndex,
                 "method":"slim.request",
-                "params":[identifier , 
+                "params":[identifier ,
                         ["status","-","4","tags:playlist_id"]
                     ]
             }
@@ -389,7 +389,7 @@ class pollPlayerStatus(poller):
                 CurrentTrackTitle = unicode(item["title"])
             CurrentTrackArtist = None
             if "artist" in item.keys():
-                CurrentTrackArtist = unicode(item["artist"])            
+                CurrentTrackArtist = unicode(item["artist"])
             if playlistIndex == playlist_cur_index:
                 self.model.playerList[playerIndex].CurrentTrackTitle.update(CurrentTrackTitle)
                 self.model.playerList[playerIndex].CurrentTrackId.update(playlistIndex)
