@@ -14,6 +14,8 @@ else:
     import simplejson as json
 
 
+log = logging.getLogger(__name__)
+
 
 class poller:
     def __init__(self,model):
@@ -217,10 +219,15 @@ class pollSongStatus(poller):
                     asInt = float(cleanItem)
                     outputList.append(asInt)
             return outputList
-        
-        
-        
-        identifier = responce["result"]["songinfo_loop"][0][u'id']
+        resp_result = responce.get("result")
+        if resp_result is None:
+            log.error("resp_result is None")
+            return
+        resp_songinfo_loop = resp_result.get("songinfo_loop")
+        if resp_songinfo_loop is None:
+            log.error("resp_songinfo_loop is None")
+            return
+        identifier = resp_songinfo_loop[0][u'id']
         if identifier == 0:
             self.log.error("Invalid song ID")
             return
@@ -229,7 +236,7 @@ class pollSongStatus(poller):
             newSongInfo = self.model.SongCache[identifier]
         else:
             newSongInfo = squeezeSong()
-        for metadata in  responce["result"]["songinfo_loop"]:
+        for metadata in resp_songinfo_loop:
             #print metadata
             for key in metadata:
                 #print key
