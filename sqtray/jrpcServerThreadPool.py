@@ -40,7 +40,7 @@ class SqueezeConnectionWorker(Thread):
         self.log.debug( 'taskDone')
         for func in self.callbacks['task_done']:
             func(request)
-        # Now process nicely   
+        # Now process nicely
         return
     def processRequest(self,request):
         params = request['params']
@@ -154,7 +154,7 @@ class sConTPool:
         self.taskCacheFinished = {}
         self.postTasks = Queue()
         self.blockedMessages = {}
-        for item in range(num_threads): 
+        for item in range(num_threads):
             new = SqueezeConnectionWorker(self.tasks)
             new.ConnectionSet(connectionString)
             new.SocketErrNo.addCallback(self.OnSocketErrNo)
@@ -167,7 +167,7 @@ class sConTPool:
         self.callbacks['messagesToProcess'][function] = 1
     def cbDoOnMessagesToProcess(self):
         for item in self.callbacks["messagesToProcess"]:
-            item(self)    
+            item(self)
     def handleTaskDoneByThread(self,request):
         self.log.debug('handleTaskDoneByThread')
         msgHash = request['params'].__hash__()
@@ -200,7 +200,7 @@ class sConTPool:
         self.tasks.join()
 
     def SendMessage(self,func,message, *args, **kargs):
-        #Sends a message now without Queuing 
+        #Sends a message now without Queuing
         #for a aproved thread
         request = {
             'function' : func,
@@ -217,7 +217,7 @@ class sConTPool:
         self.QueueProcessPreTask()
 
     def QueueProcessPreTask(self):
-        # For calling to place messages on 
+        # For calling to place messages on
         #self.log.debug( 'self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
         while True:
             try:
@@ -256,7 +256,7 @@ class sConTPool:
             if func != None:
                 func(rep,params,*args, **kargs)
             #try: func(rep)
-            #except Exception, e: 
+            #except Exception, e:
             #    print e
             #    #traceback.print_tb(e, limit=1, file=sys.stdout)
 
@@ -286,7 +286,7 @@ class sConTPool:
         SocketErrNo = self.squeezeConMdle.SocketErrNo.get()
         if SocketErrNo != value:
             #print "OnSocketErrNo from '%s' to '%s'" % (SocketErrNo,value)
-            self.squeezeConMdle.SocketErrNo.set(value)        
+            self.squeezeConMdle.SocketErrNo.set(value)
 
     def OnSocketErrMsg(self,value):
         #print "OnSocketErrMsg='%s'" % (value)
@@ -313,12 +313,12 @@ if __name__ == '__main__':
     model.host.set('mini')
     poool = sConTPool(model)
     msg = {
-            "method": "slim.request", 
+            "method": "slim.request",
             "params": [
-                "-", 
+                "-",
                 [
-                    "player", 
-                    "count", 
+                    "player",
+                    "count",
                     "?"
                 ]
             ]
