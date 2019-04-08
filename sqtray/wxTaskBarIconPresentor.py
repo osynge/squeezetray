@@ -1,9 +1,8 @@
 from models import Observable
-
 import logging
-
 from wxTaskBarIcon import TaskBarIconUpdateInteractor
 from sqtray.wxTrayIconPopUpMenu import PopupMenuPresentor
+
 
 class TaskBarIconPresentor(object):
     def __init__(self, Model, View, interactor):
