@@ -36,7 +36,7 @@ from wxFrmNowPlayingPresentor import frmPlayingPresentor
 from wxFrmNowPlayingView import FrmNowPlaying
 from modelsWxFrmNowPlaying import mdlFrmNowPlaying
 
-def StoreConfig(FilePath,squeezeConMdle):
+def StoreConfig(FilePath, squeezeConMdle):
     cfg = wx.FileConfig(appName="ApplicationName",
                                 vendorName="VendorName",
                                 localFilename=FilePath,
@@ -66,7 +66,7 @@ class interactorWxUpdate():
         self.src.CbPlayersAvailableAdd(self.on_players)
         self.messagesUnblock()
 
-    def on_connected(self,value):
+    def on_connected(self, value):
         if self.block:
             return
         evt = SomeNewEvent(attr1="on_connected")
@@ -156,7 +156,7 @@ class viewWxToolBarSrc():
         if self.knowledge['connected'] == True:
             self.iconNameCache.update("ART_APPLICATION_STATUS_CONNECTED")
 
-    def on_connected(self,value):
+    def on_connected(self, value):
         self.updateNeeded = True
 
 
@@ -176,12 +176,12 @@ class viewWxToolBarSrc():
             self.src.playerList[index].CurrentTrackArtist.addCallback(self.on_player_artist)
 
 
-    def on_player_name(self,value):
+    def on_player_name(self, value):
         self.updateNeeded = True
-    def on_player_track(self,value):
+    def on_player_track(self, value):
         self.log.debug('on_player_track')
         self.updateNeeded = True
-    def on_player_artist(self,value):
+    def on_player_artist(self, value):
         self.log.debug( 'on_player_artist')
         self.updateNeeded = True
     def gettoolTip(self):
@@ -204,27 +204,27 @@ class Connection2SettingsInteractor():
         self.OnPortChange(None)
         self.connection.SocketErrNo.addCallback(self.OnConnectionError)
 
-    def OnHostChange(self,value):
+    def OnHostChange(self, value):
         self.settings.host.update(self.connection.host.get())
-    def OnPortChange(self,value):
+    def OnPortChange(self, value):
         self.settings.port.update(self.connection.port.get())
-    def OnConnectionError(self,value):
+    def OnConnectionError(self, value):
         #self.settings.connectionMsg.update("SocketErrNo=%s" % (self.connection.SocketErrNo.get()))
         pass
 
 
 class FrmNowPlayingInteractor():
-    def install(self,ModelConPool,ModelFrmNowPlaying):
+    def install(self, ModelConPool, ModelFrmNowPlaying):
         self.ModelConPool = ModelConPool
         self.ModelFrmNowPlaying = ModelFrmNowPlaying
         self.ModelConPool.Players.addCallback(self.onPlayers)
         self.ModelConPool.SongCache.addCallback(self.onSongCache)
         self.ModelConPool.connected.addCallback(self.onConnected)
 
-    def onConnected(self,value):
+    def onConnected(self, value):
         self.ModelFrmNowPlaying.serverConnected.update(value)
 
-    def onPlayers(self,value):
+    def onPlayers(self, value):
         added = False
         if value in self.ModelConPool.Players.keys():
             added = True
@@ -235,7 +235,7 @@ class FrmNowPlayingInteractor():
             del(self.ModelFrmNowPlaying[value])
         if present == False and added == True:
             self.ModelFrmNowPlaying.availablePlayer[value] = self.ModelConPool.Players[value]
-    def onSongCache(self,value):
+    def onSongCache(self, value):
         # WE JUST CARE ABOUT THE IMPORTANT SONGS
 
         currentlyplayingsongs = []
@@ -275,9 +275,9 @@ class mainApp(wx.App):
 
     def InitUI(self):
         self.ConCtrlInteractor = ConCtrlInteractor()
-        self.ConCtrlInteractor.install(self.ModelFrmSettings,self.ModelConPool)
+        self.ConCtrlInteractor.install(self.ModelFrmSettings, self.ModelConPool)
         self.FrmNowPlayingInteractor = FrmNowPlayingInteractor()
-        self.FrmNowPlayingInteractor.install(self.ModelConPool,self.ModelFrmNowPlaying)
+        self.FrmNowPlayingInteractor.install(self.ModelConPool, self.ModelFrmNowPlaying)
         #Now Load Config
 
         self.configPresentor = ConfigPresentor(self.ModelFrmSettings)
@@ -287,7 +287,7 @@ class mainApp(wx.App):
 
         # Now set model interactions
         self.Con2SettingsInteractor = Connection2SettingsInteractor()
-        self.Con2SettingsInteractor.install(self.ModelConPool,self.ModelFrmSettings)
+        self.Con2SettingsInteractor.install(self.ModelConPool, self.ModelFrmSettings)
 
 
 
@@ -312,14 +312,14 @@ class mainApp(wx.App):
         self.timer.Start(1000)  # x100 milliseconds
         wx.EVT_TIMER(self, TIMER_ID, self.OnTimer)  # call the on_timer function
         self.taskbarInteractor = TaskBarIconInteractor()
-        self.tbPresentor =  TaskBarIconPresentor(self.ModelGuiThread,self.tb,self.taskbarInteractor)
+        self.tbPresentor =  TaskBarIconPresentor(self.ModelGuiThread, self.tb, self.taskbarInteractor)
 
         self.tbPresentor.cbAddReqMdlUpdate(self.setUpdateModel)
         self.tbPresentor.cbAddRequestPopUpMenu(self.CreatePopUp)
         self.tbPresentor.callbacks['on_left_up'][self.leftClick] = 1
 
         self.interactorWxUpdate = interactorWxUpdate()
-        self.interactorWxUpdate.install(self.ModelConPool,self)
+        self.interactorWxUpdate.install(self.ModelConPool, self)
 
         self.count = 0
         self.viewWxToolBarSrc = viewWxToolBarSrc()
@@ -329,12 +329,12 @@ class mainApp(wx.App):
 
         # Now we set up the jrpc server
         self.connectionPool = sConTPool(self.ModelConPool)
-        self.jrpc = squeezeConPresentor(self.ModelConPool,self.connectionPool)
+        self.jrpc = squeezeConPresentor(self.ModelConPool, self.connectionPool)
         self.connectionPool.cbAddOnMessagesToProcess(self.OnNewMessages)
 
         #Now we set up the Tray Pup Up menu
         self.tbPopUpMenuInteractor = GuiInteractor()
-        self.tbPopUpMenuPresentor = TrayMenuPresentor(self.ModelConPool,self.tbPopUpMenuInteractor)
+        self.tbPopUpMenuPresentor = TrayMenuPresentor(self.ModelConPool, self.tbPopUpMenuInteractor)
         self.tbPopUpMenuInteractor.cbAddOnExit(self.Exit)
         self.tbPopUpMenuInteractor.cbAddOnSettings(self.SettingsOpen)
         self.tbPopUpMenuInteractor.cbAddOnNowPlaying(self.ShowNowPlaying)
@@ -353,7 +353,7 @@ class mainApp(wx.App):
         self.SettingsPresentor.cbAddOnApply(self.ConCtrlInteractor.OnApply)
         self.SettingsPresentor.cbAddOnSave(self.OnSave)
 
-        self.presentorNowPlaying = frmPlayingPresentor(self.ModelFrmNowPlaying,self.tbPopUpMenuInteractor)
+        self.presentorNowPlaying = frmPlayingPresentor(self.ModelFrmNowPlaying, self.tbPopUpMenuInteractor)
 
         # Now apply the Settings
         #self.ConCtrlInteractor.OnApply(None)
@@ -362,7 +362,7 @@ class mainApp(wx.App):
         self.jrpc.requestUpdateModel()
 
         self.ShowNowPlaying()
-    def OnNewMessages (self,details):
+    def OnNewMessages (self, details):
         self.log.debug('OnNewMessages')
         evt = SomeNewEvent(attr1="on_msg")
         #post the event
@@ -372,12 +372,12 @@ class mainApp(wx.App):
         self.block = True
     def messagesUnblock(self):
         self.block = False
-    def onTaskBarPopUpMenu(self,evt):
-        self.log.debug("onTaskBarPopUpMenu=%s",(None))
+    def onTaskBarPopUpMenu(self, evt):
+        self.log.debug("onTaskBarPopUpMenu=%s", (None))
         self.CreatePopUp()
 
-    def EventRevived(self,evt):
-        self.log.debug("EventRevived=%s",(evt.attr1 ))
+    def EventRevived(self, evt):
+        self.log.debug("EventRevived=%s", (evt.attr1 ))
         if self.block:
             return
         if evt.attr1 == "on_msg":
@@ -386,14 +386,14 @@ class mainApp(wx.App):
             #print self.ModelConPool.Players
         self.setUpdateModel(evt)
 
-    def OnSave(self,presentor):
+    def OnSave(self, presentor):
         self.ConCtrlInteractor.OnApply(presentor)
         self.configPresentor.save()
-    def OnTimer(self,event):
+    def OnTimer(self, event):
         self.jrpc.requestUpdateModel()
         self.presentorNowPlaying.Update()
         return
-    def on_event(self,event):
+    def on_event(self, event):
         self.log.debug("on_event")
 
     def Exit(self):
@@ -408,7 +408,7 @@ class mainApp(wx.App):
         newMenu = self.tbPopUpMenuPresentor.getMenu()
         return newMenu
 
-    def setUpdateModel(self,param):
+    def setUpdateModel(self, param):
 
         toolTip = self.viewWxToolBarSrc.gettoolTip()
         self.tbPresentor._OnToolTipChange(toolTip)
@@ -432,31 +432,31 @@ class mainApp(wx.App):
         self.SettingsPresentor.SettingsOpen()
 
 
-    def SettingClose(self,evnt):
+    def SettingClose(self, evnt):
         self.SettingsPresentor.SettingClose(None)
 
-    def doCbOnPlay(self,player):
+    def doCbOnPlay(self, player):
 
         self.jrpc.Play(player)
 
-    def doCbOnPause(self,player):
+    def doCbOnPause(self, player):
         results = {}
         for item in self.callbacks["on_pause"]:
             results[item] = item()
         return results
 
-    def doCbOnSeekForward(self,player):
+    def doCbOnSeekForward(self, player):
         results = {}
         for item in self.callbacks["on_seek_forward"]:
             results[item] = item()
         return results
 
-    def doCbOnSeekBackwards(self,player):
+    def doCbOnSeekBackwards(self, player):
         results = {}
         for item in self.callbacks["on_seek_backwards"]:
             results[item] = item()
         return results
 
-    def doCbOnRandomSongs(self,player):
+    def doCbOnRandomSongs(self, player):
         self.jrpc.PlayRandomSong(player)
 
