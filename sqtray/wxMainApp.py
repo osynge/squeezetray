@@ -79,8 +79,10 @@ class interactorWxUpdate():
         evt = SomeNewEvent(attr1="on_players")
         #post the event
         wx.PostEvent(self.wxObject, evt)
+
     def messagesBlock(self):
         self.block = True
+
     def messagesUnblock(self):
         self.block = False
 
@@ -94,6 +96,7 @@ class viewWxToolBarSrc():
         self.iconNameCache = Observable(None)
         self.knowledge = {}
         self.log = logging.getLogger("viewWxToolBarSrc")
+
     def install(self, src):
         self.src = src
         self.src.connected.addCallback(self.on_connected)
@@ -178,12 +181,15 @@ class viewWxToolBarSrc():
 
     def on_player_name(self, value):
         self.updateNeeded = True
+
     def on_player_track(self, value):
         self.log.debug('on_player_track')
         self.updateNeeded = True
+
     def on_player_artist(self, value):
         self.log.debug( 'on_player_artist')
         self.updateNeeded = True
+
     def gettoolTip(self):
         self.update()
         return self.toolTipCache.get()
@@ -206,8 +212,10 @@ class Connection2SettingsInteractor():
 
     def OnHostChange(self, value):
         self.settings.host.update(self.connection.host.get())
+
     def OnPortChange(self, value):
         self.settings.port.update(self.connection.port.get())
+
     def OnConnectionError(self, value):
         #self.settings.connectionMsg.update("SocketErrNo=%s" % (self.connection.SocketErrNo.get()))
         pass
@@ -235,6 +243,7 @@ class FrmNowPlayingInteractor():
             del(self.ModelFrmNowPlaying[value])
         if present == False and added == True:
             self.ModelFrmNowPlaying.availablePlayer[value] = self.ModelConPool.Players[value]
+
     def onSongCache(self, value):
         # WE JUST CARE ABOUT THE IMPORTANT SONGS
 
@@ -279,18 +288,12 @@ class mainApp(wx.App):
         self.FrmNowPlayingInteractor = FrmNowPlayingInteractor()
         self.FrmNowPlayingInteractor.install(self.ModelConPool, self.ModelFrmNowPlaying)
         #Now Load Config
-
         self.configPresentor = ConfigPresentor(self.ModelFrmSettings)
         self.configPresentor.load()
-
         self.ConCtrlInteractor.OnApply(None)
-
         # Now set model interactions
         self.Con2SettingsInteractor = Connection2SettingsInteractor()
         self.Con2SettingsInteractor.install(self.ModelConPool, self.ModelFrmSettings)
-
-
-
         #self.tb = TaskBarPresntor(self.ModelGuiThread)
         self.cfg = wx.FileConfig(appName="ApplicationName",
                                  vendorName="VendorName",
@@ -299,69 +302,48 @@ class mainApp(wx.App):
         # Now we can set up forms using the art provider
         self.tb = TaskBarIcon(self.ModelGuiThread)
         self.tb.Bind(wx.EVT_CLOSE, self.Exit)
-
         TIMER_ID = wx.NewId()  # pick a number
-
         self.CUSTOM_ID = wx.NewId()
-
         self.timer = wx.Timer(self, TIMER_ID)  # message will be sent to the panel
-
-
-
-
         self.timer.Start(1000)  # x100 milliseconds
         wx.EVT_TIMER(self, TIMER_ID, self.OnTimer)  # call the on_timer function
         self.taskbarInteractor = TaskBarIconInteractor()
         self.tbPresentor =  TaskBarIconPresentor(self.ModelGuiThread, self.tb, self.taskbarInteractor)
-
         self.tbPresentor.cbAddReqMdlUpdate(self.setUpdateModel)
         self.tbPresentor.cbAddRequestPopUpMenu(self.CreatePopUp)
         self.tbPresentor.callbacks['on_left_up'][self.leftClick] = 1
-
         self.interactorWxUpdate = interactorWxUpdate()
         self.interactorWxUpdate.install(self.ModelConPool, self)
-
         self.count = 0
         self.viewWxToolBarSrc = viewWxToolBarSrc()
         self.viewWxToolBarSrc.install(self.ModelConPool)
-
-
-
         # Now we set up the jrpc server
         self.connectionPool = sConTPool(self.ModelConPool)
         self.jrpc = squeezeConPresentor(self.ModelConPool, self.connectionPool)
         self.connectionPool.cbAddOnMessagesToProcess(self.OnNewMessages)
-
         #Now we set up the Tray Pup Up menu
         self.tbPopUpMenuInteractor = GuiInteractor()
         self.tbPopUpMenuPresentor = TrayMenuPresentor(self.ModelConPool, self.tbPopUpMenuInteractor)
         self.tbPopUpMenuInteractor.cbAddOnExit(self.Exit)
         self.tbPopUpMenuInteractor.cbAddOnSettings(self.SettingsOpen)
         self.tbPopUpMenuInteractor.cbAddOnNowPlaying(self.ShowNowPlaying)
-
         self.tbPopUpMenuInteractor.cbAddOnPause(self.jrpc.Pause)
         self.tbPopUpMenuInteractor.cbAddOnSeekIndex(self.jrpc.Index)
-
         self.tbPopUpMenuInteractor.cbAddOnRandomSongs(self.jrpc.PlayRandomSong)
         self.tbPopUpMenuInteractor.cbAddOnPlay(self.jrpc.Play)
         self.tbPopUpMenuInteractor.cbAddOnStop(self.jrpc.Stop)
-
-
         #Now load the settings presentor
-
         self.SettingsPresentor  = frmSettingsPresentor(self.ModelFrmSettings)
         self.SettingsPresentor.cbAddOnApply(self.ConCtrlInteractor.OnApply)
         self.SettingsPresentor.cbAddOnSave(self.OnSave)
-
         self.presentorNowPlaying = frmPlayingPresentor(self.ModelFrmNowPlaying, self.tbPopUpMenuInteractor)
-
         # Now apply the Settings
         #self.ConCtrlInteractor.OnApply(None)
         #print self.ModelFrmSettings.host.get()
         self.messagesUnblock()
         self.jrpc.requestUpdateModel()
-
         self.ShowNowPlaying()
+
     def OnNewMessages (self, details):
         self.log.debug('OnNewMessages')
         evt = SomeNewEvent(attr1="on_msg")
@@ -370,8 +352,10 @@ class mainApp(wx.App):
 
     def messagesBlock(self):
         self.block = True
+
     def messagesUnblock(self):
         self.block = False
+
     def onTaskBarPopUpMenu(self, evt):
         self.log.debug("onTaskBarPopUpMenu=%s", (None))
         self.CreatePopUp()
@@ -389,10 +373,12 @@ class mainApp(wx.App):
     def OnSave(self, presentor):
         self.ConCtrlInteractor.OnApply(presentor)
         self.configPresentor.save()
+
     def OnTimer(self, event):
         self.jrpc.requestUpdateModel()
         self.presentorNowPlaying.Update()
         return
+
     def on_event(self, event):
         self.log.debug("on_event")
 
@@ -404,6 +390,7 @@ class mainApp(wx.App):
         self.SettingClose(None)
 
         self.tb.Destroy()
+
     def CreatePopUp(self):
         newMenu = self.tbPopUpMenuPresentor.getMenu()
         return newMenu
