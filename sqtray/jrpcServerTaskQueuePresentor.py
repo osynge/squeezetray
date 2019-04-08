@@ -185,7 +185,7 @@ class pollSongStatus(poller):
             msg = {
                         "method": "slim.request",
                         "params": ["-",
-                            ['songinfo', '0', '100', 'track_id:%s'  % (trackId), "tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]
+                                   ['songinfo', '0', '100', 'track_id:%s'  % (trackId), "tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"]]
                     }
 
             secondDelay += secondInterval
@@ -313,19 +313,22 @@ class pollPlayerStatus(poller):
         if currentMode == None:
             newUpdateFrequancy = 1
         else:
-            maper = {"playing" : 2,
-                "paused" : 15,
-                "Off" : 15,
-                "stop" : 15
-            }
+            maper = {
+                    "playing" : 2,
+                    "paused" : 15,
+                    "Off" : 15,
+                    "stop" : 15
+                    }
             if currentMode in maper.keys():
                 newUpdateFrequancy = maper[currentMode]
 
-        msg = {"id": self.playerIndex,
-                "method": "slim.request",
-                "params": [identifier ,
-                        ["status", "-", "4", "tags:playlist_id"]
-                    ]
+        msg = {
+            "id": self.playerIndex,
+            "method": "slim.request",
+            "params": [
+                identifier ,
+                ["status", "-", "4", "tags:playlist_id"]
+                ]
             }
         self.Pollfrequancy.update(newUpdateFrequancy)
 
@@ -353,7 +356,8 @@ class pollPlayerStatus(poller):
             return
         self.model.playerList[playerIndex].name.update(playerName)
         lsbsMode = unicode(responce["result"]["mode"])
-        mappings = {"play" : "playing",
+        mappings = {
+            "play" : "playing",
             "pause" : "paused",
             "off" : "Off",
             "stop" : "stop"
@@ -478,10 +482,12 @@ class schedular:
             if duedate < self.jobsById[msghash]['duedate']:
                 self.jobsById[msghash]['duedate'] = duedate
         else:
-            details = {'uuid' : msghash,
+            details = {
+                'uuid' : msghash,
                 'duedate' : duedate,
                 'msg' : message,
-                'poller' : poller}
+                'poller' : poller
+                }
             self.jobsById[msghash] = details
     def Overdue(self):
         overduelist = []
@@ -498,7 +504,8 @@ class schedular:
                 metadata['poller'].PollNext.update(now)
                 results[key] =  metadata
                 #print metadata
-                self.threadpool.QueueProcessAddMessage(metadata['poller'].handleResponce,
+                self.threadpool.QueueProcessAddMessage(
+                    metadata['poller'].handleResponce,
                     metadata['msg'], [], {}
                     )
 
