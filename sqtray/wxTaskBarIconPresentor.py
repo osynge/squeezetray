@@ -58,6 +58,7 @@ class TaskBarIconPresentor(object):
 
     def cbAddReqMdlUpdate(self, func):
         self.callbacks['on_modelUpdate'][func] = 1
+
     def cbAddRequestPopUpMenu(self, func):
         self.callbacks['on_popupMenu'][func] = 1
 
@@ -65,15 +66,19 @@ class TaskBarIconPresentor(object):
 
     def cbAddOnSettings(self, func):
         self.callbacks['on_settings'].append(func)
+
     def cbAddOnToolTipUpdate(self, func):
         self.callbacks['on_settings'].append(func)
 
     def cbAddOnExit(self, func):
         self.callbacks['on_exit'].append(func)
+
     def OnTrack(self):
         self.UpdateToolTip()
+
     def GetSqueezeServerPlayer(self):
         return self.currentPlayer.get()
+
     def UpdateToolTip(self):
         newToolTip = self.Model.tooltip.get()
         #self.View.set_toolTip(newToolTip)
@@ -85,6 +90,7 @@ class TaskBarIconPresentor(object):
         self.UpdateToolTip()
         #self.View.set_icon("ART_APPLICATION_STATUS_DISCONECTED",(16,16))
         self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED", (16, 16))
+
     def SelectPopupMenu(self):
         self.log.debug( "CreatePopupMenu")
         resultset = self.doCbPopupMenu()
@@ -105,6 +111,7 @@ class TaskBarIconPresentor(object):
         #print 'on_move'
         pass
         self.UpdateToolTip()
+
     def on_settings(self):
         for item in self.callbacks["on_settings"]:
             item()
@@ -114,6 +121,7 @@ class TaskBarIconPresentor(object):
         if value != self.Model.GuiPlayer.get():
             self.Model.GuiPlayer.set(value)
             #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
+
     def on_exit(self):
         #self.on_settings_close(event)
         #wx.CallAfter(self.Destroy)
@@ -127,13 +135,16 @@ class TaskBarIconPresentor(object):
     def on_right_down(self):
         #print 'on_right_down'
         pass
+
     def on_right_up(self):
         self.log.debug( 'on_right_up')
         #menu = self.CreatePopupMenu()
         #print dir (menu)
+
     def on_right_dclick(self):
         self.log.debug( 'on_right_dclick')
         #self.CreatePopUp(  event.GetPoint() )
+
     def on_click(self):
         pass
 
@@ -141,9 +152,11 @@ class TaskBarIconPresentor(object):
     def on_left_down(self):
         #print 'Tray icon was left-clicked.'
         pass
+
     def on_left_dclick(self):
         #print 'Tray icon was on_left_dclick-clicked.'
         pass
+
     def setIcon(self, IconName):
         #self.View.set_icon("ART_APPLICATION_STATUS_CONNECTED",(16,16))
         self.View.set_icon(IconName, (16, 16))
