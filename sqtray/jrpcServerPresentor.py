@@ -27,7 +27,7 @@ from jrpcServerTaskQueuePresentor import jrpcServerTaskQueuePresentor
 from  modelActions import ConCtrlInteractor
 
 class squeezeConPresentor:
-    def __init__(self,model,connectionPool):
+    def __init__(self, model, connectionPool):
         self.model = model
         #self.internalModel = squeezeConMdle()
         #self.internalModel.host.update('mini')
@@ -45,7 +45,7 @@ class squeezeConPresentor:
 
 
 
-    def Pause(self,player):
+    def Pause(self, player):
         if not self.model.connected.get():
             return None
         if not player in self.model.Players:
@@ -60,9 +60,9 @@ class squeezeConPresentor:
                 ]
         }
         msg = json.dumps(msg, sort_keys=True, indent=4)
-        reponce = self.connectionPool.SendMessage(None,msg)
+        reponce = self.connectionPool.SendMessage(None, msg)
 
-    def Play(self,player):
+    def Play(self, player):
         if not self.model.connected.get():
             return None
         if not player in self.model.Players:
@@ -77,9 +77,9 @@ class squeezeConPresentor:
                 ]
         }
         msg = json.dumps(msg, sort_keys=True, indent=4)
-        reponce = self.connectionPool.SendMessage(None,msg)
+        reponce = self.connectionPool.SendMessage(None, msg)
 
-    def Stop(self,player):
+    def Stop(self, player):
         if not self.model.connected.get():
             return None
         if not player in self.model.Players:
@@ -94,9 +94,9 @@ class squeezeConPresentor:
                 ]
         }
         msg = json.dumps(msg, sort_keys=True, indent=4)
-        reponce = self.connectionPool.SendMessage(None,msg)
+        reponce = self.connectionPool.SendMessage(None, msg)
 
-    def Index(self,player,Count):
+    def Index(self, player, Count):
         if not self.model.connected.get():
             return None
         prefix = ""
@@ -110,13 +110,13 @@ class squeezeConPresentor:
             "id":playerIndex,
             "method":"slim.request",
             "params":[ playerId,
-                    ["playlist","index",prefix + unicode(Count)]
+                    ["playlist", "index", prefix + unicode(Count)]
                 ]
         }
         msg = json.dumps(msg, sort_keys=True, indent=4)
-        reponce = self.connectionPool.SendMessage(None,msg)
+        reponce = self.connectionPool.SendMessage(None, msg)
 
-    def PlayRandomSong(self,player):
+    def PlayRandomSong(self, player):
         if not self.model.connected.get():
             return None
         if not player in self.model.Players:
@@ -127,9 +127,9 @@ class squeezeConPresentor:
             "id":playerIndex,
             "method":"slim.request",
             "params":[ playerId,
-                    ["randomplay",'tracks']
+                    ["randomplay", 'tracks']
                 ]
             }
         msg = json.dumps(msg, sort_keys=True, indent=4)
-        reponce = self.connectionPool.SendMessage(None,msg)
+        reponce = self.connectionPool.SendMessage(None, msg)
 
