@@ -74,12 +74,14 @@ class FrmSettings(wx.Frame):
     def cbDoOnApply(self):
         for item in self.callbacks["on_apply"]:
             item(self)
+
     def cbAddOnSave(self, func):
         self.callbacks['on_save'][func] = 1
 
     def cbDoOnSave(self):
         for item in self.callbacks["on_save"]:
             item(self)
+
     def cbAddOnCancel(self, func):
         self.callbacks['on_cancel'][func] = 1
 
@@ -111,7 +113,7 @@ class FrmSettings(wx.Frame):
         #self.app.configSave()
         #self.log.error('should call call back here')
         self.cbDoOnSave()
-#
+
     def OnApply(self, event):
         newHost = self.tcHost.GetValue()
         self.model.host.update(newHost)
