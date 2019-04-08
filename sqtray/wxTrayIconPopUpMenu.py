@@ -6,11 +6,11 @@ import functools
 import logging
 from sqtray.wxArtSvg import MyArtProvider
 from wxAppInteractor import GuiInteractor as TrayMenuInteractor
-def create_menu_item(menu, label, art,func):
+def create_menu_item(menu, label, art, func):
     item = wx.MenuItem(menu, -1, label)
     menu.Bind(wx.EVT_MENU, func, id=item.GetId())
     if art != None:
-        save_ico = wx.ArtProvider.GetBitmap(art, wx.ART_TOOLBAR, (16,16))
+        save_ico = wx.ArtProvider.GetBitmap(art, wx.ART_TOOLBAR, (16, 16))
         item.SetBitmap(save_ico)
     menu.AppendItem(item)
     return item
@@ -22,11 +22,11 @@ def create_menu_item(menu, label, art,func):
 
 
 class PopupMenuPresentor(object):
-    def __init__(self, Model, View,squeezecmd, interactor):
+    def __init__(self, Model, View, squeezecmd, interactor):
         self.Model = Model
         self.View = View
         self.squeezeConCtrl = squeezecmd
-        interactor.install(self,self.View)
+        interactor.install(self, self.View)
         self.player = Observable(None)
         self._cb_settings = []
 
@@ -48,10 +48,10 @@ class PopupMenuPresentor(object):
             results[item] = item()
         return results
 
-    def cbAddOnExit(self,func):
+    def cbAddOnExit(self, func):
         self.callbacks['on_exit'][func] = 1
 
-    def cbAddOnSettings(self,func):
+    def cbAddOnSettings(self, func):
         self.callbacks['on_settings'][func] = 1
 
 
@@ -78,14 +78,14 @@ class PopupMenuPresentor(object):
         if player != None:
             #self.squeezecmd.squeezecmd_Index(player,1)
 
-            self.squeezeConCtrl.Index(player,1)
+            self.squeezeConCtrl.Index(player, 1)
         else:
             self.on_settings()
     def onScPrevious(self):
         player = self.GetSqueezeServerPlayer()
         if player != None:
             #self.squeezecmd.squeezecmd_Index(player,-1)
-            self.squeezeConCtrl.Index(player,-1)
+            self.squeezeConCtrl.Index(player, -1)
         else:
             self.on_settings()
     def onScRandom(self):
@@ -99,7 +99,7 @@ class PopupMenuPresentor(object):
 
     def on_settings(self):
         self.doCbSettings()
-    def ChangePlayer(self,player):
+    def ChangePlayer(self, player):
         oldPlayer = self.player.get()
         if oldPlayer != player:
             self.player.set(player)
@@ -114,7 +114,7 @@ class PopupMenuPresentor(object):
 
 
 class TrayMenuPresentor(object):
-    def __init__(self, model,interactor):
+    def __init__(self, model, interactor):
         self.model = model
         self.interactor = interactor
         self.log = logging.getLogger("TrayMenuPresentor")
@@ -130,42 +130,42 @@ class TrayMenuPresentor(object):
                     self.log.error("Player[%s] with no name" % (i))
                     continue
                 playersMENU = wx.Menu()
-                toolsMENU.AppendMenu(-1,playerName , playersMENU)
+                toolsMENU.AppendMenu(-1, playerName, playersMENU)
                 MenuItem = wx.MenuItem(playersMENU, -1, 'Play')
-                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_PLAY", wx.ART_TOOLBAR, (16,16))
+                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_PLAY", wx.ART_TOOLBAR, (16, 16))
                 MenuItem.SetBitmap(save_ico)
-                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnPlay,player = playerName), id=MenuItem.GetId())
+                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnPlay, player = playerName), id=MenuItem.GetId())
                 playersMENU.AppendItem(MenuItem)
                 MenuItem = wx.MenuItem(playersMENU, -1, 'Stop')
-                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_STOP", wx.ART_TOOLBAR, (16,16))
+                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_STOP", wx.ART_TOOLBAR, (16, 16))
                 MenuItem.SetBitmap(save_ico)
-                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnStop,player = playerName), id=MenuItem.GetId())
+                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnStop, player = playerName), id=MenuItem.GetId())
                 playersMENU.AppendItem(MenuItem)
 
                 MenuItem = wx.MenuItem(playersMENU, -1, 'Pause')
-                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_PAUSE", wx.ART_TOOLBAR, (16,16))
+                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_PAUSE", wx.ART_TOOLBAR, (16, 16))
                 MenuItem.SetBitmap(save_ico)
-                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnPause,player = playerName), id=MenuItem.GetId())
+                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnPause, player = playerName), id=MenuItem.GetId())
                 playersMENU.AppendItem(MenuItem)
                 MenuItem = wx.MenuItem(playersMENU, -1, 'Next')
-                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_SEEK_FORWARD", wx.ART_TOOLBAR, (16,16))
+                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_SEEK_FORWARD", wx.ART_TOOLBAR, (16, 16))
                 MenuItem.SetBitmap(save_ico)
-                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnSeekForward,player = playerName), id=MenuItem.GetId())
+                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnSeekForward, player = playerName), id=MenuItem.GetId())
                 playersMENU.AppendItem(MenuItem)
                 MenuItem = wx.MenuItem(playersMENU, -1, 'Previous')
-                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_SEEK_BACKWARD", wx.ART_TOOLBAR, (16,16))
+                save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_SEEK_BACKWARD", wx.ART_TOOLBAR, (16, 16))
                 MenuItem.SetBitmap(save_ico)
-                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnSeekBackwards,player = playerName), id=MenuItem.GetId())
+                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnSeekBackwards, player = playerName), id=MenuItem.GetId())
                 playersMENU.AppendItem(MenuItem)
                 MenuItem = wx.MenuItem(playersMENU, -1, 'Rnd')
-                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnRandomSongs,player = playerName), id=MenuItem.GetId())
+                playersMENU.Bind(wx.EVT_MENU, functools.partial(self.interactor.doCbOnRandomSongs, player = playerName), id=MenuItem.GetId())
                 playersMENU.AppendItem(MenuItem)
 
             toolsMENU.AppendSeparator()
-        create_menu_item(toolsMENU, 'Now Playing',None, self.interactor.doCbOnNowPlaying)
-        create_menu_item(toolsMENU, 'Settings',None, self.interactor.doCbOnSettings)
+        create_menu_item(toolsMENU, 'Now Playing', None, self.interactor.doCbOnNowPlaying)
+        create_menu_item(toolsMENU, 'Settings', None, self.interactor.doCbOnSettings)
         toolsMENU.AppendSeparator()
-        create_menu_item(toolsMENU, 'Exit', wx.ART_QUIT,self.interactor.doCbOnExit)
+        create_menu_item(toolsMENU, 'Exit', wx.ART_QUIT, self.interactor.doCbOnExit)
         return toolsMENU
 
 
