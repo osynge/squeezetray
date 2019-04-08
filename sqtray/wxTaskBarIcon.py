@@ -8,12 +8,13 @@ import datetime
 import functools
 import wxIcons
 import logging
+from sqtray.models import Observable
+from sqtray.wxTrayIconPopUpMenu import PopupMenuPresentor
+
 
 TRAY_TOOLTIP = 'SqueezeTray'
 
-from sqtray.models import Observable
 
-from sqtray.wxTrayIconPopUpMenu import  PopupMenuPresentor
 class TaskBarIcon(wx.TaskBarIcon):
     def __init__(self, model):
         super(TaskBarIcon, self).__init__()
@@ -35,7 +36,6 @@ class TaskBarIcon(wx.TaskBarIcon):
             self.CallBacks['CreatePopupMenu'].append(funct)
 
     def Show(self):
-
         self.app.squeezeConCtrl.RecConnectionOnline()
         super(TaskBarIcon, self).Show()
 
@@ -43,8 +43,6 @@ class TaskBarIcon(wx.TaskBarIcon):
         if not hasattr(self, 'model'):
             return None
         return self.model.GuiPlayer.get()
-
-
 
     def set_icon(self, status, size):
         if (self.IconStatus == status) and (self.IconSize == size):
@@ -82,12 +80,10 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def CreatePopupMenu(self):
         result = None
-
         if "CreatePopupMenu" in self.CallBacks:
             resultSet = {}
             for item in self.CallBacks["CreatePopupMenu"]:
                 #print "called"
-
                 rc = item()
                 if rc == None:
                     continue
@@ -95,8 +91,6 @@ class TaskBarIcon(wx.TaskBarIcon):
                 #print "rc=%s" % (rc)
                 if rc != None:
                     result = rc
-
-
         self.log.debug('No menu? result = %s' % (result))
         return result
 
@@ -156,6 +150,7 @@ class TaskBarIconInteractor(object):
         #print "asdasdaSD"
         self.presenter.on_settings()
 
+
 class TaskBarIconUpdateInteractor(object):
     """ http://wiki.wxpython.org/ModelViewPresenter inspired """
 
@@ -170,10 +165,8 @@ class TaskBarIconUpdateInteractor(object):
         self.log.warn("dsfsf")
 
 
-
 def timedelta2str(timedeltainst):
     delta = abs(timedeltainst)
     totalseconds = delta.seconds + delta.days * 24 * 3600
     output = "%s:%02d" % (totalseconds / 60, totalseconds % 60)
     return output
-
