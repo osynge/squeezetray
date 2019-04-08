@@ -1,12 +1,12 @@
 import sys, os
 sys.path = [os.path.abspath(os.path.dirname(os.path.dirname(__file__)))] + sys.path
 import sqtray
+import pytest
 
 import unittest
-import nose
 import logging
 
-class TestModule_runnershell2(unittest.TestCase):
+class TestModule_runnershell2():
     def test_initialise(self):
         pass
 
@@ -15,4 +15,4 @@ if __name__ == "__main__":
     LoggingLevel = logging.WARNING
     logging.basicConfig(level=LoggingLevel)
     log = logging.getLogger("main")
-    nose.runmodule()
+    pytest.runmodule()
