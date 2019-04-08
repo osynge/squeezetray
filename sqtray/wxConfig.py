@@ -9,9 +9,9 @@ class ConfigView():
     def __init__(self,model):
         self.model = model
         self.log = logging.getLogger("ConfigView")
-        self.cfg = wx.FileConfig(appName="ApplicationName", 
-                                    vendorName="VendorName", 
-                                    localFilename=".squeezetray.cfg", 
+        self.cfg = wx.FileConfig(appName="ApplicationName",
+                                    vendorName="VendorName",
+                                    localFilename=".squeezetray.cfg",
                                     style=wx.CONFIG_USE_LOCAL_FILE)
     def configRead(self):
         self.log.debug("configRead")
@@ -57,7 +57,7 @@ class ConfigView():
     def configSave(self):
         self.cfg.Write("squeezeServerHost", self.model.host.get())
         self.cfg.WriteInt("squeezeServerPort", self.model.port.get())
-        result = self.cfg.Flush()        
+        result = self.cfg.Flush()
 class ConfigPresentor():
     def __init__(self,model):
 
