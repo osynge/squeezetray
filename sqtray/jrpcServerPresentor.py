@@ -52,10 +52,10 @@ class squeezeConPresentor:
             return None
         playerIndex = self.model.Players[player].index.get()
         playerId = self.model.Players[player].identifier.get()
-        msg = { 
+        msg = {
             "id":playerIndex,
             "method":"slim.request",
-            "params":[ playerId, 
+            "params":[ playerId,
                     ["pause"]
                 ]
         }
@@ -69,10 +69,10 @@ class squeezeConPresentor:
             return None
         playerIndex = self.model.Players[player].index.get()
         playerId = self.model.Players[player].identifier.get()
-        msg = { 
+        msg = {
             "id" : playerIndex,
             "method":"slim.request",
-            "params":[ playerId, 
+            "params":[ playerId,
                     ["play"]
                 ]
         }
@@ -86,10 +86,10 @@ class squeezeConPresentor:
             return None
         playerIndex = self.model.Players[player].index.get()
         playerId = self.model.Players[player].identifier.get()
-        msg = { 
+        msg = {
             "id" : playerIndex,
             "method":"slim.request",
-            "params":[ playerId, 
+            "params":[ playerId,
                     ["stop"]
                 ]
         }
@@ -106,10 +106,10 @@ class squeezeConPresentor:
             return None
         playerIndex = self.model.Players[player].index.get()
         playerId = self.model.Players[player].identifier.get()
-        msg = { 
+        msg = {
             "id":playerIndex,
             "method":"slim.request",
-            "params":[ playerId, 
+            "params":[ playerId,
                     ["playlist","index",prefix + unicode(Count)]
                 ]
         }
@@ -123,10 +123,10 @@ class squeezeConPresentor:
             return None
         playerIndex = self.model.Players[player].index.get()
         playerId = self.model.Players[player].identifier.get()
-        msg = { 
+        msg = {
             "id":playerIndex,
             "method":"slim.request",
-            "params":[ playerId, 
+            "params":[ playerId,
                     ["randomplay",'tracks']
                 ]
             }
