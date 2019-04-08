@@ -32,6 +32,7 @@ class frmSettingsModelWatcher():
 
     def messagesBlock(self):
         self.block = True
+
     def messagesUnblock(self):
         self.block = False
 
@@ -88,6 +89,7 @@ class frmSettingsPresentor:
     def cbDoOnApply(self):
         for item in self.callbacks["on_apply"]:
             item(self)
+
     def cbAddOnSave(self, func):
         self.callbacks['on_save'][func] = 1
 
