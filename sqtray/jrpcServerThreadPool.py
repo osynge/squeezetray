@@ -5,9 +5,7 @@ from threading import *
 import logging
 from Queue import Queue, Empty
 import exceptions
-
 from sqtray.models import Observable
-
 import sys
 
 if float(sys.version[:3]) >= 2.6:
@@ -32,6 +30,7 @@ class SqueezeConnectionWorker(Thread):
         self.SocketErrMsg = Observable("")
         self.log = logging.getLogger("JrpcServerthreadPool.SqueezeConnectionWorker")
         self.conn = None
+
     def cbAddTaskDone(self, funct):
         self.callbacks['task_done'][funct] = 1
 
@@ -42,6 +41,7 @@ class SqueezeConnectionWorker(Thread):
             func(request)
         # Now process nicely
         return
+
     def processRequest(self, request):
         params = request['params']
         if self.connectionString == None:
@@ -72,8 +72,6 @@ class SqueezeConnectionWorker(Thread):
             response = self.conn.getresponse()
         except exceptions.AttributeError, E:
             self.log.error("AttributeError=%s" % (E))
-
-
             return
         except socket.error, E:
             errorNumber = E.errno
@@ -84,19 +82,13 @@ class SqueezeConnectionWorker(Thread):
             self.log.error("SocketErrNo2=%s,SocketErrMsg=%s" % (self.SocketErrNo.get(),
                                                                 self.SocketErrMsg.get()))
             self.conn = None
-
-
             return
         except httplib.BadStatusLine, E:
             self.conn = None
-
             self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message, E))
-
             return
         if response.status != 200:
             self.log.info( "httplib.BadResponceStatus %s:%s" % (response.status, response.reason))
-
-
         try:
             rep = json.loads(response.read())
         except ValueError as E:
@@ -104,9 +96,6 @@ class SqueezeConnectionWorker(Thread):
 
             return
         return rep
-
-
-
 
     def run(self):
         while True:
@@ -134,11 +123,8 @@ class SqueezeConnectionWorker(Thread):
         self.conn = None
 
 
-
-
 class sConTPool:
     """Pool of threads consuming tasks from a queue"""
-
     def __init__(self, squeezeConMdle, num_threads = 10):
         self.log = logging.getLogger("sConTPool")
         self.squeezeConMdle = squeezeConMdle
@@ -162,12 +148,14 @@ class sConTPool:
             new.cbAddTaskDone(self.handleTaskDoneByThread)
             self.arrayOfSqueezeConnectionWorker.append(new)
         self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
-    def cbAddOnMessagesToProcess(self, function):
 
+    def cbAddOnMessagesToProcess(self, function):
         self.callbacks['messagesToProcess'][function] = 1
+
     def cbDoOnMessagesToProcess(self):
         for item in self.callbacks["messagesToProcess"]:
             item(self)
+
     def handleTaskDoneByThread(self, request):
         self.log.debug('handleTaskDoneByThread')
         msgHash = request['params'].__hash__()
@@ -213,7 +201,6 @@ class sConTPool:
             self.log.error("SendMessage Overwriting task")
         self.taskCacheRunning[msgHash] = request
         self.tasks.put(request)
-
         self.QueueProcessPreTask()
 
     def QueueProcessPreTask(self):
@@ -224,7 +211,6 @@ class sConTPool:
                 request = self.preTasks.get_nowait()
             except Empty:
                 break
-
             msgHash = request['params'].__hash__()
             self.taskCacheRunning[msgHash] = request
             if msgHash in self.preTaskCache.keys():
@@ -263,6 +249,7 @@ class sConTPool:
             del(self.taskCacheFinished[msgHash])
             self.postTasks.task_done()
         #self.log.debug('self.postTasks.qsize=%s' % ( self.postTasks.qsize())   )
+
     def QueueProcessAddMessage(self, func, message, *args, **kargs):
         messageDict = {}
         if message.__hash__() in self.preTaskCache.keys():
@@ -278,9 +265,6 @@ class sConTPool:
         self.preTasks.put(request)
         #self.log.debug('adding self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
 
-
-
-
     def OnSocketErrNo(self, value):
         #print "OnSocketErrNo='%s'" % (value)
         SocketErrNo = self.squeezeConMdle.SocketErrNo.get()
@@ -294,6 +278,7 @@ class sConTPool:
         if SocketErrMsg != value:
             #print "OnSocketErrMsg from '%s' to '%s'" % (SocketErrMsg,value)
             self.squeezeConMdle.SocketErrMsg.set(value)
+
     def OnConnectionStrChange(self, value):
         oldvalue = self.squeezeConMdle.connectionStr.get()
         self.log.debug('OnConnectionStrChange=%s' % (oldvalue))
@@ -323,9 +308,6 @@ if __name__ == '__main__':
                 ]
             ]
         }
-
     poool.SendMessage(testcbDone, msg)
-
     log.error('self.tasks.qsize=%s' % (poool.tasks.qsize()))
     time.sleep(20)
-
