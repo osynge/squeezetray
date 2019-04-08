@@ -167,7 +167,7 @@ class interactorNowPlaying:
 
             iconName = 'ART_PLAYER_PLAY'
         if playerStatus != None:
-            mapping = {'playing' :'ART_PLAYER_PLAY',
+            mapping = {'playing' : 'ART_PLAYER_PLAY',
                         'paused' : 'ART_PLAYER_PAUSE',
                         'stop' : 'ART_PLAYER_STOP' }
             if playerStatus in mapping.keys():
