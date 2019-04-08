@@ -34,7 +34,7 @@ class SqueezeConnectionWorker(Thread):
         self.conn = None
     def cbAddTaskDone(self,funct):
         self.callbacks['task_done'][funct] = 1
-            
+
     def taskDone(self,request):
         self.tasks.task_done()
         self.log.debug( 'taskDone')
@@ -73,7 +73,7 @@ class SqueezeConnectionWorker(Thread):
         except exceptions.AttributeError, E:
             self.log.error("AttributeError=%s" % (E))
 
-            
+
             return
         except socket.error, E:
             errorNumber = E.errno
@@ -85,29 +85,29 @@ class SqueezeConnectionWorker(Thread):
                 self.SocketErrMsg.get()))
             self.conn = None
 
-            
+
             return
         except httplib.BadStatusLine, E:
             self.conn = None
 
             self.log.info( "httplib.BadStatusLine exception.message=%s,E=%s" % (E.message,E))
-            
+
             return
         if response.status != 200:
             self.log.info( "httplib.BadResponceStatus %s:%s" % (response.status, response.reason))
-            
-            
+
+
         try:
             rep = json.loads(response.read())
         except ValueError as E:
             self.log.info( "Json decoding ValueError:%s" %(E))
-            
+
             return
         return rep
-    
-    
-    
-      
+
+
+
+
     def run(self):
         while True:
             request = self.tasks.get()
@@ -115,9 +115,9 @@ class SqueezeConnectionWorker(Thread):
             reponce = self.processRequest(request)
             if reponce != None:
                 request['responce'] = reponce
-            
+
             self.taskDone(request)
-            
+
     def ConnectionSet(self,connectionStr):
         #print "connectionStr", connectionStr
         Changed =  False
@@ -135,10 +135,10 @@ class SqueezeConnectionWorker(Thread):
 
 
 
-        
+
 class sConTPool:
     """Pool of threads consuming tasks from a queue"""
-    
+
     def __init__(self, squeezeConMdle,num_threads = 10):
         self.log = logging.getLogger("sConTPool")
         self.squeezeConMdle = squeezeConMdle
@@ -163,7 +163,7 @@ class sConTPool:
             self.arrayOfSqueezeConnectionWorker.append(new)
         self.squeezeConMdle.connectionStr.addCallback(self.OnConnectionStrChange)
     def cbAddOnMessagesToProcess(self,function):
-        
+
         self.callbacks['messagesToProcess'][function] = 1
     def cbDoOnMessagesToProcess(self):
         for item in self.callbacks["messagesToProcess"]:
@@ -193,12 +193,12 @@ class sConTPool:
         self.taskCacheFinished[msgHash] = request
         self.postTasks.put(msgHash)
         self.cbDoOnMessagesToProcess()
-        
+
     def wait_completion(self):
         """Wait for completion of all the tasks in the queue"""
         self.log.error("Wait for completion of all the tasks in the queue")
         self.tasks.join()
-        
+
     def SendMessage(self,func,message, *args, **kargs):
         #Sends a message now without Queuing 
         #for a aproved thread
@@ -213,9 +213,9 @@ class sConTPool:
             self.log.error("SendMessage Overwriting task")
         self.taskCacheRunning[msgHash] = request
         self.tasks.put(request)
-        
+
         self.QueueProcessPreTask()
-        
+
     def QueueProcessPreTask(self):
         # For calling to place messages on 
         #self.log.debug( 'self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
@@ -224,7 +224,7 @@ class sConTPool:
                 request = self.preTasks.get_nowait()
             except Empty:
                 break
-            
+
             msgHash = request['params'].__hash__()
             self.taskCacheRunning[msgHash] = request
             if msgHash in self.preTaskCache.keys():
@@ -234,7 +234,7 @@ class sConTPool:
             self.preTasks.task_done()
         #self.log.debug('self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
         #self.log.debug('self.tasks.qsize=%s' % (   self.tasks.qsize()))
-        
+
     def QueueProcessResponces(self):
         # To be processed by external thead
         counter = 0
@@ -277,17 +277,17 @@ class sConTPool:
         self.preTaskCache[message.__hash__()] = request
         self.preTasks.put(request)
         #self.log.debug('adding self.preTasks.qsize=%s' % (   self.preTasks.qsize()))
-        
-        
-        
-    
+
+
+
+
     def OnSocketErrNo(self,value):
         #print "OnSocketErrNo='%s'" % (value)
         SocketErrNo = self.squeezeConMdle.SocketErrNo.get()
         if SocketErrNo != value:
             #print "OnSocketErrNo from '%s' to '%s'" % (SocketErrNo,value)
             self.squeezeConMdle.SocketErrNo.set(value)        
-    
+
     def OnSocketErrMsg(self,value):
         #print "OnSocketErrMsg='%s'" % (value)
         SocketErrMsg = self.squeezeConMdle.SocketErrMsg.get()
@@ -303,7 +303,7 @@ class sConTPool:
 
 def testcbDone(one):
     print one
-        
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     import time
@@ -323,9 +323,9 @@ if __name__ == '__main__':
                 ]
             ]
         }
-    
+
     poool.SendMessage(testcbDone,msg)
-    
+
     log.error('self.tasks.qsize=%s' % (  poool.tasks.qsize()))
     time.sleep(20)
 
