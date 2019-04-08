@@ -49,7 +49,7 @@ class PopupMenuPresentor(object):
         return results
 
     def cbAddOnExit(self,func):
-        self.callbacks['on_exit'][func] = 1   
+        self.callbacks['on_exit'][func] = 1
 
     def cbAddOnSettings(self,func):
         self.callbacks['on_settings'][func] = 1
@@ -64,7 +64,7 @@ class PopupMenuPresentor(object):
         if player != None:
             self.squeezeConCtrl.Pause(player)
         else:
-            self.on_settings()    
+            self.on_settings()
     def onScPlay(self):
         player = self.GetSqueezeServerPlayer()
         if player != None:
@@ -130,7 +130,7 @@ class TrayMenuPresentor(object):
                     self.log.error("Player[%s] with no name" % (i))
                     continue
                 playersMENU = wx.Menu()
-                toolsMENU.AppendMenu(-1,playerName , playersMENU) 
+                toolsMENU.AppendMenu(-1,playerName , playersMENU)
                 MenuItem = wx.MenuItem(playersMENU, -1, 'Play')
                 save_ico = wx.ArtProvider.GetBitmap("ART_PLAYER_PLAY", wx.ART_TOOLBAR, (16,16))
                 MenuItem.SetBitmap(save_ico)
