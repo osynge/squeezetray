@@ -43,7 +43,7 @@ class ObservableDict( UserDict.DictMixin):
     def delCallback(self, func):
         del self.callback[func]
 
-    def _docallbacks(self,key):
+    def _docallbacks(self, key):
         for func in self.callbacks:
             func(key)
     def __setitem__(self, item, value):
