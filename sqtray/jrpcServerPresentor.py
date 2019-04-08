@@ -53,9 +53,9 @@ class squeezeConPresentor:
         playerIndex = self.model.Players[player].index.get()
         playerId = self.model.Players[player].identifier.get()
         msg = {
-            "id":playerIndex,
-            "method":"slim.request",
-            "params":[ playerId,
+            "id": playerIndex,
+            "method": "slim.request",
+            "params": [ playerId,
                     ["pause"]
                 ]
         }
@@ -71,8 +71,8 @@ class squeezeConPresentor:
         playerId = self.model.Players[player].identifier.get()
         msg = {
             "id" : playerIndex,
-            "method":"slim.request",
-            "params":[ playerId,
+            "method": "slim.request",
+            "params": [ playerId,
                     ["play"]
                 ]
         }
@@ -88,8 +88,8 @@ class squeezeConPresentor:
         playerId = self.model.Players[player].identifier.get()
         msg = {
             "id" : playerIndex,
-            "method":"slim.request",
-            "params":[ playerId,
+            "method": "slim.request",
+            "params": [ playerId,
                     ["stop"]
                 ]
         }
@@ -107,9 +107,9 @@ class squeezeConPresentor:
         playerIndex = self.model.Players[player].index.get()
         playerId = self.model.Players[player].identifier.get()
         msg = {
-            "id":playerIndex,
-            "method":"slim.request",
-            "params":[ playerId,
+            "id": playerIndex,
+            "method": "slim.request",
+            "params": [ playerId,
                     ["playlist", "index", prefix + unicode(Count)]
                 ]
         }
@@ -124,9 +124,9 @@ class squeezeConPresentor:
         playerIndex = self.model.Players[player].index.get()
         playerId = self.model.Players[player].identifier.get()
         msg = {
-            "id":playerIndex,
-            "method":"slim.request",
-            "params":[ playerId,
+            "id": playerIndex,
+            "method": "slim.request",
+            "params": [ playerId,
                     ["randomplay", 'tracks']
                 ]
             }
