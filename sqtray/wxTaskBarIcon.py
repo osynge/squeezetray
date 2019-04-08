@@ -28,6 +28,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.IconStatus = None
         self.IconSize = None
         self.log = logging.getLogger("TaskBarIcon")
+
     def CbAddCreatePopupMenu(self, funct):
         """Callback items shoudl return Menu objects"""
         if 'CreatePopupMenu' in self.CallBacks:
@@ -78,6 +79,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         if hasattr(self, 'icon'):
             self.SetIcon(self.icon, tooltip)
         self.ToolTipText = unicode(tooltip)
+
     def CreatePopupMenu(self):
         result = None
 
@@ -119,24 +121,34 @@ class TaskBarIconInteractor(object):
 
     def on_move(self, evt):
         self.presenter.on_move()
+
     def on_left_down(self, evt):
         self.presenter.on_left_down()
+
     def on_left_up(self, evt):
         self.presenter.on_left_up()
+
     def on_right_down(self, evt):
         self.presenter.on_right_down()
+
     def on_right_up(self, evt):
         self.presenter.on_right_up()
+
     def on_left_dclick(self, evt):
         self.presenter.on_left_dclick()
+
     def on_right_dclick(self, evt):
         self.presenter.on_right_dclick()
+
     def on_click(self, evt):
         self.presenter.on_click()
+
     def OnPlayers(self, evt):
         self.presenter.OnPlayers()
+
     def OnTrack(self, evt):
         self.presenter.OnTrack()
+
     def CreatePopupMenu(self):
         return self.presenter.SelectPopupMenu()
 
