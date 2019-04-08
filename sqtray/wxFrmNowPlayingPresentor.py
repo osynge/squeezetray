@@ -16,7 +16,6 @@ class mdlFrmInternalNowPlaying(mdlFrmNowPlaying):
 
 class frmPlayingPresentor:
     def __init__(self, model, interactor):
-
         self.GuiModel = model
         self.settingsOpen = False
         self.Example = None
@@ -32,20 +31,16 @@ class frmPlayingPresentor:
         self.interactor = interactor
         self.updateGuiInteractor = interactorNowPlaying()
         self.updateGuiInteractor.install(self.GuiModel, self.interactor)
+
     def ViewOpen(self):
         if self.settingsOpen == True:
             return
         self.Example = FrmNowPlaying(None, title='Now Playing')
-
         self.Example.Bind(wx.EVT_CLOSE, self.ViewClose)
         self.updateGuiInteractor.installGui(self.Example)
-
         self.Example.cbAddOnQuit(self.OnQuit)
         self.Example.cbAddOnPause(self.interactor.cbAddOnPause)
-
-
         self.Example.Show()
-
         self.settingsOpen = True
 
     def ViewClose(self, evnt = None):
