@@ -19,7 +19,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         super(TaskBarIcon, self).__init__()
         self.model = model
         self.icon = wx.ArtProvider.GetIcon(
-            "ART_APPLICATION_STATUS_DISCONECTED", 
+            "ART_APPLICATION_STATUS_DISCONECTED",
             wx.ART_OTHER,
             (16,16))
         self.SetIcon(self.icon,"SqueezeTray")
@@ -36,7 +36,7 @@ class TaskBarIcon(wx.TaskBarIcon):
     def Show(self):
 
         self.app.squeezeConCtrl.RecConnectionOnline()
-        super(TaskBarIcon, self).Show()        
+        super(TaskBarIcon, self).Show()
 
     def GetSqueezeServerPlayer(self):
         if not hasattr(self,'model'):
@@ -73,7 +73,7 @@ class TaskBarIcon(wx.TaskBarIcon):
     def set_toolTip(self, tooltip):
         if hasattr(self,'ToolTipText'):
             if self.ToolTipText == tooltip:
-                self.log.debug("Icon changed '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))        
+                self.log.debug("Icon changed '%s:%s'" % (self.IconStatus,str(self.IconSize).strip()))
                 return
         if hasattr(self,'icon'):
             self.SetIcon(self.icon, tooltip)
