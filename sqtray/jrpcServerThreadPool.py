@@ -82,7 +82,7 @@ class SqueezeConnectionWorker(Thread):
             self.SocketErrNo.set(errorNumber)
             self.SocketErrMsg.set(unicode(E.message))
             self.log.error("SocketErrNo2=%s,SocketErrMsg=%s" % (self.SocketErrNo.get(),
-                self.SocketErrMsg.get()))
+                                                                self.SocketErrMsg.get()))
             self.conn = None
 
 
