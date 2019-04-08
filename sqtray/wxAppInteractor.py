@@ -12,7 +12,7 @@ class GuiInteractor(object):
         }
 
     def cbAddOnExit(self,func):
-        self.callbacks['on_exit'][func] = 1   
+        self.callbacks['on_exit'][func] = 1
 
     def cbAddOnSettings(self,func):
         self.callbacks['on_settings'][func] = 1
