@@ -13,8 +13,8 @@ class squeezePlayerMdl:
         self.CurrentTrackArtist = Observable(None)
         self.CurrentTrackEnds = Observable(None)
         self.CurrentTrackId = Observable(None)
-    def OnAtribChange(self, value):
 
+    def OnAtribChange(self, value):
         discovered = True
         if  (self.name.get() == None):
             discovered = False
@@ -52,13 +52,8 @@ class squeezeSong:
         self.url = Observable(None)
 
 
-
-
-
-
 class squeezeConMdle:
     def __init__(self):
-
         self.host = Observable("localhost")
         self.port = Observable(9000)
         # connectionStr : a simple to observe break of connection settings obj
@@ -70,19 +65,15 @@ class squeezeConMdle:
         self.SocketErrNo = Observable(0)
         # Socket Human diagnostic error. Will be "" with no error,
         self.SocketErrMsg = Observable("")
-
         self.playerList = []
         self.Players = ObservableDict()
         self.CbPlayersAvailable= []
         self.CbChurrentTrack = []
         self.host.addCallback(self.OnHostChange)
         self.port.addCallback(self.OnPortChange)
-
         self.connectionStr.addCallback(self.OnConnectedChange)
         self.connected.addCallback(self.OnConnectedChange)
         self.playersCount.addCallback(self.OnPlayersCountChange)
-
-
         self.SongCache = ObservableDict()
 
     def OnHostChange(self, value):
@@ -97,7 +88,6 @@ class squeezeConMdle:
         newConnectionStr = "%s:%s" % (self.host.get(), self.port.get())
         self.connectionStr.update(newConnectionStr)
 
-
     def OnConnectedChange(self, value):
         if not self.connected.get():
             if 0 != self.playersCount.get():
@@ -110,8 +100,6 @@ class squeezeConMdle:
             self.playerList[index].discovered.addCallback(self.OnPlayersAvailableChange)
             self.playerList[index].CurrentTrackId.addCallback(self.OnCurrentTrack)
         self.OnPlayersAvailableChange(value)
-
-
 
     def OnPlayersAvailableChange(self, value):
         #print "OnPlayersAvailableChange"
@@ -133,14 +121,14 @@ class squeezeConMdle:
 
     def CbPlayersAvailableAdd(self, func, *args, **kargs):
         self.CbPlayersAvailable.append((func, args, kargs))
+
     def CbChurrentTrackAdd(self, func, *args, **kargs):
         self.CbChurrentTrack.append((func, args, kargs))
+
     def OnCurrentTrack(self, value):
         #print "OnCurrentTrack (%s)" % value
         for func, args, kargs in self.CbChurrentTrack:
             func(*args, **kargs)
-
-
 
     def playerListClear(self):
         self.playerList = []
