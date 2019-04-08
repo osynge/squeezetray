@@ -10,9 +10,9 @@ class ConfigView():
         self.model = model
         self.log = logging.getLogger("ConfigView")
         self.cfg = wx.FileConfig(appName="ApplicationName",
-                                    vendorName="VendorName",
-                                    localFilename=".squeezetray.cfg",
-                                    style=wx.CONFIG_USE_LOCAL_FILE)
+                                 vendorName="VendorName",
+                                 localFilename=".squeezetray.cfg",
+                                 style=wx.CONFIG_USE_LOCAL_FILE)
     def configRead(self):
         self.log.debug("configRead")
         # Set Host
