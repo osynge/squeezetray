@@ -63,7 +63,7 @@ class pollOnline(poller):
     def GetNextDue(self):
         online = self.model.connected.get()
         msg = {
-            "method":"slim.request",
+            "method": "slim.request",
             "params": [ '-', [ 'player', 'count', '?' ] ]
         }
         if online == True:
@@ -109,7 +109,7 @@ class pollPlayerName(poller):
             if identifier == None:
                 #print "would make a name request"
                 msg = {
-                    "method":"slim.request",
+                    "method": "slim.request",
                     "params": [ '-', [ 'player', 'id', index , "?"] ]
                 }
                 secondDelay += secondInterval
@@ -119,7 +119,7 @@ class pollPlayerName(poller):
             if name == None:
                 #print "would make a name request"
                 msg = {
-                    "method":"slim.request",
+                    "method": "slim.request",
                     "params": [ '-', [ 'player', 'name', index, "?"] ]
                 }
                 secondDelay += secondInterval
@@ -132,7 +132,7 @@ class pollPlayerName(poller):
         secondInterval = 60
         for index in range(len(self.model.playerList)):
             msg = {
-                "method":"slim.request",
+                "method": "slim.request",
                 "params": [ '-', [ 'player', 'id', index, "?"] ]
             }
 
@@ -140,7 +140,7 @@ class pollPlayerName(poller):
             commands.append([secondDelay, msg])
             #print "would make a name request"
             msg = {
-                "method":"slim.request",
+                "method": "slim.request",
                 "params": [ '-', [ 'player', 'name', index, "?"] ]
             }
             secondDelay += secondInterval
@@ -183,7 +183,7 @@ class pollSongStatus(poller):
             if identifier != None:
                 continue
             msg = {
-                        "method":"slim.request",
+                        "method": "slim.request",
                         "params": ["-",
                             ['songinfo', '0', '100', 'track_id:%s'  % (trackId), "tags:GPlASIediqtymkovrfijnCcYXRTIuwxN"] ]
                     }
@@ -321,9 +321,9 @@ class pollPlayerStatus(poller):
             if currentMode in maper.keys():
                 newUpdateFrequancy = maper[currentMode]
 
-        msg = {"id":self.playerIndex,
-                "method":"slim.request",
-                "params":[identifier ,
+        msg = {"id": self.playerIndex,
+                "method": "slim.request",
+                "params": [identifier ,
                         ["status", "-", "4", "tags:playlist_id"]
                     ]
             }
