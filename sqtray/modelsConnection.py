@@ -68,7 +68,7 @@ class squeezeConMdle:
         self.playersCount = Observable(0)
         # Socket Computer diagnostic error. Will be 0 when no error
         self.SocketErrNo = Observable(0)
-        # Socket Human diagnostic error. Will be "" with no error, 
+        # Socket Human diagnostic error. Will be "" with no error,
         self.SocketErrMsg = Observable("")
 
         self.playerList = []
